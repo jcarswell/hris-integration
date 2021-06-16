@@ -1,0 +1,64 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{{ site.name }}{% endblock %}</title>
+
+  {% block meta %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% endblock %}
+
+  {% block base_style %}
+  {% include 'hirs_admin/lib/_styles.html' %}
+  {% endblock %}
+  {% block extra_style %}{% endblock %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="hold-transition sidebar-mini {% block body_class %}layout-fixed{% endblock %}">
+  {% block body %}
+  <div class="wrapper">
+    {% block nav_header %}
+    {% include 'hirs_admin/lib/_main_header.html' %}
+    {% endblock %}
+
+    {% block nav_sidebar %}
+    {% include 'hirs_admin/lib/_main_sidebar.html' %}
+    {% endblock %}
+
+    {% block content_wrapper %}
+    <div class="content-wrapper">
+      {% block content_header %}
+      <section class="content-header">
+        {% block no_heading %}
+        <h1>
+          {% block page_name %}{{ page.title|default:"" }}{% endblock %}
+          <div class="header-actions">
+            {% block page_actions %}{% endblock %}
+          </div>
+          {% block no_description %}
+          <small>{% block page.description %}{% endblock %}</small>
+          {% endblock %}
+        </h1>
+        {% endblock no_heading %}
+      </section>
+      {% endblock %}
+
+      {% block content_outer %}
+      <section class="content">
+        {% block content_block_wrap %}
+        {% block content %}{% endblock %}
+        {% endblock %}
+      </section>
+      {% endblock %}
+      </div>
+      {% endblock content_wrapper %}
+    </div>
+{% endblock body %}
+{% block base_js %}
+{% include 'adminlte/lib/_scripts.html' %}
+{% endblock %}
+{% block extra_js %}{% endblock %}
+{% block extra_foot %}{% endblock %}
+</body>
+</html>

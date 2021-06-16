@@ -1,0 +1,66 @@
+{% load i18n static %}
+{% extends "hirs_admin/base.html" %}
+
+{% block page_actions %}
+{% if form_new %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a class="btn btn-sm btn-outline-secondary" href="{{ form_new }}">Add New</a>
+<div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% block feild_set %}
+  <form id="{{ form.id|default:'form_list' }}"{% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
+    {% csrf_token %}
+    {% if form.name %}<h2>{{ form.name }}</h2>{% endif %}
+    {% if form.description %}
+    <div class="description">{{ form.description|safe }}</div>
+    {% endif %}
+    {{ form }}
+  </form>
+  {% endblock %}
+<div>
+{% endblock content %}
+
+{% block base_js %}
+{% include 'adminlte/lib/_scripts.html' %}
+<script>
+var itemsOverride
+function hashDiff(h1,h2){var d={};for(var k in h2){if(h1[k]!==h2[k])d[k]=h2[k];}return d;}
+function convertSerializedArrayToHash(a){var r={};for(var i=0;i<a.length;i++){r[a[i].name]=a[i].value;}return r;}
+function doneProcess(data) {
+  if (data["status"] != "success") {
+    $('.alert').text(data["message"]);
+    $('.alert').alert();
+    $('.alert').addClass("alert-danger");
+    for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
+  } else {
+    $('.alert').text("Success");
+    $('.alert').alert();
+    $('.alert').addClass("alert-sucess");
+    itemsOverride = convertSerializedArrayToHash($(this).serializeArray());
+    $('.is-invalid').removeClass("is-invalid");
+  }
+}
+function errorProcess(jqXHR,status,error) {
+  $('.alert').text("A Server error occured: " + status);
+  $('.alert').alert();
+  $('.alert').addClass("alert-danger");
+}
+$("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
+  e.preventDefault();
+  var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
+  data["csrfmiddlewaretoken"] = csrftoken
+
+  $.ajax({
+    type: "POST",
+    url: location.href,
+    data: form_data
+  })
+  .done(doneProcess(data);)
+  .error(errorProcess(jqXHR,status,error);)
+});
+</script>
+{% endblock extra_js %}

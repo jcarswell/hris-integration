@@ -1,0 +1,98 @@
+{% extends "admin/base_site.html" %}
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+{% endblock extrastyle %}
+{% block extrahead %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js" inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd" crossorigin="anonymous"></script>
+{% endblock extrahead %}
+{% block context %}
+<div id="page-nav" class="list-group">
+  {% for root in settings %}
+  <a class="list-group-item list-group-item-action" href="#employee">Item 1</a>
+  <nav class="nav nav-pills flex-column">
+  {% for sub in root.items %}
+    <a class="nav-link ml-3 my-1" href="#{{ sub.id }}">{{ sub.name }}</a>
+  {% endfor %}
+  {% endfor %}
+</div>
+<div data-spy="scroll" data-target="#page-nav" data-offset="0" class="scrollspy-example container">
+  <div class="alert" role="alert"></div>
+  <h2>Settings</h2>
+  <div data-spy="scroll" data-target="#page-nav" data-offset="0" class="scrollspy-example">
+    <form>
+      {% csrf_token %}
+      {% for root in settings %}
+      <h3 id="{{ root.id }}">{{ root.name }}</h3>
+      {% for sub in root.items %}
+      <hr style="border-top:2px solid #bbb">
+      <h4 id="{{ sub.id }}">{{ sub.name }}</h4>
+      {% for item in sub.items %}
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon1">{{ item.name }}</span>
+        </div>
+        {% if item.hidden %}
+        <input type="password" name="{{ item.id }}" class="form-control" data-toggle="password" value="{{ item.value }}">
+        {% else %}
+        <input type="text" name="{{ item.id }}" class="form-control" value="{{ item.value }}">
+      <div>
+      {% endfor %}
+      {% endfor %}
+      <hr style="border-top:4px solid black">
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">submit</button>
+    </form>
+  </div>
+</div>
+<script type="text/javascript">
+<!--
+var startItems
+
+function hashDiff(h1,h2){var d={};for(var k in h2){if(h1[k]!==h2[k])d[k]=h2[k];}return d;}
+function convertSerializedArrayToHash(a){var r={};for(var i=0;i<a.length;i++){r[a[i].name]=a[i].value;}return r;}
+$(function() {
+  const csrftoken = Cookies.get('csrftoken');
+  var $form = $('form');
+  var startItems = convertSerializedArrayToHash($form.serializeArray()); 
+});
+$(body).scrollspy({ target: '#page-nav' });
+$("form").submit(function(e) {
+  e.preventDefault();
+  var data = hashDiff(startItems,convertSerializedArrayToHash($form.serializeArray()));
+  data["csrfmiddlewaretoken"] = csrftoken
+  
+  $('.alert').dismiss;
+  $('.alert').class("alert");
+
+  $.ajax({
+    type: "POST",
+    url: location.href,
+    data: data,
+    datatype: "json"
+  })
+  .done(function(data) {
+    if (data["status"] != "success") {
+      $('.alert').text(data["message"]);
+      $('.alert').alert();
+      $('.alert').addClass("alert-danger");
+      for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
+    } else {
+      $('.alert').text("Success");
+      $('.alert').alert();
+      $('.alert').addClass("alert-sucess");
+      startItems = convertSerializedArrayToHash($form.serializeArray());
+      $('.is-invalid').removeClass("is-invalid");
+    }
+  })
+  .error(function(jqXHR,status,error) {
+    $('.alert').text("A Server error occured: " + status);
+    $('.alert').alert();
+    $('.alert').addClass("alert-danger");
+  });
+});
+-->
+</script>
+{% endblock context %}

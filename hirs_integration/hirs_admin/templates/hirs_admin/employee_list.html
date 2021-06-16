@@ -1,0 +1,39 @@
+{% extends "hirs_admin/base.html" %}
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"/>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="table-responsive">
+    <table class="table table-striped" id="emp_list" style="width:100%;">
+      <tr>
+        <th>id</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Username</th>
+        <th>Email</th>
+      </tr>
+      {% for emp in employees %}
+      <tr id="{{ emp.pk }}">
+        <td><a href="{% url 'employee_edit' emp.pk %}"><strong>{{ emp.pk }}</strong></a></td>
+        <td><a href="{% url 'employee_edit' emp.pk %}">{{ emp.givenname }}</a></td>
+        <td><a href="{% url 'employee_edit' emp.pk %}">{{ emp.surname}}</a></td>
+        <td><a href="{% url 'employee_edit' emp.pk %}">{{ emp.username }}</a></td>
+        <td><a href="{% url 'employee_edit' emp.pk %}">{{ emp.email }}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  <div>
+<div>
+{% endblock content %}
+{% block extra_js %}
+<script type="text/javascript">
+<!--
+$(document).ready(function() {
+  $('#emp_list').DataTable();
+} );
+-->
+</script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+{% endblock extra_js %}

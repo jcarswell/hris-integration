@@ -1,0 +1,46 @@
+{% load i18n static %}
+{% extends "hirs_admin/base.html" %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"/>
+{% endblock %}
+
+{% block page_actions %}
+{% if form_new %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a class="btn btn-sm btn-outline-secondary" href="{{ form_new }}">Add New</a>
+<div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="table-responsive">
+    <table class="table table-striped" id="{{ form.id|default:'form_list' }}" style="width:100%;">
+      <tr>
+      {% for header in form.feilds %}
+        <th>{{ header }}</th>
+      {% endfor %}
+      </tr>
+      {% for row in form.rows %}
+      <tr id="{{ row.pk }}">
+        <td><a href="{% url 'edit' row.pk %}"><strong>{{ row.pk }}</strong></a></td>
+        {% for value in row %}
+        <td><a href="{% url 'edit' row.pk %}">{{ value }}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  <div>
+<div>
+{% endblock content %}
+{% block base_js %}
+{% include 'adminlte/lib/_scripts.html' %}
+{% include 'adminlte/lib/datatables_scripts.html' %}
+<script type="text/javascript">
+<!--
+$(document).ready(function() {
+  $('#' + "{{ form.id|default:'form_list' }}").DataTable();
+} );
+-->
+</script>
+{% endblock extra_js %}
