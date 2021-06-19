@@ -1,4 +1,5 @@
 import pyodbc
+import logging
 
 from django.db import utils
 from typing import Set
@@ -6,32 +7,51 @@ from typing import Set
 from hirs_admin.models import Setting
 from .adquery import AD
 
+INIT_ERROR = [('Not Loaded','System not initalized')]
+logger = logging.getLogger('helpers.adtools')
+
+
 def get_adgroups():
     ad_query = AD()
     
     try:
         base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
-        ad_query.execute_query(attributes=["distinguishedName","sAMAccountName"], 
+        ad_query.execute_query(attributes=["objectGUID","sAMAccountName"], 
                             where_clause="objectClass = 'group'",
-                            base_dn=base_dn)
+                            base_dn=base_dn.value)
         
         return ad_query.get_all_results_tuple()
     except pyodbc.ProgrammingError:
-        return [('Not Loaded','System not initalized')]
+        logger.warning("Caught pyodbc.ProgrammingError")
+        return INIT_ERROR
     except utils.ProgrammingError:
-        return None
+        logger.warning("Caught django.utils.ProgrammingError")
+        return INIT_ERROR
+    except Setting.DoesNotExist:
+        logger.warning("Caught DoesNotExist Warning")
+        ad_query.execute_query(attributes=["objectGUID","sAMAccountName"], 
+                where_clause="objectClass = 'group'")
+        return ad_query.get_all_results_tuple()
+
     
 def get_adous():
     ad_query = AD()
     
     try:
         base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
-        ad_query.execute_query(attributes=["distinguishedName","sAMAccountName"], 
+        ad_query.execute_query(attributes=["objectGUID","distinguishedName"], 
                             where_clause="objectCategory = 'organizationalUnit'",
-                            base_dn=base_dn)
+                            base_dn=base_dn.value)
         
         return ad_query.get_all_results_tuple()
     except pyodbc.ProgrammingError:
-        return [('Not Loaded','System not initalized')]
+        logger.warning("Caught pyodbc.ProgrammingError")
+        return INIT_ERROR
     except utils.ProgrammingError:
-        return None
+        logger.warning("Caught django.utils.ProgrammingError")
+        return INIT_ERROR
+    except Setting.DoesNotExist:
+        logger.warning("Caught DoesNotExist Warning")
+        ad_query.execute_query(attributes=["objectGUID","distinguishedName"], 
+                where_clause="objectCategory = 'organizationalUnit'")
+        return ad_query.get_all_results_tuple()
