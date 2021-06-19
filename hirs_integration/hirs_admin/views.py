@@ -2,11 +2,10 @@ import string
 import json
 import logging
 
-from django.forms.models import ModelForm
 from django.http import HttpResponse, HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_protect
-from django.views.generic.base import TemplateResponseMixin, View
+from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
 from django.contrib.auth.views import redirect_to_login
 
 from . import models
@@ -23,12 +22,14 @@ def emp_list(request):
     return HttpResponse(render(request,'hirs_admin/list.html', context))
 
 
-class LoggedInView(View):
+class LoggedInView(ContextMixin, View):
     page_title = 'HIRS Sync Admin'
     site_title = 'HIRS Sync Admin'
     page_description = None
+    redirect_path = None
 
     def get_context(self, **kwargs):
+        base_context = self.get_context_data(**kwargs)
         context = {
             "site": {
                 "title": self.site_title
@@ -38,17 +39,30 @@ class LoggedInView(View):
                 "description": self.page_description
             }
         }
-        return context
+        return base_context.update(context)
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        if self.redirect_path == None:
+            self.redirect_path = request.path
 
     def dispatch(self, request, *args, **kwargs):
+        logger.debug(f"In dispatch for {self.__class__.__name__} got {request.method}")
         if not request.user.is_authenticated:
-            return redirect_to_login(next=request.path)
+            return redirect_to_login(next=self.redirect_path)
         return super().dispatch(request, *args, **kwargs)
+
+
+class Index(TemplateResponseMixin, LoggedInView):
+    template_name = 'hirs_admin/base.html'
+    def get(self, request, *args, **kwargs):
+        context = self.get_context(**kwargs)
+        return self.render_to_response(context)
 
 
 class FormView(TemplateResponseMixin, LoggedInView):
     form = None
-    template_name = 'hirs_admin/base_edit.html'
+    template_name = 'hirs_admin/base.html'
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
@@ -75,7 +89,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
             self._form = None
 
     def get(self, request, *args, **kwargs):
-        context = self.get_context()
+        context = self.get_context(**kwargs)
         
         if self._form == None:
             #theres no pk in the request so return the list view
@@ -119,7 +133,7 @@ class Employee(LoggedInView):
     @csrf_protect
     def get(self, request, *args, **kwargs):
         if 'emp_id' not in kwargs or 'emp_id' not in request.GET:
-            context = self.get_context()
+            context = self.get_context(**kwargs)
             context['employees'] = Employee.objects.all()
             return HttpResponse(render(request,'hirs_admin/employee_list.html',context=context))
         
@@ -213,7 +227,7 @@ class Settings(LoggedInView):
                     "hidden": setting.hidden
                 }
         
-        context = self.get_context()
+        context = self.get_context(**kwargs)
         context["settings": settings_data]
 
         return HttpResponse(render(request, 'hirs_admin/settings.html', context=context))
