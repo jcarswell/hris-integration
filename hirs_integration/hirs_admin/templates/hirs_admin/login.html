@@ -1,4 +1,4 @@
-{% extends "adminlte/base.html" %}
+{% extends "hirs_admin/base.html" %}
 {% load i18n static %}
 
 {% block body_class %}login-page{% endblock %}
@@ -8,7 +8,7 @@
         {% block logo %}
         <div class="login-logo">
             {# Mirrors block names used in _main_header.html #}
-            <a href="{% block logo_href %}/{% endblock %}">{% block logo_text %}<b>Admin</b>LTE{% endblock %}</a>
+            <a href="{% block logo_href %}/{% endblock %}">{% block logo_text %}HIRS Integration Admin{% endblock %}</a>
         </div>
         {% endblock %}
         <!-- /.login-logo -->
@@ -38,18 +38,18 @@
                             <p class="login-box-msg" style="color: red;">{{ message }}</p>
                         {% endif %}
                         <div class="input-group mb-3">
-                          <input type="email" class="form-control" placeholder="{% trans 'Email' %}">
+                          <input type="input" class="form-control" placeholder="{% trans 'Username' %}" autocomplete="username">
                           <div class="input-group-append">
                             <div class="input-group-text">
-                              <span class="fas fa-envelope"></span>
+                              <ion-icon name="person"></ion-icon>
                             </div>
                           </div>
                         </div>
                         <div class="input-group mb-3">
-                          <input type="password" class="form-control" placeholder="{% trans 'Password' %}">
+                          <input type="password" class="form-control" placeholder="{% trans 'Password' %}" autocomplete="current-password">
                           <div class="input-group-append">
                             <div class="input-group-text">
-                              <span class="fas fa-lock"></span>
+                              <ion-icon name="key"></ion-icon>
                             </div>
                           </div>
                         </div>
