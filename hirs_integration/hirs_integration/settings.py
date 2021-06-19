@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'hirs_integration.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sql_server.pyodbc',
+        'ENGINE': 'mssql',
         'NAME': 'HrisIntegration',
         'HOST': 'LOCALHOST',
         'OPTIONS': {
