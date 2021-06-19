@@ -62,7 +62,7 @@ class Index(TemplateResponseMixin, LoggedInView):
 
 class FormView(TemplateResponseMixin, LoggedInView):
     form = None
-    template_name = 'hirs_admin/base.html'
+    template_name = 'hirs_admin/base_edit.html'
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
