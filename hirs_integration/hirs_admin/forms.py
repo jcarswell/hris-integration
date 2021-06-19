@@ -1,17 +1,18 @@
 from django import forms
-from django.forms import fields
 from django.forms.widgets import ChoiceWidget
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 
 from . import models
 from .helpers import adtools
-from django.utils.translation import gettext_lazy as _
 
 class Form(forms.ModelForm):
     def as_form(self):
         output = []
         hidden_fields = []
+        attrs = {"class":"form-control"}
+        attrs_disabled = {"class":"form-control","disabled":True}
 
         for name,field in self.fields.items():
             bf = self[name]
@@ -22,14 +23,17 @@ class Form(forms.ModelForm):
                     label = bf.label_tag() or ''
                 output.append('<div calss="form-row">')
                 output.append(label)
-                output.append(bf.as_widget(attrs={"class":"form-control"}))
+                if bf.name in self.disabled:
+                    output.append(bf.as_widget(attrs=attrs_disabled))
+                else:
+                    output.append(bf.as_widget(attrs=attrs))
                 output.append('</div>')
 
         if hidden_fields:
             output.append(hidden_fields)
-        
+
         return mark_safe('\n'.join(output))
-    
+
     def __str__(self) -> str:
         return self.as_form()
 
@@ -48,6 +52,8 @@ class GroupMapping(Form):
             'bu': _("Business Units"),
             'loc': _("Locations")
         }
+        disabled = ()
+        
 
 
 class JobRole(Form):
@@ -61,6 +67,7 @@ class JobRole(Form):
             'bu': _("Business Units"),
             'seats': _("Number of Seats")
         }
+        disabled = ('job_id',)
 
 
 class Designation(Form):
@@ -71,6 +78,7 @@ class Designation(Form):
         labels = {
             'label': _("Designation")
         }
+        disabled = ()
         
 
 class BusinessUnit(Form):
@@ -88,6 +96,7 @@ class BusinessUnit(Form):
             'parent': _("Parent"),
             'ad_ou': _("Active Directory Folder")
         }
+        disabled = ('bu_id',)
 
 
 class Location(Form):
@@ -99,6 +108,7 @@ class Location(Form):
             'bld_id': _("Number"),
             'name': _("Name")
         }
+        disabled = ('bld_id',)
 
 
 class WordList(Form):

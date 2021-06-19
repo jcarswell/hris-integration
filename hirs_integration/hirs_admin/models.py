@@ -130,7 +130,7 @@ pre_save.connect(Setting.pre_save, sender=Setting)
 class BusinessUnit(models.Model):
     class Meta:
         db_table = 'businessunit'
-    bu_id = models.IntegerField(primary_key=True, disable=True)
+    bu_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     ad_ou = models.CharField(max_length=256)
@@ -142,7 +142,7 @@ class BusinessUnit(models.Model):
 class JobRole(models.Model):
     class Meta:
         db_table = 'jobroles'
-    job_id = models.IntegerField(verbose_name="Job ID",primary_key=True,disable=True)
+    job_id = models.IntegerField(verbose_name="Job ID",primary_key=True)
     name = models.CharField(max_length=255,verbose_name="Job Name")
     bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Business Units")
     seats = models.IntegerField(default=0, verbose_name="Seats")
@@ -154,7 +154,7 @@ class JobRole(models.Model):
 class Location(models.Model):
     class Meta:
         db_table = 'locations'
-    bld_id = models.IntegerField(primary_key=True, disable=True)
+    bld_id = models.IntegerField(primary_key=True,)
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     
     def __str__(self):
@@ -165,7 +165,7 @@ class Employee(models.Model):
     """ Employees Table """
     class Meta:
         db_table = 'employee'
-    emp_id = models.IntegerField(primary_key=True, disable=True)
+    emp_id = models.IntegerField(primary_key=True)
     created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
