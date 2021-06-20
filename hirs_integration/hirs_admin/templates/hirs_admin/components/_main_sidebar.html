@@ -26,8 +26,8 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Add icons to the links using the .nav-icon class
               with font-awesome or any other icon font library -->
-        <li class="nav-item has-treeview">
-          <a role="button" class="nav-link active">
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
             <i class="nav-icon fas fa-users"></i>
             <p>
               Employeess and Roles
@@ -42,14 +42,14 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href=".{% url 'jobs' %}" class="nav-link">
+              <a href="{% url 'jobs' %}" class="nav-link">
                 <i class="fas fa-hat-cowboy-side nav-icon"></i>
                 <p>Job Roles</p>
               </a>
             </li>
           </ul>
         </li>
-        <li class="nav-item has-treeview">
+        <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
             <i class="nav-icon fas fa-briefcase"></i>
             <p>
@@ -72,7 +72,7 @@
             </li>
           </ul>
         </li>
-        <li class="nav-item has-treeview">
+        <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
             <i class="nav-icon fas fa-cog"></i>
             <p>
@@ -83,14 +83,14 @@
           {% block extra_nav %}{% endblock %}
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="{% url 'settings' %}" class="nav-link active">
+              <a href="{% url 'settings' %}" class="nav-link">
                 <i class="fas fa-cogs nav-icon"></i>
                 <p>Settings</p>
               </a>
             </li>
             <li class="nav-item">
               <a href="{% url 'group_mappings' %}" class="nav-link">
-                <ion-icon name="contract nav-icon"></ion-icon>
+                <i class="fas fa-globe"></i>
                 <p>AD Group Mappings</p>
               </a>
             </li>
