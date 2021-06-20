@@ -1,0 +1,6 @@
+<div class="input-group mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="basic-addon1">{{ widget.title }}</span>
+  </div>
+  <input type="text" name="{{ widget.name }}" class="form-control"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}>
+</div>
