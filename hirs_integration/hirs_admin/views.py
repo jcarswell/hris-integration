@@ -3,8 +3,10 @@ import json
 import logging
 
 from django.http import HttpResponse, HttpResponseServerError
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
 from django.contrib.auth.views import redirect_to_login
 
@@ -32,7 +34,7 @@ class LoggedInView(ContextMixin, View):
         base_context = self.get_context_data(**kwargs)
         context = {
             "site": {
-                "title": self.site_title
+                "name": self.site_title
             },
             "page": {
                 "title": self.page_title,
@@ -46,6 +48,7 @@ class LoggedInView(ContextMixin, View):
         if self.redirect_path == None:
             self.redirect_path = request.path
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         logger.debug(f"In dispatch for {self.__class__.__name__} got {request.method}")
         if not request.user.is_authenticated:
@@ -88,6 +91,10 @@ class FormView(TemplateResponseMixin, LoggedInView):
         else:
             self._form = None
 
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = self.get_context(**kwargs)
         
@@ -127,10 +134,13 @@ class FormView(TemplateResponseMixin, LoggedInView):
 class Employee(LoggedInView):
     #http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
-
     page_title = 'Employee Admin'
 
-    @csrf_protect
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+
     def get(self, request, *args, **kwargs):
         if 'emp_id' not in kwargs or 'emp_id' not in request.GET:
             context = self.get_context(**kwargs)
@@ -163,7 +173,6 @@ class Employee(LoggedInView):
 
         return HttpResponse(render(request,'hirs_admin/edit.html',context=context))
 
-    @csrf_protect
     def post(self, request, *args, **kwargs):
         try:
             emp_id = getattr('emp_id',kwargs,
@@ -200,8 +209,12 @@ class Employee(LoggedInView):
 
 class Settings(LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
+    page_title = 'Settings'
+    
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
-    @csrf_protect
     def get(self, request, *args, **kwargs):
         settings_data = {}
 
@@ -232,7 +245,6 @@ class Settings(LoggedInView):
 
         return HttpResponse(render(request, 'hirs_admin/settings.html', context=context))
 
-    @csrf_protect
     def post(self, request, *args, **kwargs):
         errors = []
         request.POST.pop('csrfmiddlewaretoken')
