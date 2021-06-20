@@ -6,7 +6,10 @@ from datetime import datetime
 from cryptography.fernet import Fernet
 from django import conf
 from django.db.models.signals import pre_save,post_save
-from random import choice
+from random import choice, choices
+from django.utils.translation import gettext_lazy as _t
+from string import ascii_letters, digits, capwords
+
 
 logger = logging.getLogger('AdminSite.Model')
 
@@ -119,11 +122,37 @@ class Setting(models.Model):
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
+        for char in instance.setting:
+            if char not in ascii_letters + digits + '_-/':
+                instance.setting.replace(char,'_')
+        if len(instance.setting.split('/')) != 3:
+            raise ValueError("setting does not contain proper format, should be group/catagory/item")
+
         if instance.hidden:
             try:
                 _ = instance.decrypt_value()
             except Exception:
-                instance.encrypt_value(instance.value)        
+                instance.encrypt_value(instance.value)    
+    
+    @staticmethod
+    def _as_text(text:str) -> str:
+        if _t(text) == text:
+            text = " ".join(text.split("_"))
+            return capwords(text)
+        else:
+            return _t(text)
+
+    @property
+    def group(self):
+        return self._as_text(self.setting.split('/')[0])
+
+    @property
+    def catagory(self):
+        return self._as_text(self.setting.split('/')[1])
+
+    @property
+    def item(self):
+        return self._as_text(self.setting.split('/')[2])
 pre_save.connect(Setting.pre_save, sender=Setting)
 
 
