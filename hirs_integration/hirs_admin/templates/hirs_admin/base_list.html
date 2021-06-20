@@ -1,5 +1,5 @@
-{% load i18n static %}
 {% extends "hirs_admin/base.html" %}
+{% load i18n static %}
 
 {% block extra_style %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"/>
@@ -27,6 +27,7 @@
         <td><a href="{% url 'edit' row.pk %}"><strong>{{ row.pk }}</strong></a></td>
         {% for value in row %}
         <td><a href="{% url 'edit' row.pk %}">{{ value }}</a></td>
+        {% endfor %}
       </tr>
       {% endfor %}
     </table>
@@ -43,4 +44,4 @@ $(document).ready(function() {
 } );
 -->
 </script>
-{% endblock extra_js %}
+{% endblock %}

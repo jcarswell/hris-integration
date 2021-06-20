@@ -1,5 +1,5 @@
-{% load i18n static %}
 {% extends "hirs_admin/base.html" %}
+{% load i18n static %}
 
 {% block page_actions %}
 {% if form_new %}
@@ -18,7 +18,7 @@
     {% if form.description %}
     <div class="description">{{ form.description|safe }}</div>
     {% endif %}
-    {{ form }}
+    {{ form.as_form }}
   </form>
   {% endblock %}
 <div>
@@ -63,4 +63,4 @@ $("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
   .error(errorProcess(jqXHR,status,error);)
 });
 </script>
-{% endblock extra_js %}
+{% endblock %}
