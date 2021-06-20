@@ -10,7 +10,7 @@
   {% endblock %}
 
   {% block base_style %}
-  {% include 'hirs_admin/lib/_styles.html' %}
+  {% include 'hirs_admin/components/_styles.html' %}
   {% endblock %}
   {% block extra_style %}{% endblock %}
   {% block extra_head %}{% endblock %}
@@ -19,11 +19,11 @@
   {% block body %}
   <div class="wrapper">
     {% block nav_header %}
-    {% include 'hirs_admin/lib/_main_header.html' %}
+    {% include 'hirs_admin/components/_main_header.html' %}
     {% endblock %}
 
     {% block nav_sidebar %}
-    {% include 'hirs_admin/lib/_main_sidebar.html' %}
+    {% include 'hirs_admin/components/_main_sidebar.html' %}
     {% endblock %}
 
     {% block content_wrapper %}
@@ -56,7 +56,7 @@
     </div>
 {% endblock body %}
 {% block base_js %}
-{% include 'hirs_admin/lib/_scripts.html' %}
+{% include 'hirs_admin/components/_scripts.html' %}
 {% endblock %}
 {% block extra_js %}{% endblock %}
 {% block extra_foot %}{% endblock %}
