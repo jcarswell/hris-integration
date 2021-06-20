@@ -29,18 +29,12 @@
     {% block content_wrapper %}
     <div class="content-wrapper">
       {% block content_header %}
-      <section class="content-header">
-        {% block no_heading %}
-        <h1>
-          {% block page_name %}{{ page.title|default:"" }}{% endblock %}
-          <div class="header-actions">
-            {% block page_actions %}{% endblock %}
-          </div>
-          {% block no_description %}
-          <small>{% block page.description %}{% endblock %}</small>
-          {% endblock %}
-        </h1>
-        {% endblock no_heading %}
+      <section class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        {% block page_title %}
+        <h3>{{ page.title|default:"" }}</h3>
+        <small>{{ page.description|default:"" }}</small>
+        {% endblock %}
+        {% block page_actions %}{% endblock %}
       </section>
       {% endblock %}
 

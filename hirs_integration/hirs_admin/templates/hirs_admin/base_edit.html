@@ -14,7 +14,7 @@
   {% block feild_set %}
   <form id="{{ form.id|default:'form_list' }}"{% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
     {% csrf_token %}
-    {% if form.name %}<h2>{{ form.name }}</h2>{% endif %}
+    {% if form.name %}<h3>{{ form.name }}</h3>{% endif %}
     {% if form.description %}
     <div class="description">{{ form.description|safe }}</div>
     {% endif %}

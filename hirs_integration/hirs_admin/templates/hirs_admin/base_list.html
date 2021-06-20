@@ -6,32 +6,30 @@
 {% endblock %}
 
 {% block page_actions %}
-{% if form_new %}
 <div class="btn-toolbar mb-2 mb-md-0">
-  <a class="btn btn-sm btn-outline-secondary" href="{{ form_new }}">Add New</a>
-<div>
-{% endif %}
+  <a href="{{ request.path }}0/" class="btn btn-success">
+    <i class="fas fa-plus"></i>
+    New
+  </a>
+</div>
 {% endblock %}
-
 {% block content %}
-<div class="container">
-  <div class="table-responsive">
-    <table class="table table-striped" id="{{ form.id|default:'form_list' }}" style="width:100%;">
-      <tr>
-      {% for header in form.feilds %}
-        <th>{{ header }}</th>
+<div class="table-responsive">
+  <table class="table table-striped" id="{{ form.id|default:'form_list' }}" style="width:100%;">
+    <tr>
+    {% for header in form.feilds %}
+      <th>{{ header }}</th>
+    {% endfor %}
+    </tr>
+    {% for row in form.rows %}
+    <tr id="{{ row.pk }}">
+      <td><a href="{% url 'edit' row.pk %}"><strong>{{ row.pk }}</strong></a></td>
+      {% for value in row %}
+      <td><a href="{% url 'edit' row.pk %}">{{ value }}</a></td>
       {% endfor %}
-      </tr>
-      {% for row in form.rows %}
-      <tr id="{{ row.pk }}">
-        <td><a href="{% url 'edit' row.pk %}"><strong>{{ row.pk }}</strong></a></td>
-        {% for value in row %}
-        <td><a href="{% url 'edit' row.pk %}">{{ value }}</a></td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </table>
-  <div>
+    </tr>
+    {% endfor %}
+  </table>
 <div>
 {% endblock content %}
 {% block base_js %}
