@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
@@ -131,10 +131,11 @@ class FormView(TemplateResponseMixin, LoggedInView):
         self.post(request,*args, **kwargs)
 
 
-class Employee(LoggedInView):
+class Employee(TemplateResponseMixin, LoggedInView):
     #http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Employee Admin'
+    template_name = 'hirs_admin/employee_edit.html'
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -142,36 +143,36 @@ class Employee(LoggedInView):
 
 
     def get(self, request, *args, **kwargs):
-        if 'emp_id' not in kwargs or 'emp_id' not in request.GET:
+        try:
+            emp_id = kwargs['id']
+        except KeyError:
+            emp_id = None
+        logger.warning(f"Employee ID: {emp_id}")
+        if emp_id == None:
+            self.template_name = 'hirs_admin/employee_list.html'
             context = self.get_context(**kwargs)
             context['employees'] = models.Employee.objects.all() or None
-            return HttpResponse(render(request,'hirs_admin/employee_list.html',context=context))
-        
-        else:
-            try:
-                emp_id = getattr('emp_id',kwargs,
-                                 getattr('emp_id',request.POST))
-            except AttributeError:
-                return HttpResponseServerError()
+            return self.render_to_response(context)
 
-        if models.EmployeeDesignation.objects.exists(employee=emp_id):
+        context = self.get_context(**kwargs)
+
+        try:
             designation = models.EmployeeDesignation.objects.get(employee=emp_id).label
-        else:
+        except models.EmployeeDesignation.DoesNotExist:
             designation = ""
-        if models.EmployeeOverrides.objects.exists(employee=emp_id):
+        try:
             overrides = models.EmployeeOverrides.objects.get(employee=emp_id)
-        else:
-            overrides = models.EmployeeOverrides
-        context = {
-            "employee": models.Employee.objects.get(emp_id),
-            "designation": designation,
-            "overrides": overrides,
-            "location": models.Locations.objects.all(),
-            "phone": models.EmployeePhone.object.get(employee=emp_id),
-            "address": models.EmployeeAddress.objects.get(employee=emp_id)
-        }
+        except models.EmployeeOverrides.DoesNotExist:
+            overrides = None
 
-        return HttpResponse(render(request,'hirs_admin/edit.html',context=context))
+        context["employee"] = models.Employee.objects.get(pk=emp_id)
+        context["designation"] = designation
+        context["overrides"]=  overrides
+        context["location"] = models.Locations.objects.all()
+        context["phone"] = models.EmployeePhone.object.get(employee=emp_id)
+        context["address"] = models.EmployeeAddress.objects.get(employee=emp_id)
+
+        return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         try:
