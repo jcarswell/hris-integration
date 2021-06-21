@@ -37,8 +37,6 @@ class Form(forms.ModelForm):
         if hidden_fields:
             output.append(hidden_fields)
 
-        logger.warning(f"output: {output}")
-
         return mark_safe('\n'.join(output))
 
     def __str__(self) -> str:
