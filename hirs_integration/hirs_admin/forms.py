@@ -28,7 +28,7 @@ class Form(forms.ModelForm):
                     label = bf.label_tag() or ''
                 output.append('<div calss="form-row">')
                 output.append(label)
-                if bf.name in self.disabled:
+                if bf.name in self.Meta.disabled:
                     output.append(bf.as_widget(attrs=attrs_disabled))
                 else:
                     output.append(bf.as_widget(attrs=attrs))
@@ -127,3 +127,4 @@ class WordList(Form):
             'src': _t("Source Pattern"),
             'replace': _t("Substitution")
         }
+        disabled = ()
