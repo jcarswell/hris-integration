@@ -92,6 +92,8 @@ class FormView(TemplateResponseMixin, LoggedInView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        self.page_title = getattr(self.form,'name',None)
+        self.page_description = getattr(self.form,'description',None)
         context = self.get_context(**kwargs)
         
         if self._form == None:
@@ -103,17 +105,14 @@ class FormView(TemplateResponseMixin, LoggedInView):
                 labels.append(self.form.base_fields[field].label)
 
             context["form"] = {
-                'feilds': labels,
+                'fields': labels, 
                 'row': self._model.objects.all().values(*fields)
             }
 
         else:
-            context["form"] = {
-                'name': getattr(self.form,'name',None),
-                'description': getattr(self.form,'description',None),
-                'form': self._form
-            }
+            context["form"] = self._form
 
+        logger.debug(f"context: {context}")
         return self.render_to_response(context)
     
     def post(self, request, *args, **kwargs):
@@ -145,8 +144,6 @@ class Employee(LoggedInView):
     def get(self, request, *args, **kwargs):
         if 'emp_id' not in kwargs or 'emp_id' not in request.GET:
             context = self.get_context(**kwargs)
-            logger.warning(f"len of context = {len(context)}")
-            logger.warning(f"context = {context.keys()}")
             context['employees'] = models.Employee.objects.all() or None
             return HttpResponse(render(request,'hirs_admin/employee_list.html',context=context))
         
