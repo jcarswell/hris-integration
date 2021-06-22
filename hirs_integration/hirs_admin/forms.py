@@ -1,7 +1,7 @@
 import logging
 
 from django import forms
-from django.forms.widgets import ChoiceWidget
+from django.forms.widgets import Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
 
@@ -49,7 +49,7 @@ class GroupMapping(Form):
         model = models.GroupMapping
         fields = '__all__'
         widgets = {
-            'dn': ChoiceWidget(choices=adtools.get_adgroups()),
+            'dn': Select(choices=adtools.get_adgroups()),
         }
         labels = {
             'dn': _t("AD Group"),
@@ -93,7 +93,7 @@ class BusinessUnit(Form):
         model = models.BusinessUnit
         fields = ('bu_id','name','parent','ad_ou')
         widgets = {
-            'ad_ou': ChoiceWidget(choices=adtools.get_adous()),
+            'ad_ou': Select(choices=adtools.get_adous()),
         }
         labels = {
             'bu_id': _t("Number"),
@@ -120,9 +120,9 @@ class WordList(Form):
     name = _t("Word Expansion Map")
     class Meta:
         model = models.WordList
-        fields = ('src','replace')
+        fields = ('id','src','replace')
         labels = {
             'src': _t("Source Pattern"),
             'replace': _t("Substitution")
         }
-        disabled = ()
+        disabled = ('id')
