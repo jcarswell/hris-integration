@@ -16,7 +16,7 @@ def get_adgroups():
     
     try:
         base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
-        ad_query.execute_query(attributes=["objectGUID","sAMAccountName"], 
+        ad_query.execute_query(attributes=["name","distinguishedName"], 
                             where_clause="objectClass = 'group'",
                             base_dn=base_dn.value)
         
@@ -29,7 +29,7 @@ def get_adgroups():
         return INIT_ERROR
     except Setting.DoesNotExist:
         logger.warning("Caught DoesNotExist Warning")
-        ad_query.execute_query(attributes=["objectGUID","sAMAccountName"], 
+        ad_query.execute_query(attributes=["name","sAMAccountName"], 
                 where_clause="objectClass = 'group'")
         return ad_query.get_all_results_tuple()
 
@@ -39,7 +39,7 @@ def get_adous():
     
     try:
         base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
-        ad_query.execute_query(attributes=["objectGUID","distinguishedName"], 
+        ad_query.execute_query(attributes=["distinguishedName","name"], 
                             where_clause="objectCategory = 'organizationalUnit'",
                             base_dn=base_dn.value)
         
@@ -52,6 +52,6 @@ def get_adous():
         return INIT_ERROR
     except Setting.DoesNotExist:
         logger.warning("Caught DoesNotExist Warning")
-        ad_query.execute_query(attributes=["objectGUID","distinguishedName"], 
+        ad_query.execute_query(attributes=["distinguishedName","name"], 
                 where_clause="objectCategory = 'organizationalUnit'")
         return ad_query.get_all_results_tuple()
