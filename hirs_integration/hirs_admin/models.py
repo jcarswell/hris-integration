@@ -5,10 +5,12 @@ from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
 from django import conf
+from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
-from random import choice, choices
+from random import choice
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords
+from warnings import warn
 
 
 logger = logging.getLogger('AdminSite.Model')
@@ -102,30 +104,57 @@ class FeildEncryption:
 
 # Models
 
+class SettingsManager(models.Manager):
+    def get_by_path(self, group:str, catagory:str =None, item:str =None) -> QuerySet:
+        path = catagory
+        if group:
+            path = path + Setting.FIELD_SEP + group
+        else:
+            path = path + Setting.FIELD_SEP
+            return self.filter(setting__startswith=path)
+        
+        if item:
+            path = path + Setting.FIELD_SEP +  item
+            return self.filter(setting=path)
+        else:
+            path = path + Setting.FIELD_SEP
+            return self.filter(setting__startswith=path)
+
 class Setting(models.Model):
     """Application Settings"""
+    FIELD_SEP = '/'
     class Meta:
         db_table = 'setting'
     setting = models.CharField(max_length=128,unique=True)
-    value = models.TextField()
+    _value = models.TextField()
     hidden = models.BooleanField(default=False)
+    
+    objects = SettingsManager
 
-    def encrypt_value(self, value: str) -> None:
-        self.value = FeildEncryption().enrypt(value)
-    
-    def decrypt_value(self) -> str:
-        return FeildEncryption().decrypt(self.value)
-    
+    @property
+    def value(self) -> str:
+        if self.hidden:
+            return FeildEncryption().decrypt(self._value)
+        else:
+            return self._value
+      
+    @value.setter  
+    def value(self, value:str) -> None:
+        self._value = FeildEncryption().enrypt(value)
+
     def __str__(self):
-        return f"{self.setting} - {self.value}"
+        return f"{self.setting} - {self._value}"
+
+    @classmethod
+    
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
         for char in instance.setting:
-            if char not in ascii_letters + digits + '_-/':
+            if char not in ascii_letters + digits + cls.FIELD_SEP + '_-':
                 instance.setting.replace(char,'_')
-        if len(instance.setting.split('/')) != 3:
+        if len(instance.setting.split(cls.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
 
         if instance.hidden:
@@ -144,15 +173,27 @@ class Setting(models.Model):
 
     @property
     def group(self):
-        return self._as_text(self.setting.split('/')[0])
+        return self.setting.split(self.FIELD_SEP)[0]
 
     @property
     def catagory(self):
-        return self._as_text(self.setting.split('/')[1])
+        return self.setting.split(self.FIELD_SEP)[1]
 
     @property
     def item(self):
-        return self._as_text(self.setting.split('/')[2])
+        return self.setting.split(self.FIELD_SEP)[2]
+
+    @property
+    def group_text(self):
+        return self._as_text(self.setting.split(self.FIELD_SEP)[0])
+
+    @property
+    def catagory_text(self):
+        return self._as_text(self.setting.split(self.FIELD_SEP)[1])
+
+    @property
+    def item_text(self):
+        return self._as_text(self.setting.split(self.FIELD_SEP)[2])
 pre_save.connect(Setting.pre_save, sender=Setting)
 
 
