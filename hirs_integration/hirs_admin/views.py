@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
 from django.contrib.auth.views import redirect_to_login
+from django.utils.safestring import mark_safe
 
 from .helpers import settings_view
 from . import models
@@ -74,7 +75,8 @@ class FormView(TemplateResponseMixin, LoggedInView):
             pk = None
 
         self._model = self.form._meta.model
-
+        self.fields = self.form.base_fields.keys()
+        
         data = None
 
         if request.method == 'POST' or request.method == 'PUT':
@@ -83,7 +85,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         if pk == None:
             self._form = None
         elif pk > 0:
-            self._form = self.form(data,instance=self._model.objects.get(pk=pk))
+            self._form = self.form(data,instance=self._model.objects.get(pk))
         elif pk == 0:
             self._form = self.form(data)
 
@@ -99,20 +101,20 @@ class FormView(TemplateResponseMixin, LoggedInView):
         if self._form == None:
             #theres no pk in the request so return the list view
             self.template_name = 'hirs_admin/base_list.html'
-            fields = self.form.base_fields.keys()
+
             labels = []
-            for field in fields:
+            for field in self.fields:
                 labels.append(self.form.base_fields[field].label)
 
             context["form"] = {
                 'fields': labels, 
-                'row': self._model.objects.all().values(*fields)
+                'row': self
             }
 
         else:
             context["form"] = self._form
 
-        logger.debug(f"context: {context}")
+        logger.warning(f"context: {context}")
         return self.render_to_response(context)
     
     def post(self, request, *args, **kwargs):
@@ -129,6 +131,21 @@ class FormView(TemplateResponseMixin, LoggedInView):
     
     def put(self, request, *args, **kwargs):
         self.post(request,*args, **kwargs)
+        
+    def list_rows(self):
+        output = []
+        for row in self._model.objects.all():
+            output.append(f'<tr id="{row.pk}">')
+            for field in self.fields:
+                val = getattr(row, field)
+                url = f"{self.request.PATH}{row.pk}/"
+
+                if field[-2:] == "id":
+                    val = f"<strong>{val}</strong>"
+
+                output.append(f'<td><a href="{url}">{val}</a></td>')
+        
+        return mark_safe('\n'.join(output))
 
 
 class Employee(TemplateResponseMixin, LoggedInView):
@@ -147,7 +164,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp_id = kwargs['id']
         except KeyError:
             emp_id = None
-        logger.warning(f"Employee ID: {emp_id}")
+ 
+        logger.debug(f"Employee ID: {emp_id}")
+
         if emp_id == None:
             self.template_name = 'hirs_admin/employee_list.html'
             context = self.get_context(**kwargs)
