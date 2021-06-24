@@ -1,6 +1,7 @@
 import logging
 
 from django import forms
+from django.forms import fields
 from django.forms.widgets import Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
@@ -126,3 +127,19 @@ class WordList(Form):
             'replace': _t("Substitution")
         }
         disabled = ('id')
+
+class Employee(forms.ModelForm):
+    class Meta:
+        model = models.Employee
+        fields = '__all__'
+
+class EmployeeAddress(forms.ModelForm):
+    class Meta:
+        model = models.EmployeeAddress
+        fields = '__all__'
+
+
+class EmployeePhone(forms.ModelForm):
+    class Meta:
+        model = models.EmployeePhone
+        fields = '__all__'
