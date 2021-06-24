@@ -15,10 +15,10 @@ class Settings():
 
     def update_catagories(self,objects):
         for x in objects:
-            cat = x.setting.split('/')[0]
+            cat = x.catagory
             if cat not in self.items:
                 self.items[cat] = {
-                    "name": x.catagory,
+                    "name": x.catagory_text,
                     "groups": {}
                 }
                 logger.info(f"Added Catagory: {cat}")
@@ -26,10 +26,10 @@ class Settings():
             self.items[cat]["groups"] = self.update_group(self.items[cat]["groups"], x)
   
     def update_group(self, data, object):
-        group = object.setting.split('/')[1]
+        group = object.group
         if group not in data:
             data[group] = {
-                "name": object.group,
+                "name": object.group_text,
                 "items": {}
             }
             logger.info(f"Added group {group}")
@@ -40,7 +40,7 @@ class Settings():
 
 
     def update_item(self,data, object):
-        item = object.setting.split('/')[2]
+        item = object.item
 
         if object.hidden:
             widget = widgets.Hidden
@@ -48,7 +48,7 @@ class Settings():
             widget = widgets.Item
 
         data[item] = {
-            "title": object.item,
+            "title": object.item_text,
             "value": object.value,
             "widget": widget          
         }
