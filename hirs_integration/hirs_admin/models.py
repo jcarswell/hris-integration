@@ -115,7 +115,7 @@ class SettingsManager(models.Manager):
         
         if item:
             path = path + Setting.FIELD_SEP +  item
-            return self.filter(setting=path)
+            return self.filter(setting=path).value
         else:
             path = path + Setting.FIELD_SEP
             return self.filter(setting__startswith=path)
