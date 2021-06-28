@@ -10,8 +10,6 @@ from django.db.models.signals import pre_save,post_save
 from random import choice
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords
-from warnings import warn
-
 
 logger = logging.getLogger('AdminSite.Model')
 
@@ -363,7 +361,7 @@ class EmployeeDesignation(models.Model):
 
 class EmployeePhone(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    label = models.CharField(max_length=50)
+    label = models.CharField(max_length=50, default="Primary")
     number = models.IntegerField()
     countrycode = models.IntegerField(default=1)
     primary = models.BooleanField()
@@ -374,7 +372,7 @@ class EmployeePhone(models.Model):
 
 class EmployeeAddress(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    label = models.CharField(max_length=50)
+    label = models.CharField(max_length=50, default="Primary")
     street1 = models.CharField(max_length=128)
     street2 = models.CharField(max_length=128)
     street3 = models.CharField(max_length=128)
