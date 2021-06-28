@@ -10,11 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+LOG_DIR = Path(str(BASE_DIR) + '\\logs\\')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -129,3 +131,35 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s - [%(levelname)s] - (%(module)s-%(process)d:%(thread)d) - %(message)s'
+        },
+        'simple': {
+            'format': '%(asctime)s - [%(levelname)s] - - %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'log': {
+            'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
+            'class': 'logging.FileHandler',
+            'filters': str(LOG_DIR) + '\\system.log'
+        }
+    },
+    'loggers': {
+        'default': {
+            'handlers': ['console','log'],
+            'propagate': True,
+        }
+    }
+}
