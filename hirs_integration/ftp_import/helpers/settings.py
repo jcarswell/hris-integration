@@ -3,7 +3,7 @@ import logging
 from distutils.util import strtobool
 from warnings import warn
 
-from hirs_integration.hirs_admin.models import Setting
+from hirs_admin.models import Setting
 
 __all__ = ('CsvSetting','get_fields','get_config','SERVER_CONFIG','CSV_CONFIG','FIELD_CONFIG')
 

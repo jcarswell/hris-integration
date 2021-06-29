@@ -3,7 +3,6 @@ import paramiko
 import re
 
 from django import conf
-from tempfile import TemporaryFile
 
 from .helpers import settings
 from .helpers.text_utils import int_or_str

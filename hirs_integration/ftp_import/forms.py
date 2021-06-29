@@ -1,8 +1,8 @@
 import logging
 
 from typing import Union
-from hirs_integration.hirs_admin.models import EmployeePending, JobRole, Location, BusinessUnit, WordList, Employee
-from hirs_integration.hirs_admin import forms
+from hirs_admin.models import EmployeePending, JobRole, Location, BusinessUnit, WordList, Employee
+from hirs_admin import forms
 from django.forms import models
 from django.utils.datastructures import MultiValueDict
 
