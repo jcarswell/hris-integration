@@ -1,4 +1,5 @@
 import logging
+from typing import Set
 
 from hirs_integration.hirs_admin.models import Setting
 
