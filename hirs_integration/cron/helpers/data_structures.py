@@ -1,5 +1,3 @@
-from typing import Iterable
-
 class CronJob:
     """A Dict like object that is setup spcifically to handle
     the schdule for a cron job. CronJob take one argument of
