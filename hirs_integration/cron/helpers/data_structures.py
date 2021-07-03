@@ -1,3 +1,5 @@
+from typing import Iterable
+
 class CronJob:
     """A Dict like object that is setup spcifically to handle
     the schdule for a cron job. CronJob take one argument of
@@ -70,7 +72,7 @@ class CronJob:
             return default
 
         elif len(val.split('/')) == 2:
-            mply = val.split('/')[1]
+            mply = int(val.split('/')[1])
             ret = []
             for x in default:
                 if x % mply == 0:
@@ -78,7 +80,7 @@ class CronJob:
             return ret
 
         elif len(val.split(',')) > 1:
-            return len.split(',')
+            return val.split(',')
         
         else:
             return [int(val)]
@@ -87,28 +89,39 @@ class CronJob:
         return f"{self._MINUTE} {self._HOUR} {self._DAY} {self._MONTH} {self._DAY_OF_WEEK}"
 
     def __getitem__(self,key):
-        if key in self._CRON_MAP.keys():
-            return getattr(self,self._CRON_MAP[key])
-        try:
-            return getattr(self,key)
-        except AttributeError:
+        __map = {
+            'minute': 'minute',
+            'hour': 'hour',
+            'day': 'day',
+            'month': 'month',
+            'day_of_week': 'day_of_week',
+            '0': 'minute',
+            '1': 'hour',
+            '2': 'day',
+            '3': 'month',
+            '4': 'day_of_week',
+            0: 'minute',
+            1: 'hour',
+            2: 'day',
+            3: 'month',
+            4: 'day_of_week'
+            }
+        if key in __map.keys():
+            return getattr(self,__map[key])
+        else:
             return KeyError
     
     def __setitem__(self,key,value):
-        key_map = {
-            'minute': '_MINUTE',
-            'hour': '_HOUR',
-            'day': '_DAY',
-            'month': '_MONTH',
-            'day_of_week': '_DAY_OF_WEEK',
-            '0': '_MINUTE',
-            '1': '_HOUR',
-            '2': '_DAY',
-            '3': '_MONTH',
-            '4': '_DAY_OF_WEEK'
-        }
-        if key in key_map.items():
-            setattr(self,key_map[key],value)
-        
+        if key in self._CRON_MAP.items():
+            setattr(self,self._CRON_MAP[key],value)
+
         else:
-            setattr(self,key,value)
+            raise ValueError("key out of bounds")
+
+    def __eq__(self, o: object) -> bool:
+        for key in ['minute','hour','day','month','day_of_week',
+                    '_MINUTE','_HOUR','_DAY','_MONTH','_DAY_OF_WEEK']:
+            if getattr(self,key,None) != getattr(o,key,None):
+                return False
+            
+        return True
