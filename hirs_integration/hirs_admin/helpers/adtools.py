@@ -15,7 +15,7 @@ def get_adgroups():
     ad_query = AD()
     
     try:
-        base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
+        base_dn = Setting.o2.get(setting="AD/Config/Base_DN")
         ad_query.execute_query(attributes=["name","distinguishedName"], 
                             where_clause="objectClass = 'group'",
                             base_dn=base_dn.value)
@@ -38,7 +38,7 @@ def get_adous():
     ad_query = AD()
     
     try:
-        base_dn = Setting.objects.get(setting="AD/Config/Base_DN")
+        base_dn = Setting.o2.get(setting="AD/Config/Base_DN")
         ad_query.execute_query(attributes=["distinguishedName","name"], 
                             where_clause="objectCategory = 'organizationalUnit'",
                             base_dn=base_dn.value)

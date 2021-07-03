@@ -87,15 +87,21 @@ class FeildEncryption:
             raise ValueError("Encryption key is not available, check SECRET_KEY and SALT")
     
     def enrypt(self,data:str) -> str:
+        if data == None:
+            data = ''
+
         try:
-            return self.key.encrypt(data)
+            return self.key.encrypt(data.encode('utf-8'))
         except Exception as e:
             logger.critical("An Error occured encypting the data provided")
             raise ValueError from e
     
     def decrypt(self,data:str) -> str:
+        if data == None:
+            data = ''
+
         try:
-            self.key.decrypt(data)
+            return self.key.decrypt(data).decode('utf-8')
         except Exception as e:
             logger.critical("An Error occured decypting the data provided")
             raise ValueError from e
@@ -104,19 +110,15 @@ class FeildEncryption:
 
 class SettingsManager(models.Manager):
     def get_by_path(self, group:str, catagory:str =None, item:str =None) -> QuerySet:
-        path = catagory
-        if group:
-            path = path + Setting.FIELD_SEP + group
-        else:
-            path = path + Setting.FIELD_SEP
-            return self.filter(setting__startswith=path)
-        
+        path = group + Setting.FIELD_SEP
+
+        if catagory:
+            path = path + catagory + Setting.FIELD_SEP
+
         if item:
-            path = path + Setting.FIELD_SEP +  item
-            return self.filter(setting=path).value
-        else:
-            path = path + Setting.FIELD_SEP
-            return self.filter(setting__startswith=path)
+            path = path + item
+
+        return self.filter(setting__startswith=path)
 
 class Setting(models.Model):
     """Application Settings"""
@@ -124,10 +126,10 @@ class Setting(models.Model):
     class Meta:
         db_table = 'setting'
     setting = models.CharField(max_length=128,unique=True)
-    _value = models.TextField()
+    _value = models.TextField(null=True,blank=True)
     hidden = models.BooleanField(default=False)
     
-    objects = SettingsManager
+    o2 = SettingsManager()
 
     @property
     def value(self) -> str:
@@ -138,7 +140,10 @@ class Setting(models.Model):
       
     @value.setter  
     def value(self, value:str) -> None:
-        self._value = FeildEncryption().enrypt(value)
+        if self.hidden:
+            self._value = FeildEncryption().enrypt(value)
+        else:
+            self._value = value
 
     def __str__(self):
         return f"{self.setting} - {self._value}"
@@ -150,16 +155,10 @@ class Setting(models.Model):
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
         for char in instance.setting:
-            if char not in ascii_letters + digits + cls.FIELD_SEP + '_-':
+            if char not in ascii_letters + digits + instance.FIELD_SEP + '_-':
                 instance.setting.replace(char,'_')
-        if len(instance.setting.split(cls.FIELD_SEP)) != 3:
+        if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
-
-        if instance.hidden:
-            try:
-                _ = instance.decrypt_value()
-            except Exception:
-                instance.encrypt_value(instance.value)    
     
     @staticmethod
     def _as_text(text:str) -> str:

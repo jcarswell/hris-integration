@@ -236,7 +236,7 @@ class Settings(LoggedInView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        settings_data = settings_view.Settings(models.Setting.objects.all())
+        settings_data = settings_view.Settings(models.Setting.o2.all())
         
         context = self.get_context(**kwargs)
         context["settings"] = settings_data
@@ -252,7 +252,7 @@ class Settings(LoggedInView):
             except ValueError:
                 errors.append(pk)
             else:
-                setting = models.Setting.objects.get(pk=pk)
+                setting = models.Setting.o2.get(pk=pk)
                 setting.value = val
                 setting.save()
 
