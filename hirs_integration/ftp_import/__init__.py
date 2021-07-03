@@ -1,12 +1,15 @@
 from .exceptions import CSVParsingException,ConfigurationError,ObjectCreationError
 from .apps import FTPImportConfig
-from .ftp import FTPClient
-from .forms import form
-from .helpers import settings
 
-__all__ = ('FTPClient','FTPImportConfig','FTPClient','form',
-           'CSVParsingException','ConfigurationError','ObjectCreationError',
-           'setup')
+__all__ = ('setup','run','FTPImportConfig','CSVParsingException','ConfigurationError','ObjectCreationError')
 
 def setup():
+    from .helpers import settings
+    from hirs_integration.cron.helpers.job_manager import Job
     settings.configuration_fixures()
+    cj = Job('ftp_import','ftp_import.run','0 */6 * * *')
+    cj.save()
+
+def run():
+    from .ftp import FTPClient
+    FTPClient().run_import()
