@@ -2,7 +2,6 @@ import logging
 
 from distutils.util import strtobool
 from warnings import warn
-
 from hirs_admin.models import Setting
 
 __all__ = ('CsvSetting','get_fields','get_config','SERVER_CONFIG','CSV_CONFIG','FIELD_CONFIG')
@@ -46,16 +45,18 @@ CONFIG_DEFAULTS = {
         }
 }
 
-PATH_FORMAT = MAP_GROUP + Setting.PATH_SEP + '%s' + Setting.PATH_SEP + '%s'
 
-class CsvSetting(): 
+class CsvSetting():
+    PATH_FORMAT = None
+    PATH_FORMAT = MAP_GROUP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+
     def __init__(self) -> None:
         self.fields = {}
         self.get()
 
     def get(self) -> None:
         fields = {}
-        for row in Setting.objects.get_by_path(MAP_GROUP):
+        for row in Setting.o2.get_by_path(MAP_GROUP):
             if row.group not in fields:
                 fields[row.group] = {
                     "import": False,
@@ -81,12 +82,12 @@ class CsvSetting():
        
         for arg in args:
             try:
-                _ = Setting.objects.get(setting=PATH_FORMAT % (arg,'import'))
+                _ = Setting.o2.get(setting=self.PATH_FORMAT % (arg,'import'))
 
             except Setting.DoesNotExist:
                 for item in FIELD_ITEMS:
                     s = Setting()
-                    s.setting = PATH_FORMAT % (arg,item)
+                    s.setting = self.PATH_FORMAT % (arg,item)
                     s.value = DEFAULTS[item]
 
             else:
@@ -95,15 +96,15 @@ class CsvSetting():
 
     def add_feild(self,field:str, enable:bool =False, map_to:str =None) -> bool:
         try:
-            _ = Setting.objects.get(setting=PATH_FORMAT % (field,'import'))
+            _ = Setting.o2.get(setting=self.PATH_FORMAT % (field,'import'))
 
         except Setting.DoesNotExist:
             i = Setting()
-            i.setting = PATH_FORMAT % (field,'import')
+            i.setting = self.PATH_FORMAT % (field,'import')
             i.value = str(enable)
             i.save()
             i = Setting()
-            i.setting = PATH_FORMAT % (field,'map_to')
+            i.setting = self.PATH_FORMAT % (field,'map_to')
             i.value = map_to
             i.save()
 
@@ -119,7 +120,7 @@ class CsvSetting():
 
 def configuration_fixures():
     def add_fixture(catagory,item,value):
-        PATH = SETTINGS_GROUP + Setting.PATH_SEP + '%s' + Setting.PATH_SEP + '%s'
+        PATH = SETTINGS_GROUP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
         hidden = False
         
@@ -130,7 +131,7 @@ def configuration_fixures():
             hidden=value[1]
             value = value[0]
 
-        obj,new = Setting.objects.get_or_create(setting=PATH % (catagory,item))
+        obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
         if new:
             obj.setting = PATH % (catagory,item)
             obj.hidden = hidden
@@ -153,12 +154,12 @@ def get_config(catagory:str ,item:str) -> str:
         return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
     
     try:
-        q = Setting.objects.get_by_path(SETTINGS_GROUP,catagory,item)
+        q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
     except Setting.DoesNotExist:
         if item in CONFIG_DEFAULTS[SETTINGS_GROUP]:
             configuration_fixures()
             try:
-                q = Setting.objects.get_by_path(SETTINGS_GROUP,catagory,item)
+                q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
             except Setting.DoesNotExist:
                 logger.fatal("Failed to install fixture data")
                 raise SystemError(f"Installation of fixture data failed.")
