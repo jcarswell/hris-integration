@@ -23,7 +23,7 @@ LOG_DIR = Path(str(BASE_DIR) + '\\logs\\')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-n4cf!m31j_1qr##+@+qv@vwrrn=l2267dqoonlqb*$#vddwn4='
-ENCRYPTION_KEY = 'change-me'
+ENCRYPTION_KEY = 'NyGR3ajLIu7Qgm1cUJ43QCXkbQ7rq8zsbos8uXhgWHk=' #cryptography.fernet.Fernet.generate_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hirs_admin.apps.HirsAdminConfig'
+    'hirs_admin.apps.HirsAdminConfig',
+    'cron.CronConfig',
+    'ftp_import.FTPImportConfig'
 ]
 
 MIDDLEWARE = [
@@ -146,14 +148,15 @@ LOGGING = {
     'handlers': {
         'console': {
             'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
-            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
         'log': {
             'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
-            'class': 'logging.FileHandler',
-            'filters': str(LOG_DIR) + '\\system.log'
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(LOG_DIR) + '\\system.log',
+            'maxBytes': 102400,
+            'backupCount': 10
         }
     },
     'loggers': {
