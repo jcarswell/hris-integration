@@ -73,9 +73,9 @@ def set_username(instance, username:str =None) -> None:
         if (Employee.objects.filter(_username=username).exists()
                 or EmployeeOverrides.objects.filter(_username=username).exists()):
             if suffix == '':
-                suffix = 1
+                suffix = '1'
             else:
-                suffix = suffix + 1
+                suffix = str(int(suffix) + 1)
         else:
             instance._username = username
 
@@ -262,10 +262,8 @@ class Employee(models.Model):
         """
         
         employee = EmployeeOverrides.objects.get(employee=self.pk)
-        if len(employee) == 1:
-            return employee.username or self._username
         
-        return self._username
+        return self._username or employee.username
     
     @property
     def password(self) -> str:
@@ -314,12 +312,12 @@ post_save.connect(Employee.post_save, sender=Employee)
 
 class EmployeeOverrides(models.Model):
     employee = models.OneToOneField(Employee, on_delete=models.CASCADE, unique=True)
-    firstname = models.CharField(max_length=96)
-    lastname = models.CharField(max_length=96)
-    nickname = models.CharField(max_length=96)
+    firstname = models.CharField(max_length=96, null=True, blank=True)
+    lastname = models.CharField(max_length=96, null=True, blank=True)
+    nickname = models.CharField(max_length=96, null=True, blank=True)
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
-    _username = models.CharField(max_length=128)
-    email_alias = models.CharField(max_length=128)
+    _username = models.CharField(max_length=128, null=True, blank=True)
+    email_alias = models.CharField(max_length=128, null=True, blank=True)
     
     @property
     def username(self):
