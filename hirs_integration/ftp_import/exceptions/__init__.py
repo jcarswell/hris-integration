@@ -1,3 +1,3 @@
-from .exceptions import CSVParsingException,ConfigurationError,ObjectCreationError
+from .exceptions import CSVParsingException,ConfigurationError,ObjectCreationError,SFTPIOError
 
-__all__ = ('CSVParsingException','ConfigurationError','ObjectCreationError')
+__all__ = ('CSVParsingException','ConfigurationError','ObjectCreationError','SFTPIOError')
