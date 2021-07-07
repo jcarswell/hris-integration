@@ -5,7 +5,7 @@ from hirs_integration.hirs_admin.models import Setting
 from .data_structures import CronJob
 
 GROUP_CONFIG = 'cron'
-CONFIG_CAT = 'cponfiguration'
+CONFIG_CAT = 'configuration'
 CATAGORY_SETTINGS = (CONFIG_CAT,)
 GROUP_JOBS =  'cron_jobs'
 ITEM_SCHEDULE = 'schedule'
@@ -13,7 +13,6 @@ ITEM_PATH = 'path'
 ITEM_ARGS = 'options'
 ITEM_STATE = 'status'
 ITEM_JOBS = (ITEM_ARGS,ITEM_PATH,ITEM_SCHEDULE,ITEM_STATE)
-
 
 CONFIG_DEFAULTS = {
     CONFIG_CAT: {
@@ -53,6 +52,7 @@ def configuration_fixures():
 def get_jobs(keep_disabled=False) -> dict:
     jobs = Setting.o2.get_by_path(GROUP_JOBS)
     output = {}
+
     for job in jobs:
         if job.item in ITEM_JOBS:
             logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
@@ -78,6 +78,7 @@ def get_jobs(keep_disabled=False) -> dict:
 def get_job(job_name:str, create=False) -> dict:
     jobs = Setting.o2.get_by_path(GROUP_JOBS,job_name)
     output = {}
+
     for job in jobs:
         if job.item in ITEM_JOBS:
             logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
@@ -97,7 +98,7 @@ def get_job(job_name:str, create=False) -> dict:
 def get_config(catagory:str ,item:str) -> str:
     if not catagory in CATAGORY_SETTINGS:
         return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
-    
+
     try:
         q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
     except Setting.DoesNotExist:
@@ -111,11 +112,12 @@ def get_config(catagory:str ,item:str) -> str:
         else:
             logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
             raise ValueError(f"Unable to find requested item {item}")
-    
+
     return q.value
 
 def set_job(name, path, schedule, args, state):
     query_path = GROUP_JOBS + Setting.FIELD_SEP + name + Setting.FIELD_SEP + '%s'
+
     def save(setting,value):
         o,_ = Setting.o2.get_or_create(setting=setting)
         if o.value != str(value):
@@ -124,7 +126,7 @@ def set_job(name, path, schedule, args, state):
             return True
         else:
             return False
-        
+
     save(query_path % ITEM_SCHEDULE,schedule)
     save(query_path % ITEM_PATH, path)
     save(query_path % ITEM_ARGS, args)
