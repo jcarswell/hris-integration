@@ -312,12 +312,12 @@ post_save.connect(Employee.post_save, sender=Employee)
 
 class EmployeeOverrides(models.Model):
     employee = models.OneToOneField(Employee, on_delete=models.CASCADE, unique=True)
-    firstname = models.CharField(max_length=96, null=True, blank=True)
-    lastname = models.CharField(max_length=96, null=True, blank=True)
+    _firstname = models.CharField(max_length=96, null=True, blank=True)
+    _lastname = models.CharField(max_length=96, null=True, blank=True)
     nickname = models.CharField(max_length=96, null=True, blank=True)
-    location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
+    _location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _username = models.CharField(max_length=128, null=True, blank=True)
-    email_alias = models.CharField(max_length=128, null=True, blank=True)
+    _email_alias = models.CharField(max_length=128, null=True, blank=True)
     
     @property
     def username(self):
@@ -339,6 +339,49 @@ class EmployeeOverrides(models.Model):
 
     def update_username(self):
         set_username(self)
+        
+    @property
+    def firstname(self):
+        if not self._firstname:
+            employee = Employee.objects.get(self.employee)
+            return employee.givenname
+        return self._firstname
+
+    @firstname.setter
+    def firstname(self,val):
+        self._firstname = val
+
+    @property
+    def lastname(self):
+        if not self._lastname:
+            employee = Employee.objects.get(self.employee)
+            return employee.surname
+        return self._lastname
+
+    @lastname.setter
+    def lastname(self,val):
+        self._lastname = val
+
+    @property
+    def location(self):
+        if not self._location:
+            employee = Employee.objects.get(self.employee)
+            return employee.location
+        return self._location
+
+    @location.setter
+    def location(self,val):
+        self._location = val
+
+    @property
+    def email_alias(self):
+        if not self._email_alias:
+            return self.username
+        return self._email_alias
+
+    @email_alias.setter
+    def email_alias(self,val):
+        self._email_alias = val
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
