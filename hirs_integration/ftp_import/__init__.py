@@ -5,7 +5,7 @@ __all__ = ('setup','run','FTPImportConfig','CSVParsingException','ConfigurationE
 
 def setup():
     from .helpers import settings
-    from hirs_integration.cron.helpers.job_manager import Job
+    from cron.helpers.job_manager import Job
     settings.configuration_fixures()
     cj = Job('ftp_import','ftp_import.run','0 */6 * * *')
     cj.save()
