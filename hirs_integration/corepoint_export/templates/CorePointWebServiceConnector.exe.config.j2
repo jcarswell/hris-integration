@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <configSections>
+    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
+    <sectionGroup name="userSettings" type="System.Configuration.UserSettingsGroup, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken={{ PUBLIC_KEY }}" >
+      <section name="CorePointWebServiceConnector.My.MySettings" type="System.Configuration.ClientSettingsSection, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken={{ PUBLIC_KEY }}" requirePermission="false" />
+    </sectionGroup>
+  </configSections>
+  <startup>
+    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.5" />
+  </startup>
+
+  <log4net>
+    <appender name="RollingFileAppender" type="log4net.Appender.RollingFileAppender">
+      <param name="File" value="Logs\CPWebConnector.log"/>
+      <param name="AppendToFile" value="true"/>
+      <param name="RollingStyle" value="Size"/>
+      <param name="MaxSizeRollBackups" value="5"/>
+      <param name="MaximumFileSize" value="5000KB"/>
+      <param name="StaticLogFileName" value="true"/>
+      <layout type="log4net.Layout.PatternLayout">
+        <param name="ConversionPattern" value="%d %-5p %c - %m%n"/>
+      </layout>
+    </appender>
+    <appender name="ColoredConsoleAppender" type="log4net.Appender.ColoredConsoleAppender">
+      <mapping>
+        <level value="ERROR"/>
+        <foreColor value="Red, HighIntensity"/>
+      </mapping>
+      <mapping>
+        <level value="WARN"/>
+        <foreColor value="Yellow, HighIntensity"/>
+      </mapping>
+      <mapping>
+        <level value="INFO"/>
+        <foreColor value="White"/>
+      </mapping>
+      <mapping>
+        <level value="DEBUG"/>
+        <foreColor value="Green"/>
+      </mapping>
+      <layout type="log4net.Layout.PatternLayout">
+        <conversionPattern value="%d %message%newline"/>
+      </layout>
+    </appender>
+    <root>
+      <!-- set value="ALL" to turn on logging.
+			set value="OFF" to disable logging.-->
+      <level value="ALL"/>
+      <appender-ref ref="RollingFileAppender"/>
+      <appender-ref ref="ColoredConsoleAppender"/>
+    </root>
+  </log4net>
+  <system.serviceModel>
+    <bindings>
+      <basicHttpBinding>
+        <binding name="BasicHttpBinding_CPointServices">
+          <security mode="Transport" />
+        </binding>
+        <binding name="BasicHttpBinding_CPointServices1">
+          <security mode="Transport" />
+        </binding>
+      </basicHttpBinding>
+    </bindings>
+    <client>
+      <endpoint address="{{ API_URL }}"
+        binding="basicHttpBinding" bindingConfiguration="BasicHttpBinding_CPointServices"
+        contract="CorePointServices.CPointServices" name="BasicHttpBinding_CPointServices" />
+      <endpoint address="{{ API_URL }}"
+        binding="basicHttpBinding" bindingConfiguration="BasicHttpBinding_CPointServices1"
+        contract="ServiceReference1.CPointServices" name="BasicHttpBinding_CPointServices1" />
+    </client>
+  </system.serviceModel>
+  <!-- ConnectionMethod is either CSVFile or SQLString-->
+  <!-- DefaultSiteCode is the matching site-->
+  <userSettings>
+    <CorePointWebServiceConnector.My.MySettings>
+      <setting name="SQLStatement" serializeAs="String">
+        <value>
+          SELECT  EMPLOYEE_NO
+          , SITE_CODE ,LAST_NAME ,FIRST_NAME ,MIDDLE_NAME ,STREET_ADDR ,STREET
+          ,CITY ,PROVINCE ,POSTAL_CODE ,AREA_CODE ,PHONE_NUM ,AREA_CODE2 ,PHONE_NUM2
+          ,BIRTH_DATE ,HIRE_DATE ,SENIORITY_DATE ,COMPANY_SENIORITY_DATE
+          ,STATUS_ID ,EMPLOYEE_TYPE ,EMAIL_ADDR ,ACTIVE_IND ,SIN
+          ,SEX ,NULL JOB_CODE
+          ,NULL JOB_NAME ,EMP_TICKS ,STAMP_DATE ,MODIFY_DATE ,EMPLOYEE_STATUS ,0 SUPERVISOR_EMPLOYEE_NO
+          ,IS_SUPERVISOR ,MOBILE_AREA ,MOBILE_PHONE
+          FROM Employee
+        </value>
+      </setting>
+      <setting name="CustomerToken" serializeAs="String">
+        <value>{{ CUSTOMER_TOKEN }}</value>
+      </setting>
+      <setting name="CustomerID" serializeAs="String">
+        <value>{{ CUSTOMER_ID }}</value>
+      </setting>
+      <setting name="ConnectionMethod" serializeAs="String">
+        <value>CSVFile</value>
+      </setting>
+      <setting name="DefaultSiteCode" serializeAs="String">
+        <value>0</value>
+      </setting>
+      <setting name="DefaultEmployeeType" serializeAs="String">
+        <value>SAL</value>
+      </setting>
+      <setting name="ConnectionString" serializeAs="String">
+        <value>Data Source=MySQLServer;Initial Catalog=MyDataBase;Integrated Security=SSPI;Connect Timeout=200; pooling='true'; Max Pool Size=200</value>
+      </setting>
+      <setting name="csvFile" serializeAs="String">
+        <value>{{ EXPORT_PATH }}</value>
+      </setting>
+      <setting name="DateFormat" serializeAs="String">
+        <value>yyyy-mm-dd</value>
+      </setting>
+      {% for key,value in map_values.items() %}
+      <setting name="{{ key }}" serializeAs="String">
+        <value>{{ value }}</value>
+      <setting>
+      {% endfor %}
+    </CorePointWebServiceConnector.My.MySettings>
+  </userSettings>
+</configuration>
