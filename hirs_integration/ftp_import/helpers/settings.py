@@ -153,19 +153,16 @@ def get_config(catagory:str ,item:str) -> str:
     if not catagory in SETTINGS_CATAGORIES:
         return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
     
-    try:
+    q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
+    if len(q) == 0 and item in CONFIG_DEFAULTS[SETTINGS_GROUP]:
+        configuration_fixures()
         q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
-    except Setting.DoesNotExist:
-        if item in CONFIG_DEFAULTS[SETTINGS_GROUP]:
-            configuration_fixures()
-            try:
-                q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
-            except Setting.DoesNotExist:
-                logger.fatal("Failed to install fixture data")
-                raise SystemError(f"Installation of fixture data failed.")
-        else:
-            logger.error(f"Setting {SETTINGS_GROUP}/{catagory}/{item} was requested but does not exist")
-            raise ValueError(f"Unable to find requested item {item}")
-    
-    return q.value
+        if len(q) == 0:
+            logger.fatal("Failed to install fixture data")
+            raise SystemError(f"Installation of fixture data failed.")
+    elif len(q) == 0:
+        logger.error(f"Setting {SETTINGS_GROUP}/{catagory}/{item} was requested but does not exist")
+        raise ValueError(f"Unable to find requested item {item}")
+
+    return q[0].value
         
