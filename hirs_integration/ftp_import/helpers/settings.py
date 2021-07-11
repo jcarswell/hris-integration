@@ -47,7 +47,6 @@ CONFIG_DEFAULTS = {
 
 
 class CsvSetting():
-    PATH_FORMAT = None
     PATH_FORMAT = MAP_GROUP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
     def __init__(self) -> None:
