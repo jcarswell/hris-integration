@@ -2,17 +2,16 @@ import logging
 
 from django.db.models.query import QuerySet
 from django.db.models import Q
-from hirs_integration.hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
+from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                                 Employee,EmployeeOverrides,EmployeeDesignation,
                                                 EmployeePending,Location,BusinessUnit,JobRole,
                                                 GroupMapping)
-from hirs_integration.hirs_admin.helpers import config
 
 GROUP_CONFIG = 'ad_export'
 CONFIG_CAT = 'configuration'
 EMPLOYEE_CAT = 'employee_configurations'
 DEFAULTS_CAT = 'user_defaults'
-CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT)
+CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
 EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
 EMPLOYEE_LEAVE_GROUP_ADD = 'leave_groups_add'
 EMPLOYEE_LEAVE_GROUP_DEL = 'leave_groups_remove'
@@ -42,7 +41,7 @@ CONFIG_DEFAULTS = {
         EMPLOYEE_LEAVE_GROUP_ADD: '',
         EMPLOYEE_LEAVE_GROUP_DEL: ''
     },
-    DEFAULTS_CAT:{
+    DEFAULTS_CAT: {
         DEFAULT_ORG: '',
         DEFAULT_PHONE: '',
         DEFAULT_FAX: '',
