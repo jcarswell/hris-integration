@@ -28,7 +28,6 @@ def get_adgroups():
         logger.warning("Caught django.utils.ProgrammingError")
         return INIT_ERROR
 
-    
 def get_adous():
     ad_query = AD()
     

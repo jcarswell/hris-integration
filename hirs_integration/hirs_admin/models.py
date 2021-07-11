@@ -48,30 +48,34 @@ def set_username(instance, username:str =None) -> None:
         username (str, optional): username for the user if blank we'll use the database feilds
     """
     
+    if isinstance(instance,EmployeeOverrides):
+        # If we are using the EmployeeOverrides we need to ensure that we are
+        # updating the employee table not the override table
+        employee = Employee.objects.get(instance.employee)
+        if not username:
+            username = username_validator(username)
+        else:
+            username = username_validator((instance.firstname or employee.givenname),
+                                          (instance.lastname or employee.surname))
+        
+        if employee._username != username:
+            set_username(employee,username)
+            employee.save()
+
+        return
+
     if username:
         username = username_validator(username)
-    
-    elif isinstance(instance,EmployeeOverrides):
-        # If we are using the EmployeeOverrides table it is possible that the
-        # Firstname or Lastname feild is not set. We will need to use the correct
-        # information from the Employee Table
-        employee = Employee.objects.get(instance.employee)
-        username = username_validator(
-            (instance.firstname or employee.givenname),
-            (instance.lastname or employee.surname)
-        )
-    
     else:
         username = username_validator(instance.givenname, instance.surename)
     
-    if instance.username == username:
+    if instance._username == username:
         return
     
-    while instance.username != username:
+    while instance._username != username:
         suffix = ''
         username = username_validator(username, suffix=suffix)
-        if (Employee.objects.filter(_username=username).exists()
-                or EmployeeOverrides.objects.filter(_username=username).exists()):
+        if Employee.objects.filter(_username=username).exists():
             if suffix == '':
                 suffix = '1'
             else:
@@ -149,9 +153,6 @@ class Setting(models.Model):
         return f"{self.setting} - {self._value}"
 
     @classmethod
-    
-
-    @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
         for char in instance.setting:
@@ -159,7 +160,7 @@ class Setting(models.Model):
                 instance.setting.replace(char,'_')
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
-    
+
     @staticmethod
     def _as_text(text:str) -> str:
         if _t(text) == text:
@@ -201,7 +202,7 @@ class BusinessUnit(models.Model):
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     ad_ou = models.CharField(max_length=256)
-    
+
     def __str__(self):
         return self.name
 
@@ -213,7 +214,7 @@ class JobRole(models.Model):
     name = models.CharField(max_length=255,verbose_name="Job Name")
     bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Business Units")
     seats = models.IntegerField(default=0, verbose_name="Seats")
-    
+
     def __str__(self):
         return self.name
 
@@ -223,7 +224,7 @@ class Location(models.Model):
         db_table = 'locations'
     bld_id = models.IntegerField(primary_key=True,)
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -252,20 +253,6 @@ class Employee(models.Model):
     _password = models.CharField(max_length=128,null=True,blank=True)
 
     @property
-    def username(self):
-        """
-        Returns the username for the user either from current set value or
-        if set the overridden username.
-
-        Returns:
-            str: The Overridden Employees Useraname
-        """
-        
-        employee = EmployeeOverrides.objects.get(employee=self.pk)
-        
-        return self._username or employee.username
-    
-    @property
     def password(self) -> str:
         return FeildEncryption().decrypt(self._password)
     
@@ -273,12 +260,13 @@ class Employee(models.Model):
     def password(self, passwd: str) -> None:
         self._password = FeildEncryption().enrypt(passwd)
 
+    @property
+    def username(self):
+        return self._username
+
     @username.setter
     def username(self,username:str) -> None:
         set_username(self, username)
-
-    def update_username(self):
-        set_username(self)
     
     @property
     def status(self):
@@ -301,11 +289,10 @@ class Employee(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        if instance.username is None:
-            instance.set_username(instance)
-        
-        if update_fields:
-            instance.updated_on = datetime.utcnow()
+        if instance._username is None:
+            set_username(instance)
+
+        instance.updated_on = datetime.utcnow()
 pre_save.connect(Employee.pre_save, sender=Employee)
 post_save.connect(Employee.post_save, sender=Employee)
 
@@ -316,29 +303,20 @@ class EmployeeOverrides(models.Model):
     _lastname = models.CharField(max_length=96, null=True, blank=True)
     nickname = models.CharField(max_length=96, null=True, blank=True)
     _location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
-    _username = models.CharField(max_length=128, null=True, blank=True)
     _email_alias = models.CharField(max_length=128, null=True, blank=True)
     
     @property
     def username(self):
         """
-        Returns the username for the user either from current set value or
-        if set the overridden username.
-
-        Returns:
-            str: The Employees Useraname
+        Returns the Employees Username Exists for conitinuity
         """
-        if not self._username:
-            employee = Employee.objects.get(self.employee)
-            return employee.username
-        return self._username
+
+        employee = Employee.objects.get(self.employee)
+        return employee.username
     
     @username.setter
-    def username(self,username:str) -> None:
-        set_username(self, username)
-
-    def update_username(self):
-        set_username(self)
+    def username(self,username:str) -> None:        
+        set_username(Employee.get(self.employee), username)
         
     @property
     def firstname(self):
@@ -385,12 +363,15 @@ class EmployeeOverrides(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        if instance.username is None and instance.firstname is not None or instance.lastname is not None:
-            instance.set_username(instance)
-        
         emp = Employee.objects.get(instance.employee)
+
+        if instance.firstname is not None or instance.lastname is not None:
+            set_username(emp, username_validator((instance.firstname or emp.givenname),
+                                                 (instance.lastname or emp.surname)))
+
         emp.updated_on = datetime.utcnow()
         emp.save()
+
 pre_save.connect(EmployeeOverrides.pre_save, sender=EmployeeOverrides)
 
 
