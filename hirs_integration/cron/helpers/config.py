@@ -1,6 +1,7 @@
 import logging
 
 from hirs_admin.models import Setting
+from distutils.util import strtobool
 
 from .data_structures import CronJob
 
@@ -24,7 +25,7 @@ logger = logging.getLogger('cron.config_helper')
 
 def configuration_fixures():
     def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEPadd + '%s'
 
         hidden = False
         
@@ -54,7 +55,7 @@ def get_jobs(keep_disabled=False) -> dict:
     output = {}
 
     for job in jobs:
-        if job.item in ITEM_JOBS:
+        if job.item not in ITEM_JOBS:
             logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
         elif job not in output.keys():
             output[job] = {job.item:job.value}
@@ -68,7 +69,7 @@ def get_jobs(keep_disabled=False) -> dict:
             output.pop(job)
         else:
             output[job][ITEM_SCHEDULE] = CronJob(output[job][ITEM_SCHEDULE])
-            output[job][ITEM_STATE] = bool(output[job][ITEM_STATE])
+            output[job][ITEM_STATE] = strtobool(output[job][ITEM_STATE])
         if not output[job][ITEM_STATE] and not keep_disabled:
             logger.debug(f"job {job} is disabled")
             output.pop(job)
@@ -80,18 +81,18 @@ def get_job(job_name:str, create=False) -> dict:
     output = {}
 
     for job in jobs:
-        if job.item in ITEM_JOBS:
+        if job.item not in ITEM_JOBS:
             logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
         else:
             output[job.item] = [job.value,job]
 
     logger.debug(f"Job Config {job_name} - {output}")        
     if output.keys != list(ITEM_JOBS):
-        logger.error(f"job {job} is missing required paramaters. Exluding job")
+        logger.error(f"job {job_name} is missing required paramaters. Exluding job")
         return {}
     else:
         output[ITEM_SCHEDULE][0] = CronJob(output[job][ITEM_SCHEDULE][0])
-        output[ITEM_STATE][0] = bool(output[ITEM_STATE][0])
+        output[ITEM_STATE][0] = strtobool(output[ITEM_STATE][0])
 
     return output
 
@@ -117,14 +118,14 @@ def set_job(name, path, schedule, args, state):
 
     def save(setting,value):
         o,_ = Setting.o2.get_or_create(setting=setting)
-        if o.value != str(value):
-            o.value = str(value)
+        if o.value != value:
+            o.value = value
             o.save()
             return True
         else:
             return False
 
-    save(query_path % ITEM_SCHEDULE,schedule)
+    save(query_path % ITEM_SCHEDULE, str(schedule))
     save(query_path % ITEM_PATH, path)
     save(query_path % ITEM_ARGS, args)
-    save(query_path % ITEM_STATE, state)
+    save(query_path % ITEM_STATE, f"{state}")

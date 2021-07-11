@@ -14,19 +14,24 @@ class Job:
     def __init__(self, name:str, path:str =None,schedule:str =None, args:str =None, state:bool =False, **kwargs):
         self.name = self._clean(name)
         self.job_config = config.get_job(self.name)
-        self.path = path or self.job_config[config.ITEM_PATH][0]
-        schedule = CronJob(schedule,**kwargs)
-        if schedule == CronJob():
-            self.schedule = self.job_config[config.ITEM_SCHEDULE][0]
-        self.args = args or self.job_config[config.ITEM_ARGS][0]
-        self.state = state or self.job_config[config.ITEM_STATE]
+
+        if self.job_config:
+            self.path = path or self.job_config[config.ITEM_PATH][0]
+            schedule = CronJob(schedule,**kwargs)
+            if schedule == CronJob():
+                self.schedule = self.job_config[config.ITEM_SCHEDULE][0]
+            self.args = args or self.job_config[config.ITEM_ARGS][0]
+            self.state = state or self.job_config[config.ITEM_STATE]
+        else:
+            self.path = path
+            self.schedule = CronJob(schedule,**kwargs)
+            self.args = args
+            self.state = state
+
         self.kwargs = kwargs
-        
+
         if path:
             self.module = self.__import_path()
-        
-        if len(self.args):
-            self.args = tuple(self.args.split(','))
 
     def update_schedule(self, schedule,**kwargs):
         """Create a new schedule for a job"""
@@ -105,7 +110,7 @@ class Job:
 
         return getattr(m,self.path.split('.')[-1])
 
-    def save(self,**kwargs):
+    def save(self):
         config.set_job(self.name,self.path,self.schedule,self.args,self.state)
 
 

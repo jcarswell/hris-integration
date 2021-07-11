@@ -21,7 +21,12 @@ class CronJob:
     day = None
     month = None
     day_of_week = None
-
+    _MINUTE = None
+    _HOUR = None
+    _DAY = None
+    _MONTH = None
+    _DAY_OF_WEEK = None
+    
     _CRON_MAP = {
         'minute': '_MINUTE',
         'hour': '_HOUR',
