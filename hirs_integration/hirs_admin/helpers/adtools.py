@@ -18,7 +18,7 @@ def get_adgroups():
         base_dn = get_config(CONFIG_CAT,BASE_DN)
         ad_query.execute_query(attributes=["name","distinguishedName"], 
                             where_clause="objectClass = 'group'",
-                            base_dn=base_dn.value)
+                            base_dn=base_dn)
         
         return ad_query.get_all_results_tuple()
     except pyodbc.ProgrammingError:
@@ -26,6 +26,9 @@ def get_adgroups():
         return INIT_ERROR
     except utils.ProgrammingError:
         logger.warning("Caught django.utils.ProgrammingError")
+        return INIT_ERROR
+    except AttributeError:
+        logger.info("Caught Attibute Error, this is likely due to pre-init")
         return INIT_ERROR
 
 def get_adous():
@@ -35,7 +38,7 @@ def get_adous():
         base_dn = get_config(CONFIG_CAT,BASE_DN)
         ad_query.execute_query(attributes=["distinguishedName","name"], 
                             where_clause="objectCategory = 'organizationalUnit'",
-                            base_dn=base_dn.value)
+                            base_dn=base_dn)
         
         return ad_query.get_all_results_tuple()
     except pyodbc.ProgrammingError:
@@ -43,4 +46,7 @@ def get_adous():
         return INIT_ERROR
     except utils.ProgrammingError:
         logger.warning("Caught django.utils.ProgrammingError")
+        return INIT_ERROR
+    except AttributeError:
+        logger.info("Caught Attibute Error, this is likely due to pre-init")
         return INIT_ERROR
