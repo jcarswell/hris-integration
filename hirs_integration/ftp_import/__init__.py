@@ -7,8 +7,8 @@ def setup():
     from .helpers import settings
     from cron.helpers.job_manager import Job
     settings.configuration_fixures()
-    cj = Job('ftp_import','ftp_import.run','0 */6 * * *')
-    cj.save()
+    cj = Job('ftp_import')
+    cj.new('ftp_import.run','0 */6 * * *')
 
 def run():
     from .ftp import FTPClient
