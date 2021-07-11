@@ -1,6 +1,6 @@
 import logging
 
-from hirs_integration.hirs_admin.models import Setting
+from hirs_admin.models import Setting
 
 from .data_structures import CronJob
 
@@ -24,7 +24,7 @@ logger = logging.getLogger('cron.config_helper')
 
 def configuration_fixures():
     def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.PATH_SEP + '%s' + Setting.PATH_SEP + '%s'
+        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
         hidden = False
         
