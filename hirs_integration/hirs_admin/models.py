@@ -11,7 +11,7 @@ from random import choice
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords
 
-logger = logging.getLogger('AdminSite.Model')
+logger = logging.getLogger('hirs_admin.Model')
 
 # Helper Functions
 def username_validator(first:str, last:str =None, suffix:str =None, allowed_char:list =None) -> str:
@@ -202,6 +202,7 @@ class BusinessUnit(models.Model):
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     ad_ou = models.CharField(max_length=256)
+    manager = models.ForeignKey("Employee",null=True,blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name
