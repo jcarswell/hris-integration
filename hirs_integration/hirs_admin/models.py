@@ -83,26 +83,26 @@ def set_username(instance, username:str =None) -> None:
         else:
             instance._username = username
 
-class FeildEncryption:
+class FieldEncryption:
     def __init__(self) -> None:
         try:
             self.key = Fernet(conf.settings.ENCRYPTION_KEY)
         except Exception:
             raise ValueError("Encryption key is not available, check SECRET_KEY and SALT")
     
-    def enrypt(self,data:str) -> str:
+    def encrypt(self,data:str) -> str:
         if data == None:
             data = ''
 
         try:
-            return self.key.encrypt(data.encode('utf-8'))
+            return self.key.encrypt(data.encode('utf-8')).decode('utf-8')
         except Exception as e:
-            logger.critical("An Error occured encypting the data provided")
+            logger.critical("An Error occured encrypting the data provided")
             raise ValueError from e
     
-    def decrypt(self,data:str) -> str:
-        if data == None:
-            data = ''
+    def decrypt(self,data:bytes) -> str:
+        if not isinstance(data,bytes):
+            data = data.encode('utf-8')
 
         try:
             return self.key.decrypt(data).decode('utf-8')
@@ -110,7 +110,11 @@ class FeildEncryption:
             logger.critical("An Error occured decypting the data provided")
             raise ValueError from e
 
-# Models
+#######################
+#####            ######
+######  Models  #######
+#####            ######
+#######################
 
 class SettingsManager(models.Manager):
     def get_by_path(self, group:str, catagory:str =None, item:str =None) -> QuerySet:
@@ -138,14 +142,14 @@ class Setting(models.Model):
     @property
     def value(self) -> str:
         if self.hidden:
-            return FeildEncryption().decrypt(self._value)
+            return FieldEncryption().decrypt(self._value)
         else:
             return self._value
       
     @value.setter  
     def value(self, value:str) -> None:
         if self.hidden:
-            self._value = FeildEncryption().enrypt(value)
+            self._value = FieldEncryption().encrypt(value).dec
         else:
             self._value = value
 
@@ -255,11 +259,11 @@ class Employee(models.Model):
 
     @property
     def password(self) -> str:
-        return FeildEncryption().decrypt(self._password)
+        return FieldEncryption().decrypt(self._password)
     
     @password.setter
     def password(self, passwd: str) -> None:
-        self._password = FeildEncryption().enrypt(passwd)
+        self._password = FieldEncryption().encrypt(passwd)
 
     @property
     def username(self):
