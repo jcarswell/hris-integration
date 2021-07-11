@@ -99,21 +99,18 @@ def get_config(catagory:str ,item:str) -> str:
     if not catagory in CATAGORY_SETTINGS:
         return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
 
-    try:
+    q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
+    if item in CONFIG_DEFAULTS[GROUP_CONFIG] and len(q) == 0:
+        configuration_fixures()
         q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-    except Setting.DoesNotExist:
-        if item in CONFIG_DEFAULTS[GROUP_CONFIG]:
-            configuration_fixures()
-            try:
-                q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-            except Setting.DoesNotExist:
-                logger.fatal("Failed to install fixture data")
-                raise SystemError(f"Installation of fixture data failed.")
-        else:
-            logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
-            raise ValueError(f"Unable to find requested item {item}")
+        if len(q) == 0:
+            logger.fatal("Failed to install fixture data")
+            raise SystemError(f"Installation of fixture data failed.")
+    elif len(q) == 0:
+        logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
+        raise ValueError(f"Unable to find requested item {item}")
 
-    return q.value
+    return q[0].value
 
 def set_job(name, path, schedule, args, state):
     query_path = GROUP_JOBS + Setting.FIELD_SEP + name + Setting.FIELD_SEP + '%s'
