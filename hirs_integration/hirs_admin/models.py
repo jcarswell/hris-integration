@@ -125,6 +125,7 @@ class SettingsManager(models.Manager):
 
         if item:
             path = path + item
+            return self.filter(setting=path)
 
         return self.filter(setting__startswith=path)
 
@@ -148,8 +149,12 @@ class Setting(models.Model):
       
     @value.setter  
     def value(self, value:str) -> None:
+        if value == None:
+            value = ''
+        if not isinstance(value,str):
+            raise ValueError(f"Expected a str got {type(value)}")
         if self.hidden:
-            self._value = FieldEncryption().encrypt(value).dec
+            self._value = FieldEncryption().encrypt(value)
         else:
             self._value = value
 
