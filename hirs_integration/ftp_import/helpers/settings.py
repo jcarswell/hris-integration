@@ -14,6 +14,22 @@ CSV_CONFIG = 'csv_parse'
 FIELD_CONFIG = 'field_config'
 SETTINGS_GROUP = 'ftp_import_config'
 SETTINGS_CATAGORIES = (SERVER_CONFIG,CSV_CONFIG,FIELD_CONFIG)
+CONF_SERVER = 'server'
+CONF_PROTOCAL = 'protocal'
+CONF_PORT = 'port'
+CONF_USER = 'user'
+CONF_PASSWORD = 'password'
+CONF_SSH_KEY = 'ssh_key'
+CONF_PATH = 'base_path'
+CONG_FILE_EXP = 'file_name_expression'
+CSV_FIELD_SEP = 'field_sperator'
+CSV_IMPORT_CLASS = 'import_form_class'
+CSV_USE_EXP = 'use_word_expansion'
+FIELD_LOC_NAME = 'location_name_field'
+FIELD_JD_NAME = 'job_description_name_field'
+FIELD_JD_BU = 'job_description_business_unit_field'
+FIELD_BU_NAME = 'business_unit_name_field'
+FIELD_BU_PARENT = 'business_unit_parent_field'
 MAP_GROUP = 'ftp_import_feild_mapping'
 FIELD_ITEMS = ('import','map_to')
 DEFAULTS = {
@@ -22,26 +38,26 @@ DEFAULTS = {
 }
 CONFIG_DEFAULTS = {
     SERVER_CONFIG: {
-        'server': None,
-        'protocal': 'sftp',
-        'port': 22,
-        'user': None,
-        'password': [None,True],
-        'ssh_key': [None,True],
-        'base_path': '.',
-        'file_name_expression': '.*'
+        CONF_SERVER: None,
+        CONF_PROTOCAL: 'sftp',
+        CONF_PORT: 22,
+        CONF_USER: None,
+        CONF_PASSWORD: [None,True],
+        CONF_SSH_KEY: [None,True],
+        CONF_PATH: '.',
+        CONG_FILE_EXP: '.*'
     },
     CSV_CONFIG: {
-        'field_sperator': ',',
-        'import_form_class': 'ftp_import.forms',
-        'use_word_expansion': True
+        CSV_FIELD_SEP: ',',
+        CSV_IMPORT_CLASS: 'ftp_import.forms',
+        CSV_USE_EXP: True
     },
     FIELD_CONFIG: {
-        'location_name_field': None,
-        'job_description_name_field': None,
-        'job_description_business_unit_field': None,
-        'business_unit_name_field': None,
-        'business_unit_parent_field': None
+        FIELD_LOC_NAME: None,
+        FIELD_JD_NAME: None,
+        FIELD_JD_BU: None,
+        FIELD_BU_NAME: None,
+        FIELD_BU_PARENT: None
         }
 }
 
@@ -153,7 +169,7 @@ def get_config(catagory:str ,item:str) -> str:
         return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
     
     q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
-    if len(q) == 0 and item in CONFIG_DEFAULTS[SETTINGS_GROUP]:
+    if len(q) == 0 and item in CONFIG_DEFAULTS[catagory]:
         configuration_fixures()
         q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
         if len(q) == 0:

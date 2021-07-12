@@ -24,7 +24,7 @@ class EmployeeForm():
         self.address = forms.EmployeeAddress
         self.kwargs = kwargs
         self._feild_config = fields_config
-        self.expand = bool(settings.get_config(settings.CSV_CONFIG,'use_word_expansion'))
+        self.expand = bool(settings.get_config(settings.CSV_CONFIG,settings.CSV_USE_EXP))
         
         fields = models.fields_for_model(self.employee())
         fields.append(models.fields_for_model(self.phone,exclude="employee"))
@@ -79,7 +79,7 @@ class EmployeeForm():
 
     def _location_check(self,data):
         loc,new = Location.objects.get_or_create(pk=data)
-        loc_desc = settings.get_config(settings.CSV_CONFIG,'location_name_field')
+        loc_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_LOC_NAME)
 
         if new and loc_desc not in self.kwargs:
             logger.error(f"Location description field, {loc_desc} not in fields imported")
@@ -103,8 +103,8 @@ class EmployeeForm():
             ObjectCreationError: If requied data to create the Job Description is missing
         """
         job,new = JobRole.objects.get_or_create(pk=data)
-        job_desc = settings.get_config(settings.CSV_CONFIG,'job_description_name_field')
-        bu_id = settings.get_config(settings.CSV_CONFIG,'job_description_business_unit_field')
+        job_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_NAME)
+        bu_id = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_BU)
         if new and job_desc not in self.kwargs:
             logger.error(f"Job description field, {job_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {job_desc} not in fields")
@@ -125,7 +125,6 @@ class EmployeeForm():
     def _business_unit_exists(data:int) -> bool:
         """
         Check if the business unit exists
-
         Args:
             data (int): business unit id
 
@@ -149,8 +148,8 @@ class EmployeeForm():
             ObjectCreationError: if there is missing data needed to create the Business Unit
         """
         bu,new = BusinessUnit.objects.get_or_create(pk=data)
-        bu_desc = settings.get_config(settings.CSV_CONFIG,'business_unit_name_field')
-        bu_parent_field = settings.get_config(settings.CSV_CONFIG,'business_unit_parent_field')
+        bu_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_NAME)
+        bu_parent_field = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_PARENT)
         if new and bu_desc not in self.kwargs:
             logger.error(f"Business unit name field, {bu_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {bu_desc} not in fields")

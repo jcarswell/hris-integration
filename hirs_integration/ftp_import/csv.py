@@ -17,8 +17,8 @@ class CsvImport():
         
         self.fields = []
         self.data = []
-        self.sep = settings.get_config(settings.CSV_CONFIG,'feild_self.seperator')
-        self.form = settings.get_config(settings.CSV_CONFIG,'import_form_class')
+        self.sep = settings.get_config(settings.CSV_CONFIG,settings.CSV_FIELD_SEP)
+        self.form = settings.get_config(settings.CSV_CONFIG,settings.CSV_IMPORT_CLASS)
 
         self.parse_headers(file_handle)
         self.parse_data(file_handle)

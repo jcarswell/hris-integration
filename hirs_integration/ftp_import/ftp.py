@@ -27,13 +27,13 @@ class FTPClient:
             ConfigurationError: configured protocol is not supported.
         """
 
-        self.server = settings.get_config(settings.SERVER_CONFIG,'server')
-        self.port = settings.get_config(settings.SERVER_CONFIG,'port')
-        self.user = settings.get_config(settings.SERVER_CONFIG,'user')
-        self.basepath = settings.get_config(settings.SERVER_CONFIG,'base_path')
-        file_expr = settings.get_config(settings.SERVER_CONFIG,'file_name_expression')
-        protocol = settings.get_config(settings.SERVER_CONFIG,'protocal')
-        self.__password = settings.get_config(settings.SERVER_CONFIG,'password')
+        self.server = settings.get_config(settings.SERVER_CONFIG,settings.CONF_SERVER)
+        self.port = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PORT)
+        self.user = settings.get_config(settings.SERVER_CONFIG,settings.CONF_USER)
+        self.basepath = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PATH)
+        file_expr = settings.get_config(settings.SERVER_CONFIG,settings.CONG_FILE_EXP)
+        protocol = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PROTOCAL)
+        self.__password = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PASSWORD)
         
         self.file_expr = re.compile(file_expr)
         
