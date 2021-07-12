@@ -12,6 +12,7 @@ from base64 import b64encode
 from hirs_admin.models import set_username
 
 from .helpers import config
+from hirs_integration.ad_export.excpetions import ADResultsError,UserDoesNotExist
 
 logger = logging.getLogger('ad_export.ad_export')
 
@@ -19,7 +20,8 @@ class Export:
     reprocess = False
     
     def __init__(self,full=False) -> None:
-        self.employees = config.get_employees(delta=(not full))
+        self._delta = not full
+        self.get_employees()
         self.connect_ad()
         
     def connect_ad(self):
@@ -29,10 +31,23 @@ class Export:
         if user:
             set_defaults(username=user,password=passwd)
 
+    def get_employees(self):
+        self.employees = config.get_employees(delta=self._delta)
+
     def run(self):
         new_user=[]
+
         for employee in self.employees:
-            ad_user = self.ad_user(employee.username,employee.id)
+            self.check_user(employee)
+
+        self.get_employees()
+
+        for employee in self.employees:
+            try:
+                ad_user = self.ad_user(employee.username,employee.id)
+            except ADResultsError:
+                ad_user = None
+
             ou = ADContainer.from_dn(employee.ou)
             
             if ad_user:
@@ -46,20 +61,7 @@ class Export:
                         ad_user.update_attribute('employeeNumber',employee.id)
 
             else: 
-                ad_user = ou.create_user(f"{employee.firstname} {employee.lastname}",
-                                         employee.password,
-                                         {
-                                             'employeeNumber': str(employee.id),
-                                             'company': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
-                                             'homePhone': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
-                                             'facsimileTelephoneNumber': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_FAX),
-                                             'streetAddress': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET),
-                                             'postOfficeBox': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PO),
-                                             'l': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY),
-                                             'st': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE),
-                                             'postalCode': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
-                                             'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
-                                             })
+                ad_user = self.create_aduser(ou,employee)
                 new_user.append(employee)
             
             self.update_user(employee,ad_user)
@@ -79,80 +81,105 @@ class Export:
                 for user in pending:
                     config.commit_employee(user.id)
     
+    def create_aduser(self,ou,employee:config.EmployeeManager) -> ADUser:
+        ad_user = ou.create_user(f"{employee.firstname} {employee.lastname}",
+                                    employee.password,
+                                    {
+                                        'employeeNumber': str(employee.id),
+                                        'company': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
+                                        'homePhone': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
+                                        'facsimileTelephoneNumber': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_FAX),
+                                        'streetAddress': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET),
+                                        'postOfficeBox': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PO),
+                                        'l': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY),
+                                        'st': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE),
+                                        'postalCode': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
+                                        'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
+                                        })
+        ad_user.force_pwd_change_on_login()
+
+        return ad_user
+
     def ad_user(self,username:str,id:int =None) -> Union[ADUser,None]:
         """
         gets an AD Users by username with a backup method of getting by employeeNumber
         in the event that their username has changed due to a name change or a database miss-match.
 
         Args:
-            username (str): [description]
-            id (int, optional): [description]. Defaults to None.
+            username (str): the Employees username
+            id (int, optional): the Employees ID
 
         Returns:
-            Union[ADUser,None]: [description]
+            ADUser: the Employees AD Account
         """
+
+        try:
+            return self.get_aduser_by_username(username)
+        except ADResultsError as e:
+            if id:
+                return self.get_aduser_by_id(id)
+            else:
+                raise ADResultsError(str(e))
+
+    def get_aduser_by_username(self,username:str) -> ADUser:
         ad = ADQuery()
         ad.execute_query(attributes=["sAMAccontName","distinguishedName"], 
-                         where_clause="sAMAccountName='%s'"%username)
-
-        res = ad.get_all_results()
-
-        if len(res) >= 1:
-
-            for val in res:
-                if val['sAMAccountName'] == username:
-                    res = val['distinguishedName']
-                    break
-            if not isinstance(res,str):
-                res = None
-
-        if res == None and id:
-            # Backup fetch in the event that the sAMAccount name has changed
-            ad.execute_query(attributes=["distinguishedName"], 
-                            where_clause="employeeNumber='%s'"%str(id))
-            if ad.get_row_count() == 1:
-                res = ad.get_single_result()['distinguishedName']
-            else:
-                return None
-        elif res == None:
-            return None
-
-        try:
-            user = ADUser.from_dn(res)
-        except pyadexceptions.invalidResults:
-            logger.fatal(f"Please check the code base got user result for {username} with dn={res} but could not resolve dn")
-            return None
-
-        if user:
-            return user
-        else:
-            return None
-    
-    def _check_username(self,dn,username) -> str:
-        ad = ADQuery()
-        ad.execute_query(attributes=["sAMAccountName","employeeNumber","distinguishedName"],
-                         where_clause="objectClass='Person'",
+                         where_clause="sAMAccountName='%s'"%username,
                          base_dn=config.base_dn())
-        res = ad.get_all_results()
+        
+        if ad.get_row_count() >= 1:
+            logger.critical(f"More that one user object with the same sAMAccountName {username}")
+            raise ADResultsError(f"Too Many results for username {username}")
+        elif ad.get_row_count() == 0:
+            raise ADResultsError(f"No results found for username {username}")
+        else:
+            return ADUser.from_dn(ad.get_single_result()['distinguishedName'])
 
+    def get_aduser_by_id(self,id:int) -> ADUser:
+        ad = ADQuery()
+        ad.execute_query(attributes=["distinguishedName"], 
+                where_clause="employeeNumber='%s'"%str(id),
+                base_dn=config.base_dn())
+
+        if ad.get_row_count() == 1:
+            return ADUser.from_dn(ad.get_single_result()['distinguishedName'])
+        elif ad.get_row_count() >= 1:
+            logger.critical(f"There are {ad.get_row_count()} userser with employee id {id}")
+            raise ADResultsError(f"Too Many results for employeeNumber {id}")
+        else:
+            raise ADResultsError(f"No results found for employeeNumber {id}")
+
+    def check_user(self,employee:config.EmployeeManager):
         try:
-            prefix = int(username[-1])
-        except ValueError:
-            prefix = 0
+            adu = self.get_aduser_by_id(employee.id)
+        except ADResultsError:
+            try:
+                adu = self.get_aduser_by_username(employee.username)
+            except ADResultsError:
+                raise UserDoesNotExist("Could not find a user object for the employee")
 
-        for result in res:
-            if username == result['sAMAccontName']:
-                if result['employeeNumber'] == None and result['distinguishedName'] != dn:
-                    logger.warning(f"Conflicting non employee account detected for {username} with {result['distinguishedName']}")
-                else:
-                    logger.warning(f"Database entry for employee {result['employeeNumber']} does not match with AD. Correcting")
-                    config.fix_username(result['employeeNumber'],username)
-                    for emp in range(len(self.employees)):
-                        if self.employee[emp.id] == int(result['employeeNumber'][0]):
-                            self.employee[emp.id].get(int(result['employeeNumber'][0]))
-                    self._check_username(dn, username + str(prefix + 1))
+        empno = int(adu.get_attribute('employeeNumber',always_return_list=False))
+        empsam = adu.get_attribute('sAMAccountName',always_return_list=False)
+        empfname = adu.get_attribute('givenname',always_return_list=False)
+        emplname = adu.get_attribute('sn',always_return_list=False)
 
-        return username
+        if (not empno and empfname == employee.firstname and 
+            emplname == employee.lastname and empsam == employee.username):
+            logger.info(f"Updating {empsam} with employeeNumber {employee.id}")
+            adu.update_attribute('employeeNumber',str(employee.id))
+        elif empno and empno == employee.id and empsam != employee.username:
+            logger.warning(f"found employee {empno} but username doesn't match database attempting to correct")
+            if not self.fix_username(employee,empsam):
+                logger.error(f"Employee Username was uncorrectable {employee.id} {empsam} please correct manually")
+                return False
+
+        else:
+            return False
+
+        if adu.get_last_login():
+            employee.employee.clear_password(True)
+
+        return True
 
     def update_user(self,employee:config.EmployeeManager, user:ADUser):
         attribs = {
@@ -198,28 +225,37 @@ class Export:
             g = ADGroup.from_dn(group)
             g.remove_members(user)
 
-    def fix_username(self,id:int,user:str):
+    def fix_username(self,employee_source:config.EmployeeManager, user:str) -> bool:
         query = ADQuery()
-        for employee in config.fuzzy_employee(user):
-            if employee.username == user and employee.id == id:
+        employees = config.fuzzy_employee(user)
+
+        if len(employees) == 0:
+            set_username(employee_source.employee,user)
+            return True
+
+        for employee in employees:
+            if employee.username == user and employee.id == employee_source.id:
                 logger.info(f"fix_username for {id} already correct in database")
-                return
+                return True
             elif employee.username == user:
                 try:
                     prefix = int(employee.username[-1]) + 1
+                    luser =  employee.username[:-1]
                 except ValueError:
                     prefix = 1
+                    luser = employee.username
                 while True:
                     #Ensure that we are not updating an already existing user
+                    lpuser = f"{luser}{prefix}"
                     query.execute_query(attributes=["employeeNumber"],
-                                        where_clause="sAMAccountName='%s'"% user+str(prefix))
+                                        where_clause="sAMAccountName='%s'"% lpuser)
 
-                    rs = query.get_all_results()
-                    emp = config.EmployeeManager(int(rs['employeeNumber']))
-                    
-                    if emp.username == user + prefix:
-                        prefix = prefix + 1
-                    else:
-                        break
+                    if query.get_row_count() == 0:
+                        return self.fix_username(employee,lpuser)
 
-                set_username(employee.employee,employee.username + prefix)
+                    prefix = prefix + 1
+            else:
+                set_username(employee_source.employee,user)
+                if employee_source.username != user:
+                    return False
+                return True
