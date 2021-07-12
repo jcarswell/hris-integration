@@ -1,10 +1,12 @@
+from hirs_integration.ad_export.helpers.config import get_config
 import time
 import logging
 import signal
 
 from multiprocessing import Process
+from distutils.util import strtobool
 
-from .helpers import job_manager
+from .helpers import job_manager,config
 
 logger = logging.getLogger('cron.manager')
 
@@ -14,10 +16,15 @@ class Runner:
         self._jobs = job_manager.get_jobs()
 
     def __init__(self):
+        if not strtobool(get_config(config.CONFIG_CAT,config.CONFIG_ENABLED)):
+            logger.info("Cron is currently disabled")
+            return
+
         self.get_jobs()
+
         if self._jobs == {}:
             logger.warning("There are currently no jobs configured")
-        
+
         if hasattr(self,'runners'):
             logger.warning("It seams that we're already running")
             return

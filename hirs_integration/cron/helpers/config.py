@@ -7,6 +7,7 @@ from .data_structures import CronJob
 
 GROUP_CONFIG = 'cron'
 CONFIG_CAT = 'configuration'
+CONFIG_ENABLED = 'enabled'
 CATAGORY_SETTINGS = (CONFIG_CAT,)
 GROUP_JOBS =  'cron_jobs'
 ITEM_SCHEDULE = 'schedule'
@@ -17,7 +18,7 @@ ITEM_JOBS = (ITEM_ARGS,ITEM_PATH,ITEM_SCHEDULE,ITEM_STATE)
 
 CONFIG_DEFAULTS = {
     CONFIG_CAT: {
-        'enabled': True
+        CONFIG_ENABLED: 'True'
     }
 }
 
@@ -25,7 +26,7 @@ logger = logging.getLogger('cron.config_helper')
 
 def configuration_fixures():
     def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEPadd + '%s'
+        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
         hidden = False
         

@@ -1,5 +1,4 @@
-from django.core.management.base import BaseCommand,CommandError
-from hirs_integration.cron import Runner
+from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     help = "Start the cron server"
@@ -7,4 +6,5 @@ class Command(BaseCommand):
     requires_system_checks = []
     
     def handle(self, *args, **kwargs):
+        from cron.cron import Runner
         Runner()
