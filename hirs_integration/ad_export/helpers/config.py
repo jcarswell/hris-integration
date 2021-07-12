@@ -336,7 +336,7 @@ def base_dn() -> str:
     from hirs_integration.hirs_admin.helpers import config
     return config.get_config(config.GROUP_CONFIG,config.BASE_DN)
 
-def fuzzy_employee(username):
+def fuzzy_employee(username:str) -> list[EmployeeManager]:
     users = Employee.objects.filter(_username__startswith=username)
     output = []
     for employee in users:
