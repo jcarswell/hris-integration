@@ -102,7 +102,7 @@ def get_config(catagory:str ,item:str) -> str:
         return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
 
     q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-    if item in CONFIG_DEFAULTS[GROUP_CONFIG] and len(q) == 0:
+    if item in CONFIG_DEFAULTS[catagory] and len(q) == 0:
         configuration_fixures()
         q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
         if len(q) == 0:
