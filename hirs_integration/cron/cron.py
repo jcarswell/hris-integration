@@ -1,4 +1,3 @@
-from hirs_integration.ad_export.helpers.config import get_config
 import time
 import logging
 import signal
@@ -16,7 +15,7 @@ class Runner:
         self._jobs = job_manager.get_jobs()
 
     def __init__(self):
-        if not strtobool(get_config(config.CONFIG_CAT,config.CONFIG_ENABLED)):
+        if not strtobool(config.get_config(config.CONFIG_CAT,config.CONFIG_ENABLED)):
             logger.info("Cron is currently disabled")
             return
 
