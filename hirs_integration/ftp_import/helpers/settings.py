@@ -33,8 +33,8 @@ FIELD_BU_PARENT = 'business_unit_parent_field'
 MAP_GROUP = 'ftp_import_feild_mapping'
 FIELD_ITEMS = ('import','map_to')
 DEFAULTS = {
-    'import': 'false',
-    'map_to': None
+    'import': 'False',
+    'map_to': ''
 }
 CONFIG_DEFAULTS = {
     SERVER_CONFIG: {
@@ -72,13 +72,13 @@ class CsvSetting():
     def get(self) -> None:
         fields = {}
         for row in Setting.o2.get_by_path(MAP_GROUP):
-            if row.group not in fields:
-                fields[row.group] = {
-                    "import": False,
-                    "map_to": None
+            if row.catagory not in fields:
+                fields[row.catagory] = {
+                    "import": 'False',
+                    "map_to": ''
                 }
             if row.item in FIELD_ITEMS:
-                fields[row.group][row.item] = row.value
+                fields[row.catagory][row.item] = row.value
 
         for field in fields:
             fields[field]['import'] = strtobool(fields[field]['import'])
@@ -87,14 +87,15 @@ class CsvSetting():
                 logging.warning(f'field "{field}" enabled for import with out mapping')
                 fields[field]['import'] = False
 
-            if fields[field]['map_to']:
-                for key,val in field[field].items():
-                    self.fields[field][key] = val
+            if field not in self.fields.keys():
+                self.fields[field] = {}
+            for key,val in fields[field].items():
+                self.fields[field][key] = val
 
     def add(self, *args: str) -> None:
         if len(args) < 1:
             raise ValueError("Add Requires at least one argument")
-       
+
         for arg in args:
             try:
                 _ = Setting.o2.get(setting=self.PATH_FORMAT % (arg,'import'))
@@ -104,10 +105,15 @@ class CsvSetting():
                     s = Setting()
                     s.setting = self.PATH_FORMAT % (arg,item)
                     s.value = DEFAULTS[item]
+                    logger.info(f"Adding new field: {s}")
+                    s.save()
 
             else:
                 warn(f"{arg} is already defined")
                 logger.warning(f"Attempted to create existing CSV Feild {arg}")
+
+        self.get()
+        logger.debug(f"New Fields: {self.fields}")
 
     def add_feild(self,field:str, enable:bool =False, map_to:str =None) -> bool:
         try:

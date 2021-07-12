@@ -2,6 +2,8 @@ import logging
 import string
 import importlib
 
+from string import ascii_letters,digits
+
 from .helpers import settings
 from .exceptions import CSVParsingException,ConfigurationError
 
@@ -41,7 +43,9 @@ class CsvImport():
 
         new_fields = []
         for key in headers.split(self.sep):
+            key =  self._safe(key)
             if key not in import_fields:
+                logger.warning(f"found new field in CSV File {key}")
                 new_fields.append(key)
             elif key in import_fields and import_fields[key]['import']:
                 self.fields.append(import_fields[key])
@@ -70,6 +74,20 @@ class CsvImport():
                 row_data[self.fields[x]['field']] = line_data[x]
                     
             self.data.append(row_data)
+
+    @staticmethod
+    def _safe(val:str) -> str:
+        output = []
+        for l in val:
+            if l == ' ':
+                output.append('_')
+            elif l not in ascii_letters+digits:
+                output.append('-')
+            else:
+                output.append(l.lower())
+        
+        return "".join(output)
+        
     
     def add_data(self):
         try:
