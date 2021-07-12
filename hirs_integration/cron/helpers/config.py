@@ -54,24 +54,23 @@ def configuration_fixures():
 def get_jobs(keep_disabled=False) -> dict:
     jobs = Setting.o2.get_by_path(GROUP_JOBS)
     output = {}
+    job_list = {}
 
     for job in jobs:
         if job.item not in ITEM_JOBS:
             logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
-        elif job not in output.keys():
-            output[job] = {job.item:job.value}
+        elif job.catagory not in job_list.keys():
+            job_list[job.catagory] = {job.item:job.value}
         else:
-            output[job][job.item] = job.value
+            job_list[job.catagory][job.item] = job.value
 
-    for job in output:
-        logger.debug(f"Job Config {job} - {jobs[job]}")        
-        if output[job].keys != list(ITEM_JOBS):
-            logger.error(f"job {job} is missing required paramaters. Exluding job")
-            output.pop(job)
-        else:
-            output[job][ITEM_SCHEDULE] = CronJob(output[job][ITEM_SCHEDULE])
-            output[job][ITEM_STATE] = strtobool(output[job][ITEM_STATE])
-        if not output[job][ITEM_STATE] and not keep_disabled:
+    for job in job_list.keys():
+        logger.debug(f"Job Config {job} - {job_list[job]}")        
+        output[job] = job_list[job]
+        output[job][ITEM_SCHEDULE] = CronJob(output[job][ITEM_SCHEDULE])
+        output[job][ITEM_STATE] = strtobool(output[job][ITEM_STATE])
+
+        if not keep_disabled and not output[job][ITEM_STATE]:
             logger.debug(f"job {job} is disabled")
             output.pop(job)
 
