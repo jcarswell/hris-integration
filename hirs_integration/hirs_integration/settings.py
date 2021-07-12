@@ -22,8 +22,8 @@ LOG_DIR = Path(str(BASE_DIR) + '\\logs\\')
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n4cf!m31j_1qr##+@+qv@vwrrn=l2267dqoonlqb*$#vddwn4='
-ENCRYPTION_KEY = 'NyGR3ajLIu7Qgm1cUJ43QCXkbQ7rq8zsbos8uXhgWHk=' #cryptography.fernet.Fernet.generate_key()
+SECRET_KEY = ''
+ENCRYPTION_KEY = '' #cryptography.fernet.Fernet.generate_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
