@@ -1,4 +1,3 @@
-from django.db.models import manager
 from hirs_integration.hirs_admin.helpers.config import GROUP_CONFIG
 import logging
 
@@ -10,14 +9,14 @@ from pyad.adgroup import ADGroup
 from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from base64 import b64encode
-from hirs_integration.hirs_admin.models import set_username
+from hirs_admin.models import set_username
 
 from .helpers import config
-from .exceptions import *
 
 logger = logging.getLogger('ad_export.ad_export')
 
 class Export:
+    reprocess = False
     
     def __init__(self,full=False) -> None:
         self.employees = config.get_employees(delta=(not full))
@@ -65,6 +64,20 @@ class Export:
             
             self.update_user(employee,ad_user)
             self.update_groups(ad_user,employee.add_groups,employee.remove_groups)
+            
+            for user in new_user:
+                config.commit_employee(user.id)
+            
+            pending = config.get_pending()
+            if len(pending) != 0 and not self.reprocess:
+                logger.error(f"{len(pending)} users are still pending after import. retrying")
+                self.employees = pending
+                self.reprocess = True
+                self.run()
+            elif self.reprocess:
+                logger.critical(f"There are still {len(pending)} pending: {pending}. Clearing out")
+                for user in pending:
+                    config.commit_employee(user.id)
     
     def ad_user(self,username:str,id:int =None) -> Union[ADUser,None]:
         """
