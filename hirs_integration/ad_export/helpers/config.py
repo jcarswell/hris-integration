@@ -2,6 +2,7 @@ import logging
 
 from django.db.models.query import QuerySet
 from django.db.models import Q
+from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                                 Employee,EmployeeOverrides,EmployeeDesignation,
                                                 EmployeePending,Location,BusinessUnit,JobRole,
@@ -37,7 +38,7 @@ CONFIG_DEFAULTS = {
         CONFIF_AD_PASSWORD: ['',True]
     },
     EMPLOYEE_CAT: {
-        EMPLOYEE_DISABLE_LEAVE: False,
+        EMPLOYEE_DISABLE_LEAVE: 'False',
         EMPLOYEE_LEAVE_GROUP_ADD: '',
         EMPLOYEE_LEAVE_GROUP_DEL: ''
     },
@@ -88,7 +89,7 @@ def get_config(catagory:str ,item:str) -> str:
         return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
 
     q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-    if item in CONFIG_DEFAULTS[GROUP_CONFIG] and len(q) == 0:
+    if item in CONFIG_DEFAULTS[catagory] and len(q) == 0:
         configuration_fixures()
         q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
         if len(q) == 0:
@@ -194,7 +195,7 @@ class EmployeeManager:
 
     @property
     def status(self) -> bool:
-        if bool(get_config(EMPLOYEE_CAT,EMPLOYEE_DISABLE_LEAVE)):
+        if strtobool(get_config(EMPLOYEE_CAT,EMPLOYEE_DISABLE_LEAVE)):
             if self.__qs_emp.status != "Active":
                 return False
         elif self.__qs_emp.status == "Terminated":
@@ -323,6 +324,13 @@ def commit_employee(id:int) -> bool:
         return True
     except EmployeePending.DoesNotExist:
         return False
+
+def get_pending() -> list[EmployeeManager]:
+    output = []
+    for employee in EmployeePending.objects.all():
+        output.append(EmployeeManager(employee.employee))
+
+    return output
 
 def base_dn() -> str:
     from hirs_integration.hirs_admin.helpers import config
