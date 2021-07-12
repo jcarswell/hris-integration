@@ -4,7 +4,7 @@
 <div class="row" style="padding:0 1.5rem">
   <div data-spy="scroll" data-target="#page-nav" data-offset="0" class="scrollspy-example container col-md-10 order-md-2">
     <div data-spy="scroll" data-target="#page-nav" data-offset="0" class="scrollspy-example">
-      <form>
+      <form id="settings">
         {% csrf_token %}
         {{ settings.as_html }}
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -29,7 +29,7 @@ $(function() {
   var startItems = convertSerializedArrayToHash($form.serializeArray()); 
 });
 $(body).scrollspy({ target: '#page-nav' });
-$("form").submit(function(e) {
+$("form[id=settings]").submit(function(e) {
   e.preventDefault();
   var data = hashDiff(startItems,convertSerializedArrayToHash($form.serializeArray()));
   data["csrfmiddlewaretoken"] = csrftoken

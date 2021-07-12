@@ -2,7 +2,7 @@ import logging
 
 from django.utils.safestring import mark_safe
 
-from hirs_admin import widgets
+from hirs_admin import widgets as w
 
 logger = logging.getLogger('hirs_admin.helpers.settings_view')
 
@@ -10,31 +10,35 @@ class Settings():
 
     def __init__(self,objects):
         self.items = {}
-        self.update_catagories(objects)
+        self.update_groups(objects)
         logger.warning(f"Data: {self.as_html}")
 
-    def update_catagories(self,objects):
+    def update_groups(self,objects):
+        output = {}
         for x in objects:
-            cat = x.catagory
-            if cat not in self.items:
-                self.items[cat] = {
-                    "name": x.catagory_text,
-                    "groups": {}
+            group = x.group
+            if group not in output:
+                output[group] = {
+                    "name": x.group_text,
+                    "catagories": {}
                 }
-                logger.info(f"Added Catagory: {cat}")
+                logger.info(f"Added Catagory: {group}")
             
-            self.items[cat]["groups"] = self.update_group(self.items[cat]["groups"], x)
+            output[group]["catagories"] = self.update_catagories(output[group]["catagories"], x)
+            
+        for x in sorted(output):
+            self.items[x] = output[x]
   
-    def update_group(self, data, object):
-        group = object.group
-        if group not in data:
-            data[group] = {
-                "name": object.group_text,
+    def update_catagories(self, data, object):
+        cat = object.catagory
+        if cat not in data:
+            data[cat] = {
+                "name": object.catagory_text,
                 "items": {}
             }
-            logger.info(f"Added group {group}")
+            logger.info(f"Added group {cat}")
         
-        data[group]["items"] = self.update_item(data[group]["items"], object)
+        data[cat]["items"] = self.update_item(data[cat]["items"], object)
         
         return data
 
@@ -43,28 +47,28 @@ class Settings():
         item = object.item
 
         if object.hidden:
-            widget = widgets.Hidden
+            widget = w.Hidden
         else:
-            widget = widgets.Item
+            widget = w.Item
 
         data[item] = {
             "title": object.item_text,
             "value": object.value,
-            "widget": widget          
+            "widget": widget
         }
         
         return data
 
     def as_nav(self):
         output = []
-        for name,cat in self.items.items():
+        for gname,group in self.items.items():
             output.append(
-                f'<a class="list-group-item list-group-item-action" href="#{ name }">{ cat["name"] }</a>'
+                f'<a class="list-group-item list-group-item-action" href="#{gname}">{ group["name"] }</a>'
             )
             output.append('<nav class="nav nav-pills flex-column">')
-            for name,group in cat["groups"].items():
+            for cname,cat in group["catagories"].items():
                 output.append(
-                    f'<a class="nav-link ml-3 my-1" href="#{ name }">{ group["name"] }</a>'
+                    f'<a class="nav-link ml-3 my-1" href="#{gname}_{cname}">{cat["name"]}</a>'
                 )
             output.append('</nav>')
         
@@ -72,18 +76,17 @@ class Settings():
     
     def as_html(self):
         output = []
-        for name,cat in self.items.items():
-            output.append(f'<h3 id="{ name }">{ cat["name"] }</h3>')
+        for gname,group in self.items.items():
+            output.append(f'<h3 id="{gname}">{group["name"]}</h3>')
             output.append('<hr style="border-top:2px solid #bbb">')
-            for name,group in cat["groups"].items():
+            for cname,cat in group["catagories"].items():
                 output.append(
-                    f'<h4 id="{ name}">{ group["name"] }</a>'
+                    f'<h4 id="{gname}_{cname}">{cat["name"]}</a>'
                 )
-                for id,item in group["items"].items():
-                    output.append(item['widget']().render(
-                        id,
-                        item["value"],
-                        item["title"]))
+                for id,item in cat["items"].items():
+                    wgt = item['widget']()
+                    wgt.title = item["title"]
+                    output.append(wgt.render(id,item["value"],None))
 
         return mark_safe('\n'.join(output))
     
