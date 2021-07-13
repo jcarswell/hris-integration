@@ -6,7 +6,9 @@ import corepoint_export
 import subprocess
 import sys
 import os
+import string
 
+from random import choice
 from django.conf import settings
 from time import sleep
 
@@ -19,6 +21,12 @@ def setup():
 
     print("Please ensure that you have set the ENCYPTION_KEY and SECRET_KEY in 'hirs_integration\\settings.py'")
     sleep(10)
+
+    from django.contrib.auth.models import User
+    if not User.objects.filter(email='admin@example.com').exists():
+        pw = "".join(choice(string.ascii_letters + string.digits + string.punctuation) for char in range(9))
+        User.objects.create_superuser('admin@example.com', 'admin', pw)
+        print(f"Admin user 'admin' created with password '{pw}'")
 
     hirs_admin.setup()
     cron.setup()
