@@ -50,7 +50,7 @@ CONFIG_DEFAULTS = {
     CSV_CONFIG: {
         CSV_FIELD_SEP: ',',
         CSV_IMPORT_CLASS: 'ftp_import.forms',
-        CSV_USE_EXP: True
+        CSV_USE_EXP: 'True'
     },
     FIELD_CONFIG: {
         FIELD_LOC_NAME: None,
