@@ -29,13 +29,15 @@ CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
 CONFIG_LAST_SYNC = 'last_sycronization_run'
 CONFIG_AD_USER = 'ad_export_user'
 CONFIF_AD_PASSWORD = 'ad_export_password'
+CONFIG_UPN = 'ad_upn_suffix'
 
 CONFIG_DEFAULTS = {
     CONFIG_CAT: {
         CONFIG_NEW_NOTIFICATION:'',
-        CONFIG_LAST_SYNC:'1999-01-01 00:00',
         CONFIG_AD_USER: '',
-        CONFIF_AD_PASSWORD: ['',True]
+        CONFIF_AD_PASSWORD: ['',True],
+        CONFIG_UPN: '',
+        CONFIG_LAST_SYNC:'1999-01-01 00:00'
     },
     EMPLOYEE_CAT: {
         EMPLOYEE_DISABLE_LEAVE: 'False',
@@ -292,7 +294,7 @@ class EmployeeManager:
 
         return output
 
-def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManager]:
+def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManager]:
     """
     Gets all employees and returns a list of EmployeeManager instances.
     if delta is not set this will return all employees regardless of the
@@ -300,6 +302,7 @@ def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManage
 
     Args:
         delta (bool, optional): Whether to get all employees or just a delta. Defaults to True.
+        terminated (bool, optional): Exclude Terminated Users, defaults to False
 
     Returns:
         list[EmployeeManager]: list of employees
@@ -313,9 +316,12 @@ def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManage
         emps = Employee.objects.all()
         
     for employee in emps:
-        if (terminated and employee.status != "Terminated") or not terminated:
+        # if terminated(Exclude Terminated) is False and status = Terminated == True 
+        #   or
+        # if user status is not Terminated
+        if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
             output.append(EmployeeManager(employee.emp_id,employee))
-    
+
     return output
 
 def commit_employee(id:int) -> bool:
