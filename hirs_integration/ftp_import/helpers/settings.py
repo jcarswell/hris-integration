@@ -40,7 +40,7 @@ CONFIG_DEFAULTS = {
     SERVER_CONFIG: {
         CONF_SERVER: None,
         CONF_PROTOCAL: 'sftp',
-        CONF_PORT: 22,
+        CONF_PORT: '22',
         CONF_USER: None,
         CONF_PASSWORD: [None,True],
         CONF_SSH_KEY: [None,True],
