@@ -1,8 +1,10 @@
 import logging
 import paramiko
 import re
+import os
 
 from django import conf
+from tempfile import TemporaryFile
 
 from .helpers import settings
 from .helpers.text_utils import int_or_str
@@ -30,19 +32,29 @@ class FTPClient:
         self.server = settings.get_config(settings.SERVER_CONFIG,settings.CONF_SERVER)
         self.port = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PORT)
         self.user = settings.get_config(settings.SERVER_CONFIG,settings.CONF_USER)
-        self.basepath = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PATH)
+        basepath = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PATH)
         file_expr = settings.get_config(settings.SERVER_CONFIG,settings.CONG_FILE_EXP)
         protocol = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PROTOCAL)
         self.__password = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PASSWORD)
         
         self.file_expr = re.compile(file_expr)
-        
+        self.basepath = ''
+
+        for char in basepath:
+            if char == '\\':
+                self.basepath += '/'
+            else:
+                self.basepath += char
+
+        if not self.basepath[-1] == '/':
+            self.basepath += '/'
+
         try:
             self.port = int_or_str(self.port)
         except ValueError:
             self.port = 22
             
-        if protocol.lower != 'sftp':
+        if protocol.lower() != 'sftp':
             logger.fatal(f"unsupported protocol specified {protocol}")
             raise ConfigurationError("currently only SFTP is supported")
 
@@ -61,13 +73,13 @@ class FTPClient:
         """
 
         logger.info(f"Connecting to {self.server}")
-        paramiko.util.log_to_file(conf.settings['LOG_DIR'] + '\\ftp_client.log')
+        paramiko.util.log_to_file(str(conf.settings.LOG_DIR) + '\\ftp_client.log')
         
         self.sock = paramiko.Transport((self.server, self.port))
         try:
-            self.sock.connect(None,self.__user,self.__password)
+            self.sock.connect(username=self.user,password=self.__password)
             self.sftp = paramiko.SFTPClient.from_transport(self.sock)
-            logger.info(f"Connected to {self.server} - {self.sftp}")
+            logger.info(f"Connected to {self.server}")
         except paramiko.SSHException as e:
             logger.fatal("Failed to connecto to the server, invalid private key or username/password")
             self.sock.close()
@@ -99,22 +111,26 @@ class FTPClient:
     def run_import(self):
         """Get all new files based on the configuration and imports them"""
 
-        logger.info("Starting ftp import cycle")
+        logger.warning("Starting ftp import cycle")
         path = self.sftp.listdir(self.basepath)
         imported = 0
         
         for f in path:
             logger.debug(f"Got file {f} for checking")
             m = re.search(self.file_expr,f)
-            if m and not FileTrack.objects.exists(name=f):
-                logger.info(f"Importing {f}")
-                fh = self.sftp.getfo(self.basepath+f)
-                #TODO: Should this be a configurable class like the import form?
-                CsvImport(fh)
-                del fh
+            if m and not FileTrack.objects.filter(name=f).exists():
+                logger.warning(f"Importing {f}")
+                
+                with TemporaryFile() as fh:
+                    self.sftp.get(self.basepath+f,fh)
+                    fh.seek(0)
+                    logger.debug(f"header row of file should be {fh.readline(80)}")
+                    CsvImport(fh)
+                os.remove(self.tf)
+                self.tf = None
                 ft = FileTrack()
                 ft.name=f
-                ft.save
+                ft.save()
                 del ft
 
-        logger.info(f"Finished running import. Imported {imported} files.")
+        logger.warning(f"Finished running import. Imported {imported} files.")
