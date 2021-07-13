@@ -1,4 +1,3 @@
-import string
 import logging
 
 from django.db import models
@@ -9,7 +8,7 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
 from random import choice
 from django.utils.translation import gettext_lazy as _t
-from string import ascii_letters, digits, capwords
+from string import ascii_letters, digits, capwords, ascii_uppercase,ascii_lowercase
 
 logger = logging.getLogger('hirs_admin.Model')
 
@@ -262,9 +261,16 @@ class Employee(models.Model):
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
 
+    def clear_password(self,confirm=False):
+        if confirm:
+            self._password = None
+            self.save()
+
     @property
     def password(self) -> str:
-        return FieldEncryption().decrypt(self._password)
+        if self._password:
+            return FieldEncryption().decrypt(self._password)
+        return None
     
     @password.setter
     def password(self, passwd: str) -> None:
@@ -293,7 +299,9 @@ class Employee(models.Model):
     @classmethod
     def post_save(cls, sender, instance, created, **kwargs):
         if created:
-            passwd = "".join(choice(string.ascii_letters + string.digits) for char in range(12))
+            passwd = "".join(choice(ascii_letters + digits) for char in range(9))
+            passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
+
             instance.password(passwd)
             instance.save()
 
