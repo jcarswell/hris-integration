@@ -38,7 +38,7 @@ def setup():
     subprocess.run([nssm,'install',srv_name,sys.executable])
     subprocess.run([nssm,'set',srv_name,'AppParameters','%s\\cron\\service.py'])
     subprocess.run([nssm,'set',srv_name,'AppDirectory',str(settings.BASE_DIR)])
-    subprocess.run([nssm,'set',srv_name,'AppStdout',str(settings.LOG_DIR + "\\cron_service.out")])
+    subprocess.run([nssm,'set',srv_name,'AppStdout',str(settings.LOG_DIR) + "\\cron_service.out"])
 
 def create_keys():
     from django.core.management import utils
