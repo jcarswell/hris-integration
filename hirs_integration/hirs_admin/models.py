@@ -10,6 +10,7 @@ from django.db.models.signals import pre_save,post_save
 from random import choice
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords, ascii_uppercase,ascii_lowercase
+from django.db.utils import IntegrityError
 
 logger = logging.getLogger('hirs_admin.Model')
 
@@ -52,12 +53,11 @@ def set_username(instance, username:str =None) -> None:
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
         employee = Employee.objects.get(instance.employee)
-        if not username:
+        if username:
             username = username_validator(username)
         else:
-            username = username_validator((instance.firstname or employee.givenname),
-                                          (instance.lastname or employee.surname))
-        
+            username = username_validator(instance.firstname,instance.lastname)
+
         if employee._username != username:
             set_username(employee,username)
             employee.save()
@@ -308,6 +308,20 @@ class Employee(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        try:
+            if instance.emp_id:
+                prev_instance = Employee.objects.get(pk=instance.emp_id)
+            else:
+                prev_instance = None
+        except Employee.DoesNotExist:
+            prev_instance = None
+
+        if (prev_instance and 
+            prev_instance.status == "Terminated" and
+            instance.status == "Active"):
+            logger.info(f"{instance} transitioned from terminated to active")
+            set_username(instance)
+
         if instance.status == "Terminated" and instance._username:
             set_username(instance, f"{instance._username}{round(time.time())}")
         elif instance._username is None and instance.status != "Terminated":
@@ -326,7 +340,7 @@ class EmployeeOverrides(models.Model):
     _lastname = models.CharField(max_length=96, null=True, blank=True)
     nickname = models.CharField(max_length=96, null=True, blank=True)
     _location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
-    _email_alias = models.CharField(max_length=128, null=True, blank=True)
+    _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
     
     @property
     def username(self):
@@ -339,12 +353,12 @@ class EmployeeOverrides(models.Model):
     
     @username.setter
     def username(self,username:str) -> None:        
-        set_username(Employee.get(self.employee), username)
+        set_username(Employee.objects.get(emp_id=self.employee), username)
         
     @property
     def firstname(self):
         if not self._firstname:
-            employee = Employee.objects.get(self.employee)
+            employee = Employee.objects.get(emp_id=self.employee)
             return employee.givenname
         return self._firstname
 
@@ -355,7 +369,7 @@ class EmployeeOverrides(models.Model):
     @property
     def lastname(self):
         if not self._lastname:
-            employee = Employee.objects.get(self.employee)
+            employee = Employee.objects.get(emp_id=self.employee)
             return employee.surname
         return self._lastname
 
@@ -366,7 +380,7 @@ class EmployeeOverrides(models.Model):
     @property
     def location(self):
         if not self._location:
-            employee = Employee.objects.get(self.employee)
+            employee = Employee.objects.get(emp_id=self.employee)
             return employee.location
         return self._location
 
@@ -388,9 +402,16 @@ class EmployeeOverrides(models.Model):
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         emp = Employee.objects.get(instance.employee)
 
+        if instance._email_alias and instance._email_alias != instance.username:
+            try:
+                Employee.objects.get(_username=instance._email_alias)
+            except Employee.DoesNotExist:
+                pass
+            else:
+                raise IntegrityError("email alias cannot overlap with usernames")
+
         if instance.firstname is not None or instance.lastname is not None:
-            set_username(emp, username_validator((instance.firstname or emp.givenname),
-                                                 (instance.lastname or emp.surname)))
+            set_username(emp)
 
         emp.updated_on = datetime.utcnow()
         emp.save()
