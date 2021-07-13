@@ -21,7 +21,7 @@ def setup():
 
     from django.contrib.auth.models import User
     if not User.objects.filter(email='admin@example.com').exists():
-        pw = "".join(choice(string.ascii_letters + string.digits + string.punctuation) for char in range(9))
+        pw = "".join(choice(string.ascii_letters + string.digits + string.punctuation) for char in range(15))
         User.objects.create_superuser('admin@example.com', 'admin', pw)
         print(f"Admin user 'admin' created with password '{pw}'")
 
