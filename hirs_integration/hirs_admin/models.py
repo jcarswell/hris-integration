@@ -1,4 +1,5 @@
 import logging
+import time
 
 from django.db import models
 from datetime import datetime
@@ -307,8 +308,12 @@ class Employee(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        if instance._username is None:
+        if instance.status == "Terminated" and instance._username:
+            set_username(instance, f"{instance._username}{round(time.time())}")
+        elif instance._username is None and instance.status != "Terminated":
             set_username(instance)
+        elif instance._username is None:
+            set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
 
         instance.updated_on = datetime.utcnow()
 pre_save.connect(Employee.pre_save, sender=Employee)
