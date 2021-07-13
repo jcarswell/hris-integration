@@ -149,15 +149,20 @@ LOGGING = {
         'console': {
             'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'simple' if not DEBUG else 'verbos'
         },
         'log': {
             'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': str(LOG_DIR) + '\\system.log',
             'maxBytes': 102400,
-            'backupCount': 10
+            'backupCount': 10,
+            'formatter': 'simple' if not DEBUG else 'verbos'
         }
+    },
+    'root': {
+        'handlers': ['console','log'],
+        'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
     },
     'loggers': {
         'default': {
