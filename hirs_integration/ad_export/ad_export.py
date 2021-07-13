@@ -52,25 +52,26 @@ class Export:
             
             if ad_user:
                 try:
-                    if int(ad_user.get_attribute('employeeNumber')[0]) == employee.id:
-                        if ad_user.parent_container != ou:
-                            ad_user.move(ou)
-                
+                    if (int(ad_user.get_attribute('employeeNumber')[0]) == employee.id and 
+                            ad_user.parent_container != ou):
+                        ad_user.move(ou)
+
                 except IndexError:
                     if ad_user.parent_container == ou:
                         ad_user.update_attribute('employeeNumber',employee.id)
 
-            else: 
+            elif employee.status: 
                 ad_user = self.create_aduser(ou,employee)
                 new_user.append(employee)
-            
+
             self.update_user(employee,ad_user)
             self.update_groups(ad_user,employee.add_groups,employee.remove_groups)
-            
+
             for user in new_user:
                 config.commit_employee(user.id)
-            
+
             pending = config.get_pending()
+
             if len(pending) != 0 and not self.reprocess:
                 logger.error(f"{len(pending)} users are still pending after import. retrying")
                 self.employees = pending
@@ -80,11 +81,13 @@ class Export:
                 logger.critical(f"There are still {len(pending)} pending: {pending}. Clearing out")
                 for user in pending:
                     config.commit_employee(user.id)
-    
+
     def create_aduser(self,ou,employee:config.EmployeeManager) -> ADUser:
         ad_user = ou.create_user(f"{employee.firstname} {employee.lastname}",
                                     employee.password,
-                                    {
+                                    config.get_config(config.CONFIG_CAT,config.CONFIG_UPN),
+                                    employee.status,
+                                    optional_attributes={
                                         'employeeNumber': str(employee.id),
                                         'company': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
                                         'homePhone': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
@@ -96,6 +99,7 @@ class Export:
                                         'postalCode': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
                                         'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
                                         })
+
         ad_user.force_pwd_change_on_login()
 
         return ad_user
@@ -182,12 +186,14 @@ class Export:
         return True
 
     def update_user(self,employee:config.EmployeeManager, user:ADUser):
+        upn = f'{employee.email_alias}@{config.get_config(config.CONFIG_CAT,config.CONFIG_UPN)}'
         attribs = {
             'givenName': employee.firstname,
             'sn': employee.lastname,
             'displayName': f"{employee.firstname} {employee.lastname}",
             'sAMAccountName': employee.username,
             'mailNickname': employee.email_alias,
+            'userPrincipalName': upn,
             'extensionAttribute1': employee.designations,
             'department': employee.bu,
             'title': employee.title
@@ -197,22 +203,29 @@ class Export:
             with open(employee.photo, 'rb') as photo:
                 attribs['thumbnailPhoto'] = b64encode(photo.read())
 
-        manager = self.ad_user(employee.manager.id)
-        user.set_managedby(manager)
+        manager = self.get_aduser_by_id(employee.manager.id)
+        if manager:
+            attribs['managedBy'] = manager.dn
+        else:
+            user.clear_managedby()
         
         if employee.status:
             user.enable()
             if employee.employee.status == "Leave":
                 attribs['acsCard1State'] = False
                 attribs['acsCard2Status'] = False
+                user.clear_managedby()
+                if 'managedBy' in attribs.keys():
+                    attribs.pop('managedBy')
             else:
                 attribs['acsCard1State'] = True
                 attribs['acsCard2Status'] = True
-        
+
         else:
             user.disable()
             attribs['acsCard1State'] = False
             attribs['acsCard2Status'] = False
+            user.clear_managedby()
 
         user.update_attributes(attribs)
 
