@@ -9,6 +9,14 @@ from .exceptions import ConfigurationError
 
 logger = logging.getLogger('ftp_import.CSVImport')
 
+def decode(s) -> str:
+    if isinstance(s,bytes):
+        return s.decode('utf-8')
+    elif isinstance(s,str):
+        return s
+    else:
+        return str(s)
+
 class CsvImport():
     def __init__(self, file_handle) -> None:
         if not hasattr(file_handle,'readable'):
@@ -33,7 +41,8 @@ class CsvImport():
         # ensure we're at the start of the file to grab the header row
         file_handle.seek(0)
         
-        headers = file_handle.readline()
+        headers = decode(file_handle.readline())
+        logger.debug(f"parsing potentail header row {headers[0:60]}")
         #TODO: add text qualifier
         while headers[0] not in string.ascii_letters + string.digits:
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
@@ -41,7 +50,8 @@ class CsvImport():
             if headers[0] == self.sep:
                 logger.error("The csv file doesn't seem to have a vaild header row or we discarded it")
                 raise IndexError("The csv file does not seem to have a valid header row")
-            headers = file_handle.readline()
+            headers = decode(file_handle.readline())
+            logger.debug(f"parsing potentail header row {headers[0:60]}")
 
         new_fields = []
         for key in headers.split(self.sep):
@@ -74,7 +84,7 @@ class CsvImport():
     def parse_data(self, file_handle):
         self.import_error = []
         for line in file_handle:
-            line_data = line.split(self.sep)
+            line_data = decode(line).split(self.sep)
             logger.debug(f"There are {len(line_data)} fields for employee {line_data[0]}")
             row_data = {}
             if len(line_data) != len(self.fields):
