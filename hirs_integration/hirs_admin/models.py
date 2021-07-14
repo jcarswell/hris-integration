@@ -318,7 +318,8 @@ class Employee(models.Model):
             passwd = "".join(choice(ascii_letters + digits) for char in range(9))
             passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
 
-            instance.password(passwd)
+            logger.debug(f"Setting password {passwd} for employee")
+            instance.password = passwd
             instance.save()
 
     @classmethod
