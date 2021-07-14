@@ -122,7 +122,7 @@ class FTPClient:
                 logger.warning(f"Importing {f}")
                 
                 with TemporaryFile() as fh:
-                    self.sftp.get(self.basepath+f,fh)
+                    self.sftp.getfo(self.basepath+f,fh)
                     fh.seek(0)
                     logger.debug(f"header row of file should be {fh.readline(80)}")
                     CsvImport(fh)
