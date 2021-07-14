@@ -23,6 +23,8 @@ CONF_SSH_KEY = 'ssh_key'
 CONF_PATH = 'base_path'
 CONG_FILE_EXP = 'file_name_expression'
 CSV_FIELD_SEP = 'field_sperator'
+CSV_TXT_QULIFY = 'csv_text_qualifier'
+CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
 FIELD_LOC_NAME = 'location_name_field'
@@ -49,6 +51,8 @@ CONFIG_DEFAULTS = {
     },
     CSV_CONFIG: {
         CSV_FIELD_SEP: ',',
+        CSV_TXT_QULIFY: '',
+        CSV_FAIL_NOTIF: '',
         CSV_IMPORT_CLASS: 'ftp_import.forms',
         CSV_USE_EXP: 'True'
     },
