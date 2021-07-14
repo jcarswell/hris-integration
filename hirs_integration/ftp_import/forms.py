@@ -58,9 +58,9 @@ class EmployeeForm():
             if field and field['map_to'] in fields and field['import']:
                 if field['map_to'] == 'location':
                     self._location_check(int_or_str(kwargs[field['field']]))                
-                if field['map_to'] in ['primary_job','jobs']:
+                if field['map_to'] in ['primary_job']:
                     self._jobs_check(int_or_str(kwargs[field['field']]))
-                if field['map_to'] == 'emp_id':
+                if field['map_to'] == emp_id_field:
                     data['employee'] = int_or_str(kwargs[field['field']])
                     self.employee_id = int_or_str(kwargs[field['field']])
 
@@ -213,9 +213,14 @@ class EmployeeForm():
         """
         logger.debug(f"Saving Employee {self.employee_id}")
         try:
-            self.employee.save()
+            if self.employee.is_valid():
+                logger.debug(f"employee is valid saving")
+                self.employee.save()
+            else:
+                logger.error(f"Failed to save form errors are:\n\t\t{self.employee.errors}")
+                raise ValueError("Failed to save employee")
         except ValueError as e:
-            logger.fatal(f"Faild to save Employee error was: {e.message}")
+            logger.fatal(f"Faild to save Employee")
             raise ValueError from e
         
         if self.new:
@@ -223,12 +228,20 @@ class EmployeeForm():
             pending.employee = self.employee_id
         
         try:
-            self.phone.save()
+            if self.phone.is_valid():
+                logger.debug(f"employee phone is valid, saving")
+                self.phone.save()
+            else:
+                logger.error(f"Failed to save form errors are:\n\t\t{self.phone.errors}")      
         except ValueError as e:
             logger.error("Faild to save Employee Phone error continuing. Error was:\n\t" + {e.message})
         
         try:
-            self.address.save()
+            if self.address.is_valid():
+                logger.debug(f"employee address is valid, saving")
+                self.address.save()
+            else:
+                logger.error(f"Failed to save form errors are:\n\t\t{self.address.errors}")      
         except ValueError as e:
             logger.error("Faild to save Employee Address error continuing. Error was:\n\t" + {e.message})
 
