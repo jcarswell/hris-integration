@@ -1,9 +1,9 @@
 import logging
 
 from typing import Union
-from hirs_admin.models import EmployeePending, JobRole, Location, BusinessUnit, WordList, Employee
+from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
+                               WordList, Employee, EmployeeAddress, EmployeePhone)
 from hirs_admin import forms
-from django.forms import models
 from django.utils.datastructures import MultiValueDict
 
 from .helpers import settings
@@ -14,8 +14,23 @@ __all__ = ('form')
 
 logger = logging.getLogger('ftp_import.EmployeeForm')
 
+def get_fields(*args,exclude=None) -> list:
+    output = []
+    if not exclude:
+        exclude = []
 
+    for arg in args:
+        if hasattr(arg,'_meta'):
+            for f in arg._meta.fields:
+                if not f.name in exclude:
+                    output.append(f.name)
 
+    return output
+
+def get_pk(model) -> str:
+    for f in model._meta.fields:
+        if f.primary_key:
+            return f.name
 
 class EmployeeForm():
     def __init__(self,fields_config:list, **kwargs) -> None:
@@ -26,13 +41,13 @@ class EmployeeForm():
         self._feild_config = fields_config
         self.expand = bool(settings.get_config(settings.CSV_CONFIG,settings.CSV_USE_EXP))
         
-        fields = models.fields_for_model(self.employee())
-        fields.append(models.fields_for_model(self.phone,exclude="employee"))
-        fields.append(models.fields_for_model(self.address,exclude="employee"))
+        #FIXME: Should get fields from from note model
+        fields = get_fields(Employee,EmployeePhone,EmployeeAddress,exclude="employee")
         
         data = MultiValueDict()
         
-        employee_id_field = self._get_feild_name('emp_id')
+        emp_id_field = get_pk(Employee)
+        employee_id_field = self._get_feild_name(emp_id_field)
         if employee_id_field == None or employee_id_field not in kwargs:
             logger.fatal("Row data does not contain an employee id field mapping")
             raise ValueError("emp_id is missing from fields, can not continue")
@@ -183,7 +198,7 @@ class EmployeeForm():
             str: the field name or None if it doesn't exist
         """
         for field in self._feild_config:
-            if field['map_to'] == map_val:
+            if field and field['map_to'] == map_val:
                 return field['field']
         
         return None

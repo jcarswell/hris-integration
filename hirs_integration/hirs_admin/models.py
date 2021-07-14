@@ -252,7 +252,6 @@ class Employee(models.Model):
     surname = models.CharField(max_length=96, null=False, blank=False)
     suffix = models.CharField(max_length=20)
     start_date = models.DateField(default=datetime.utcnow)
-    end_date = models.DateField()
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=True)
     _username = models.CharField(max_length=64)
@@ -293,6 +292,22 @@ class Employee(models.Model):
             return "Active"
         else:
             return "Terminated"
+
+    @status.setter
+    def status(self,new_status):
+        if isinstance(new_status,(bool,int)):
+            self.leave = not bool(new_status)
+            self.state = bool(new_status)
+        elif isinstance(new_status,str) and new_status.lower in ['ac','ter','l','active','leave','terminated']:
+            if new_status.lower() in ['l','leave']:
+                self.leave = True
+                self.state = True
+            elif new_status.lower() in ['ter','terminated']:
+                self.leave = True
+                self.state = False
+            else:
+                self.leave = False
+                self.state = True
         
     def __str__(self):
         return f"{self.givenname} {self.surname}"

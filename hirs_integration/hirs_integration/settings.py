@@ -147,17 +147,22 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
+            'level': os.getenv('DJANGO_LOG_LEVEL','DEBUG' if DEBUG else 'INFO'),
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'simple' if not DEBUG else 'verbose'
         },
         'log': {
-            'level': os.getenv('DJANGO_LOG_LEVEL','INFO'),
+            'level': os.getenv('DJANGO_LOG_LEVEL','DEBUG' if DEBUG else 'INFO'),
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': str(LOG_DIR) + '\\system.log',
-            'maxBytes': 102400,
-            'backupCount': 10
+            'maxBytes': 10240000,
+            'backupCount': 10,
+            'formatter': 'simple' if not DEBUG else 'verbose'
         }
+    },
+    'root': {
+        'handlers': ['console','log'],
+        'level': os.getenv('DJANGO_LOG_LEVEL','DEBUG' if DEBUG else 'INFO'),
     },
     'loggers': {
         'default': {
