@@ -248,16 +248,16 @@ class Employee(models.Model):
     updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     givenname = models.CharField(max_length=96, null=False, blank=False)
-    middlename = models.CharField(max_length=96)
+    middlename = models.CharField(max_length=96, null=True, blank=True)
     surname = models.CharField(max_length=96, null=False, blank=False)
-    suffix = models.CharField(max_length=20)
+    suffix = models.CharField(max_length=20, null=True, blank=True)
     start_date = models.DateField(default=datetime.utcnow)
     state = models.BooleanField(default=True)
-    leave = models.BooleanField(default=True)
+    leave = models.BooleanField(default=False)
     _username = models.CharField(max_length=64)
     primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
-    photo = models.FileField(upload_to='uploads/')
+    photo = models.FileField(upload_to='uploads/', null=True, blank=True)
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
 
@@ -318,7 +318,8 @@ class Employee(models.Model):
             passwd = "".join(choice(ascii_letters + digits) for char in range(9))
             passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
 
-            instance.password(passwd)
+            logger.debug(f"Setting password {passwd} for employee")
+            instance.password = passwd
             instance.save()
 
     @classmethod

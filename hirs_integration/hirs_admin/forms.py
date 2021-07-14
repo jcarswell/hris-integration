@@ -132,6 +132,7 @@ class Employee(forms.ModelForm):
     class Meta:
         model = models.Employee
         fields = '__all__'
+        exclude = ('created_on','updated_on','start_date','_username','_password')
 
 class EmployeeAddress(forms.ModelForm):
     class Meta:
