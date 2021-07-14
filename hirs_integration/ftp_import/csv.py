@@ -60,15 +60,12 @@ class CsvImport():
             if key not in import_fields:
                 logger.info(f"Found new field in CSV File {key}")
                 new_fields.append(key)
-            elif key in import_fields and import_fields[key]['import']:
+            elif key in import_fields:
                 logger.debug("Feild exists and will be imported")
                 #append the field config to the fields list
                 self.fields.append(import_fields[key])
                 #add the key name to the just added field dict
                 self.fields[-1]['field'] = key
-            else:
-                logger.debug("Field is not configured for import")
-                self.fields.append(None)
 
         if len(new_fields) > 0:
             #Add the new fields to the configuration and re re-run parse_headers 
@@ -125,4 +122,7 @@ class CsvImport():
             raise ConfigurationError(f"Form module has no attribute form")
         
         for row in self.data:
-            form(self.fields,**row).save()
+            try:
+                form(self.fields,**row).save()
+            except ValueError:
+                logger.error("Failed to save Employee refere to previous logs for more details")
