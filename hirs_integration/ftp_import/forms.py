@@ -94,7 +94,7 @@ class EmployeeForm():
 
     def _location_check(self,data):
         loc,new = Location.objects.get_or_create(pk=data)
-        loc_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_LOC_NAME)
+        loc_desc = settings.get_config(settings.FIELD_CONFIG,settings.FIELD_LOC_NAME)
 
         if new and loc_desc not in self.kwargs:
             logger.error(f"Location description field, {loc_desc} not in fields imported")
@@ -119,8 +119,8 @@ class EmployeeForm():
         """
         logger.debug(f"Checking for job role with id {data}")
         job,new = JobRole.objects.get_or_create(pk=data)
-        job_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_NAME)
-        bu_id = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_BU)
+        job_desc = settings.get_config(settings.FIELD_CONFIG,settings.FIELD_JD_NAME)
+        bu_id = settings.get_config(settings.FIELD_CONFIG,settings.FIELD_JD_BU)
         if new and job_desc not in self.kwargs:
             logger.error(f"Job description field, {job_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {job_desc} not in fields")
@@ -163,8 +163,8 @@ class EmployeeForm():
         """
         logger.debug(f"Checking for business unit with id {data} ")
         bu,new = BusinessUnit.objects.get_or_create(pk=data)
-        bu_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_NAME)
-        bu_parent_field = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_PARENT)
+        bu_desc = settings.get_config(settings.FIELD_CONFIG,settings.FIELD_BU_NAME)
+        bu_parent_field = settings.get_config(settings.FIELD_CONFIG,settings.FIELD_BU_PARENT)
         if new and bu_desc not in self.kwargs:
             logger.error(f"Business unit name field, {bu_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {bu_desc} not in fields")
