@@ -55,7 +55,7 @@ class EmployeeForm():
         employee,self.new = Employee.objects.get_or_create(pk=int_or_str(kwargs[employee_id_field]))
         
         for field in fields_config:
-            if field['map_to'] in fields and field['import']:
+            if field and field['map_to'] in fields and field['import']:
                 if field['map_to'] == 'location':
                     self._location_check(int_or_str(kwargs[field['field']]))                
                 if field['map_to'] in ['primary_job','jobs']:
@@ -117,6 +117,7 @@ class EmployeeForm():
         Raises:
             ObjectCreationError: If requied data to create the Job Description is missing
         """
+        logger.debug(f"Checking for job role with id {data}")
         job,new = JobRole.objects.get_or_create(pk=data)
         job_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_NAME)
         bu_id = settings.get_config(settings.CSV_CONFIG,settings.FIELD_JD_BU)
@@ -124,6 +125,7 @@ class EmployeeForm():
             logger.error(f"Job description field, {job_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {job_desc} not in fields")
         if new and job_desc in self.kwargs:
+            logger.debug(f"Creating new job {self.kwargs[job_desc]}")
             job.job_id = data
             job.name = self._expand(self.kwargs[job_desc])
                  
@@ -146,11 +148,8 @@ class EmployeeForm():
         Returns:
             bool: state of business unit
         """
-        try:
-            _ = BusinessUnit.objects.get(pk=data)
-            return True
-        except BusinessUnit.DoesNotExist:
-            return False
+        return BusinessUnit.objects.filter(pk=data).exists()
+
 
     def _business_unit_check(self,data:int) -> None:
         """
@@ -162,6 +161,7 @@ class EmployeeForm():
         Raises:
             ObjectCreationError: if there is missing data needed to create the Business Unit
         """
+        logger.debug(f"Checking for business unit with id {data} ")
         bu,new = BusinessUnit.objects.get_or_create(pk=data)
         bu_desc = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_NAME)
         bu_parent_field = settings.get_config(settings.CSV_CONFIG,settings.FIELD_BU_PARENT)
@@ -169,6 +169,7 @@ class EmployeeForm():
             logger.error(f"Business unit name field, {bu_desc} not in fields imported")
             raise ObjectCreationError(f"Job description field, {bu_desc} not in fields")
         if new and bu_desc in self.kwargs:
+            logger.debug(f"Creating business unit {self.kwargs[bu_desc]}")
             if bu_parent_field and bu_parent_field in self.kwargs:
                 bu_parent = self.kwargs[bu_parent_field]
             else:
@@ -210,6 +211,7 @@ class EmployeeForm():
         Raises:
             ValueError: Raised from the ValueError thrown by the form.
         """
+        logger.debug(f"Saving Employee {self.employee_id}")
         try:
             self.employee.save()
         except ValueError as e:
