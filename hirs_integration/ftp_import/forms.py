@@ -77,6 +77,7 @@ class EmployeeForm():
                         pass
 
             if 'employee_status' in kwargs:
+                logger.debug(f"State is {kwargs['employee_status']}")
                 if kwargs['employee_status'] == 'AC':
                     field['state'] = True
                 elif kwargs['employee_status'] == 'L':
@@ -85,6 +86,10 @@ class EmployeeForm():
                 else:
                     field['state'] = True
                     field['leave'] = False
+            else:
+                logger.debug("missing employee status setting to leave")
+                field['state'] = True
+                field['leave'] = True                
 
             self.employee = forms.Employee(data,instance=employee)
             self.address = forms.EmployeeAddress(data)
