@@ -13,7 +13,7 @@ def run(full=False):
     from .form import BaseExport
     import importlib
 
-    modelclass = importlib.import_module(config.get_config(config.GROUP_CONFIG,config.CONFIG_MODEL_FORM))
+    modelclass = importlib.import_module(config.get_config(config.CONFIG_CAT,config.CONFIG_MODEL_FORM))
     if hasattr(modelclass,'form') and isinstance(modelclass.form(),BaseExport):
         modelclass.form(not full).run()
     else:
