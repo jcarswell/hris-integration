@@ -83,4 +83,5 @@ class Export(BaseExport):
                 output.write(",".join(line))
         
         subprocess.run(self.callable)
-                
+
+form = Export
