@@ -126,8 +126,6 @@ class FTPClient:
                     fh.seek(0)
                     logger.debug(f"header row of file should be {fh.readline(80)}")
                     CsvImport(fh)
-                os.remove(self.tf)
-                self.tf = None
                 ft = FileTrack()
                 ft.name=f
                 ft.save()

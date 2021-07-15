@@ -5,6 +5,7 @@ from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit,
                                WordList, Employee, EmployeeAddress, EmployeePhone)
 from hirs_admin import forms
 from django.utils.datastructures import MultiValueDict
+from distutils.util import strtobool
 
 from .helpers import settings
 from .exceptions import ObjectCreationError
@@ -39,7 +40,7 @@ class EmployeeForm():
         self.address = forms.EmployeeAddress
         self.kwargs = kwargs
         self._feild_config = fields_config
-        self.expand = bool(settings.get_config(settings.CSV_CONFIG,settings.CSV_USE_EXP))
+        self.expand = strtobool(settings.get_config(settings.CSV_CONFIG,settings.CSV_USE_EXP))
         
         #FIXME: Should get fields from from note model
         fields = get_fields(Employee,EmployeePhone,EmployeeAddress,exclude="employee")
@@ -53,29 +54,47 @@ class EmployeeForm():
             raise ValueError("emp_id is missing from fields, can not continue")
         
         employee,self.new = Employee.objects.get_or_create(pk=int_or_str(kwargs[employee_id_field]))
-        
-        for field in fields_config:
-            if field and field['map_to'] in fields and field['import']:
-                if field['map_to'] == 'location':
-                    self._location_check(int_or_str(kwargs[field['field']]))                
-                if field['map_to'] in ['primary_job']:
-                    self._jobs_check(int_or_str(kwargs[field['field']]))
-                if field['map_to'] == emp_id_field:
-                    data['employee'] = int_or_str(kwargs[field['field']])
-                    self.employee_id = int_or_str(kwargs[field['field']])
+        #logger.debug(kwargs)
+        if self.new and 'employee_status' in kwargs and kwargs['employee_status'] == 'TER':
+            logger.debug("Employee is doesn't exists and is already terminated not importing")
+            self.save_user = False
+            employee.delete()
+        else:
+            self.save_user = True
+            for field in fields_config:
+                if field and field['map_to'] in fields and field['import']:
+                    if field['map_to'] == 'location':
+                        self._location_check(int_or_str(kwargs[field['field']]))                
+                    if field['map_to'] in ['primary_job']:
+                        self._jobs_check(int_or_str(kwargs[field['field']]))
+                    if field['map_to'] == emp_id_field:
+                        data['employee'] = int_or_str(kwargs[field['field']])
+                        self.employee_id = int_or_str(kwargs[field['field']])
 
-                try:
-                    data[field['map_to']] = int_or_str(kwargs[field['field']])
-                except KeyError:
-                    pass
-                
-        self.employee = forms.Employee(data,instance=employee)
-        self.address = forms.EmployeeAddress(data)
-        self.phone = forms.EmployeePhone(data)
+                    try:
+                        data[field['map_to']] = int_or_str(kwargs[field['field']])
+                    except KeyError:
+                        pass
+
+            if 'employee_status' in kwargs:
+                if kwargs['employee_status'] == 'AC':
+                    field['state'] = True
+                elif kwargs['employee_status'] == 'L':
+                    field['state'] = True
+                    field['leave'] = True
+                else:
+                    field['state'] = True
+                    field['leave'] = False
+
+            self.employee = forms.Employee(data,instance=employee)
+            self.address = forms.EmployeeAddress(data)
+            self.phone = forms.EmployeePhone(data)
 
     def _expand(self,data:str) -> str:
         if not self.expand:
+            logger.debug(f"expansion disabled, returning {data}")
             return data
+        logger.debug(f"Attempting to expand {data}")
 
         words = data.split()
         exp_list = WordList.objects.all()
@@ -83,13 +102,16 @@ class EmployeeForm():
         output = []
 
         for word in words:
+            logger.debug(f"checking {word}")
             for expansion in exp_list:
                 if word == expansion.src:
                     word = expansion.replace
+                    logger.debug(f"Replaced with {word}")
                     break
 
             output.append(word)
 
+        logger.debug(f"Expanded Value is {' '.join(output)}")
         return " ".join(output)
 
     def _location_check(self,data):
@@ -101,8 +123,9 @@ class EmployeeForm():
             raise ObjectCreationError(f"Location description field, {loc_desc} not in fields")
 
         if new and loc_desc in self.kwargs:
+            logger.debug(f"Creating location {self.kwargs[loc_desc]}")
             loc.bld_id = data
-            loc.name = self.expand(self.kwargs[loc_desc])
+            loc.name = self._expand(self.kwargs[loc_desc])
             loc.save()
             
             logger.info(f"Created Location {str(loc)}")
@@ -126,17 +149,22 @@ class EmployeeForm():
             raise ObjectCreationError(f"Job description field, {job_desc} not in fields")
         if new and job_desc in self.kwargs:
             logger.debug(f"Creating new job {self.kwargs[job_desc]}")
-            job.job_id = data
-            job.name = self._expand(self.kwargs[job_desc])
-                 
+            job.name = self._expand(self.kwargs[job_desc]) or self.kwargs[job_desc]
+            job.save()
+
             if bu_id in self.kwargs:
                 try:
                     self._business_unit_check(self.kwargs[bu_id])
-                    job.bu = self.kwargs[bu_id]
+                    job.bu = BusinessUnit.objects.get(pk=self.kwargs[bu_id])
                 except ObjectCreationError:
                     logger.warning(f"Failed to create business unit for JobRole {data}")
-            job.save()
+            try:
+                job.save()
+            except Exception as e:
+                logger.exception(e)
             logger.info(f"Created Job {str(job)}")
+        else:
+            logger.debug(f"Job Role Exists {job}")
 
     @staticmethod
     def _business_unit_exists(data:int) -> bool:
@@ -183,10 +211,12 @@ class EmployeeForm():
                 logger.warning(f"Business Unit parent id {bu_parent} does not exist for {data}")
 
             bu.bu_id = data
-            bu.name = self.expand(self.kwargs[bu_desc])
-            bu.parent = bu_parent
+            bu.name = self._expand(self.kwargs[bu_desc])
+            bu.parent = BusinessUnit.objects.get(pk=bu_parent)
             bu.save()
             logger.info(f"Created Business Unit {str(bu)}")
+        else:
+            logger.debug(f"Business Unit Exists")
 
     def _get_feild_name(self,map_val:str) -> Union[str,None]:
         """
@@ -211,11 +241,18 @@ class EmployeeForm():
         Raises:
             ValueError: Raised from the ValueError thrown by the form.
         """
+        if not self.save_user:
+            logger.debug("Not Adding an already terminated employee")
+            return
+
         logger.debug(f"Saving Employee {self.employee_id}")
         try:
             if self.employee.is_valid():
                 logger.debug(f"employee is valid saving")
                 self.employee.save()
+                emp = Employee.objects.get(pk=self.employee_id)
+                emp.status = self.kwargs['employee_status']
+                emp.save()
             else:
                 logger.error(f"Failed to save form errors are:\n\t\t{self.employee.errors}")
                 raise ValueError("Failed to save employee")
@@ -225,7 +262,7 @@ class EmployeeForm():
         
         if self.new:
             pending = EmployeePending()
-            pending.employee = self.employee_id
+            pending.employee = Employee.objects.get(pk=int_or_str(self.employee_id))
         
         try:
             if self.phone.is_valid():
