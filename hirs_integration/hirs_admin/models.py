@@ -5,6 +5,7 @@ from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
 from django import conf
+from django.db.models import signals
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
 from random import choice
@@ -32,7 +33,11 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     invalid_char = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',',','<','>','.',' ','`','~']
     substitue = ''
     suffix = suffix or ""
+    if suffix == "0":
+        suffix = ""
     allowed_char = allowed_char or []
+
+    logger.debug(f"validator got {first} {last} {suffix}")
 
     output = ''
     for x in first[0] + (last or first[1:]):
@@ -40,7 +45,8 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
             output += substitue
         else:
             output += x
-            
+
+    logger.debug(f"validator username is {output} suffix is {suffix}")
     return output + suffix
 
 def set_username(instance, username:str =None) -> None:
@@ -49,7 +55,7 @@ def set_username(instance, username:str =None) -> None:
     Args:
         username (str, optional): username for the user if blank we'll use the database feilds
     """
-    logger.debug(f"Settimg username for {instance}")
+    logger.debug(f"Setting username for {instance}")
     if isinstance(instance,EmployeeOverrides):
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
@@ -74,17 +80,16 @@ def set_username(instance, username:str =None) -> None:
         return
     base = username
 
+    loop = 0
     while instance._username != username:
+        if loop >= 10:
+            logger.error("Something is wrong, unable to set user after 10 iters")
         logger.debug(f"checking {username}")
-        suffix = ''
-        username = username_validator(base, suffix=suffix)
-        if Employee.objects.filter(_username=username).exists():
-            if suffix == '':
-                suffix = '1'
-            else:
-                suffix = str(int(suffix) + 1)
-        else:
+        username = username_validator(base, suffix=str(loop))
+        logger.debug(f"Validator returns {username}")
+        if not Employee.objects.filter(_username=username).exists():
             instance._username = username
+        loop += 1
 
 class FieldEncryption:
     def __init__(self) -> None:
