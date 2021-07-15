@@ -4,9 +4,8 @@ from django.db.models.query import QuerySet
 from django.db.models import Q
 from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
-                                                Employee,EmployeeOverrides,EmployeeDesignation,
-                                                EmployeePending,Location,BusinessUnit,JobRole,
-                                                GroupMapping)
+                               Employee,EmployeeOverrides,EmployeeDesignation,
+                               EmployeePending,Location,GroupMapping)
 from datetime import datetime
 
 GROUP_CONFIG = 'ad_export'
@@ -332,7 +331,7 @@ def get_pending() -> list[EmployeeManager]:
     return output
 
 def base_dn() -> str:
-    from hirs_integration.hirs_admin.helpers import config
+    from hirs_admin.helpers import config
     return config.get_config(config.GROUP_CONFIG,config.BASE_DN)
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
@@ -342,3 +341,7 @@ def fuzzy_employee(username:str) -> list[EmployeeManager]:
         output.append(EmployeeManager(employee.emp_id,employee))
     
     return output
+
+def set_last_run():
+    ls = Setting.o2.get_from_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
+    ls.value = str(datetime.utcnow())
