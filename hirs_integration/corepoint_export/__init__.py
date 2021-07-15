@@ -11,7 +11,9 @@ def setup():
 def run(full=False):
     from .helpers import config
     from .form import BaseExport
-    modelclass = __import__(config.get_config(config.GROUP_CONFIG,config.CONFIG_MODEL_FORM))
+    import importlib
+
+    modelclass = importlib.import_module(config.get_config(config.GROUP_CONFIG,config.CONFIG_MODEL_FORM))
     if hasattr(modelclass,'form') and isinstance(modelclass.form(),BaseExport):
         modelclass.form(not full).run()
     else:
