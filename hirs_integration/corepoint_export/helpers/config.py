@@ -3,6 +3,7 @@ import re
 
 from ad_export.helpers.config import EmployeeManager
 from hirs_admin.models import Setting,Employee
+from datetime import datetime
 
 GROUP_CONFIG = 'corepoint_export'
 CONFIG_CAT = 'configuration'
@@ -154,7 +155,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def bu_id(self):
-        return self._bu.bu_id
+        return self.__qs_emp.primary_job.bu.pk
 
     @property
     def is_supervisor(self):
@@ -166,11 +167,11 @@ class CPEmployeeManager(EmployeeManager):
 
 class MapSettings(dict):
     def __init__(self,) -> None:
-        dict.__init__()
+        dict.__init__(self)
         self.get_config()
 
-    def get_config(self) -> None:
-        for row in Setting.o2.get_by_path(GROUP_CONFIG,EXPORT_CAT):
+    def get_config(self):
+        for row in Setting.o2.get_by_path(CONFIG_CAT,EXPORT_CAT):
             self[row.item] = row.value
 
 def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManager]:
@@ -189,7 +190,10 @@ def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManage
     output = []
     
     if delta:
-        emps = Employee.objects.filter(updated_on__gt=get_config(GROUP_CONFIG,CONFIG_LAST_SYNC))
+        lastsync = get_config(CONFIG_CAT,CONFIG_LAST_SYNC)
+        logger.debug(f"Last sync date {lastsync}")
+        ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
+        emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
     else:
         emps = Employee.objects.all()
         
