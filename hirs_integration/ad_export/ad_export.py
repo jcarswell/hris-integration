@@ -1,4 +1,3 @@
-from hirs_integration.hirs_admin.helpers.config import GROUP_CONFIG
 import logging
 
 from typing import Union
@@ -12,7 +11,7 @@ from base64 import b64encode
 from hirs_admin.models import set_username
 
 from .helpers import config
-from hirs_integration.ad_export.excpetions import ADResultsError,UserDoesNotExist
+from ad_export.excpetions import ADResultsError,UserDoesNotExist
 
 logger = logging.getLogger('ad_export.ad_export')
 
