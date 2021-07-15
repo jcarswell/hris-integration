@@ -174,7 +174,7 @@ class MapSettings(dict):
         for row in Setting.o2.get_by_path(CONFIG_CAT,EXPORT_CAT):
             self[row.item] = row.value
 
-def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManager]:
+def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManager]:
     """
     Gets all employees and returns a list of EmployeeManager instances.
     if delta is not set this will return all employees regardless of the
@@ -182,9 +182,10 @@ def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManage
 
     Args:
         delta (bool, optional): Whether to get all employees or just a delta. Defaults to True.
+        terminated (bool, optional): Exclude Terminated Users, defaults to False
 
     Returns:
-        list[EmployeeManager]: list of employees
+        list[CPEmployeeManager]: list of employees
     """
     
     output = []
@@ -198,5 +199,11 @@ def get_employees(delta:bool =True,terminated:bool =True) -> list[EmployeeManage
         emps = Employee.objects.all()
         
     for employee in emps:
-        if (terminated and employee.status != "Terminated") or not terminated:
-            output.append(EmployeeManager(employee.emp_id,employee))
+        # if terminated(Exclude Terminated) is False and status = Terminated == True 
+        #   or
+        # if user status is not Terminated
+        if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
+            output.append(CPEmployeeManager(employee.emp_id,employee))
+
+    return output
+
