@@ -5,7 +5,7 @@ import importlib
 from string import ascii_letters,digits
 
 from .helpers import settings
-from .exceptions import ConfigurationError
+from .exceptions import ConfigurationError, ObjectCreationError
 
 logger = logging.getLogger('ftp_import.CSVImport')
 
@@ -126,3 +126,5 @@ class CsvImport():
                 form(self.fields,**row).save()
             except ValueError:
                 logger.error("Failed to save Employee refere to previous logs for more details")
+            except ObjectCreationError:
+                logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")

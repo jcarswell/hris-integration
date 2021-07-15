@@ -33,14 +33,15 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     substitue = ''
     suffix = suffix or ""
     allowed_char = allowed_char or []
-        
-    u = first[0] + (last or first[1:])
-    
-    for x in range(len(u)):
-        if u[x] in invalid_char and not u[x] in allowed_char:
-            u[x] = substitue
+
+    output = ''
+    for x in first[0] + (last or first[1:]):
+        if x in invalid_char and not x in allowed_char:
+            output += substitue
+        else:
+            output += x
             
-    return u + suffix
+    return output + suffix
 
 def set_username(instance, username:str =None) -> None:
     """Validate and set the username paramater
@@ -48,33 +49,35 @@ def set_username(instance, username:str =None) -> None:
     Args:
         username (str, optional): username for the user if blank we'll use the database feilds
     """
-    
+    logger.debug(f"Settimg username for {instance}")
     if isinstance(instance,EmployeeOverrides):
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
-        employee = Employee.objects.get(instance.employee)
         if username:
             username = username_validator(username)
         else:
             username = username_validator(instance.firstname,instance.lastname)
 
-        if employee._username != username:
-            set_username(employee,username)
-            employee.save()
+        if instance.employee._username != username:
+            set_username(instance.employee,username)
+            instance.employee.save()
 
         return
 
     if username:
         username = username_validator(username)
     else:
-        username = username_validator(instance.givenname, instance.surename)
+        username = username_validator(instance.givenname, instance.surname)
     
     if instance._username == username:
+        logger.debug("Usernam already set correctly")
         return
-    
+    base = username
+
     while instance._username != username:
+        logger.debug(f"checking {username}")
         suffix = ''
-        username = username_validator(username, suffix=suffix)
+        username = username_validator(base, suffix=suffix)
         if Employee.objects.filter(_username=username).exists():
             if suffix == '':
                 suffix = '1'
@@ -318,7 +321,6 @@ class Employee(models.Model):
             passwd = "".join(choice(ascii_letters + digits) for char in range(9))
             passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
 
-            logger.debug(f"Setting password {passwd} for employee")
             instance.password = passwd
             instance.save()
 
@@ -338,7 +340,7 @@ class Employee(models.Model):
             logger.info(f"{instance} transitioned from terminated to active")
             set_username(instance)
 
-        if instance.status == "Terminated" and instance._username:
+        elif instance.status == "Terminated" and instance._username:
             set_username(instance, f"{instance._username}{round(time.time())}")
         elif instance._username is None and instance.status != "Terminated":
             set_username(instance)
@@ -363,19 +365,16 @@ class EmployeeOverrides(models.Model):
         """
         Returns the Employees Username Exists for conitinuity
         """
-
-        employee = Employee.objects.get(self.employee)
-        return employee.username
+        return self.employee.username
     
     @username.setter
     def username(self,username:str) -> None:        
-        set_username(Employee.objects.get(emp_id=self.employee), username)
+        set_username(self.employee, username)
         
     @property
     def firstname(self):
         if not self._firstname:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.givenname
+            return self.employee.givenname
         return self._firstname
 
     @firstname.setter
@@ -385,8 +384,7 @@ class EmployeeOverrides(models.Model):
     @property
     def lastname(self):
         if not self._lastname:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.surname
+            return self.employee.surname
         return self._lastname
 
     @lastname.setter
@@ -396,8 +394,7 @@ class EmployeeOverrides(models.Model):
     @property
     def location(self):
         if not self._location:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.location
+            return self.employee.location
         return self._location
 
     @location.setter
@@ -416,7 +413,7 @@ class EmployeeOverrides(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        emp = Employee.objects.get(instance.employee)
+        emp = instance.employee
 
         if instance._email_alias and instance._email_alias != instance.username:
             try:
@@ -427,7 +424,7 @@ class EmployeeOverrides(models.Model):
                 raise IntegrityError("email alias cannot overlap with usernames")
 
         if instance.firstname is not None or instance.lastname is not None:
-            set_username(emp)
+            set_username(instance)
 
         emp.updated_on = datetime.utcnow()
         emp.save()
