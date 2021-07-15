@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 
-from jinja2 import Template
+from jinja2 import Environment,PackageLoader,select_autoescape
 
 from .helpers import config
 from .exceptions import ConfigError
@@ -33,19 +33,22 @@ class BaseExport:
             self.employees = config.get_employees(delta)
 
     def generate_config(self):
+        env = Environment(loader=PackageLoader('corepoint_export','templates'),
+                          autoescape=select_autoescape(['XML']))
+
         attribs = {
             'API_URL': config.get_config(config.CONFIG_CAT,config.CONFIG_URL),
             'PUBLIC_KEY': config.get_config(config.CONFIG_CAT,config.CONFIG_PUB_KEY),
             'CUSTOMER_TOKEN': config.get_config(config.CONFIG_CAT,config.CONFIG_TOKEN),
             'CUSTOMER_ID': config.get_config(config.CONFIG_CAT,config.CONFIG_ID),
-            'EXPORT_PATH': self.CSV_FILENAME,
+            'EXPORT_PATH': config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) + self.CSV_FILENAME,
             'map_values': self.map
         }
         path = (config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) +
                 config.get_config(config.CONFIG_CAT,config.CONFIG_EXEC) + 
                 '.config')
         
-        j2 = Template('tempates/CorePointWebServiceConnector.exe.config.j2')
+        j2 = env.get_template('CorePointWebServiceConnector.exe.config.j2')
         with open(path, 'w') as f:
             f.write(j2.render(attribs))
         
@@ -62,6 +65,10 @@ class BaseExport:
                 To change this value override the __init__ function
         """
         raise NotImplementedError
+
+    @staticmethod
+    def set_last_run():
+        config.set_last_run()
 
     def __del__(self):
         #Make sure that we clean up the export file from disk
@@ -83,4 +90,6 @@ class Export(BaseExport):
                 output.write(",".join(line))
         
         subprocess.run(self.callable)
-                
+        self.set_last_run()
+
+form = Export

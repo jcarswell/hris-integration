@@ -4,9 +4,9 @@ from django.db.models.query import QuerySet
 from django.db.models import Q
 from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
-                                                Employee,EmployeeOverrides,EmployeeDesignation,
-                                                EmployeePending,Location,BusinessUnit,JobRole,
-                                                GroupMapping)
+                               Employee,EmployeeOverrides,EmployeeDesignation,
+                               EmployeePending,Location,GroupMapping)
+from datetime import datetime
 
 GROUP_CONFIG = 'ad_export'
 CONFIG_CAT = 'configuration'
@@ -124,30 +124,28 @@ class EmployeeManager:
         self.__qs_desig = EmployeeDesignation.objects.filter(employee=id)
         self.__qs_phone = EmployeePhone.objects.filter(employee=id)
         self.__qs_addr = EmployeeAddress.objects.filter(employee=id)
-        self._job = JobRole.objects.get(Employee.primary_job)
-        self._bu = BusinessUnit.objects.get(self._job.bu)
 
     def __str__(self) -> str:
         return self.username
-        
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}({self.id},{repr(self.employee)})>"
 
     @property
     def employee(self) -> Employee:
         return self.__qs_emp
-    
+
     @property
     def overrides(self) -> EmployeeOverrides:
         return self.__qs_over
-    
+
     @property
     def designations(self) -> str:
         if isinstance(self.__qs_desig, QuerySet):
             output = []
             for q in self.__qs_desig:
                 output.append(q.label)
-            
+
             return ", ".join(output)
         else:
             return ""
@@ -159,15 +157,15 @@ class EmployeeManager:
     @property
     def lastname(self) -> str:
         return self.__qs_over.lastname
-    
+
     @property
     def username(self) -> str:
         return self.__qs_emp.username
-    
+
     @property
     def password(self) -> str:
         return self.__qs_emp.password
-    
+
     @property
     def location(self) -> str:
         loc = self.__qs_over.location
@@ -177,23 +175,14 @@ class EmployeeManager:
     @property
     def email_alias(self) -> str:
         return self.__qs_over.email_alias
-    
-    @property
-    def reports_to(self) -> str:
-        if not self.__qs_emp.manager:
-            return ""
-
-        emp = EmployeeManager(self.__qs_emp.manager)
-        
-        return f"{emp.username}{emp.ou}"
 
     @property
     def ou(self) -> str:
-        return self._bu.ad_ou
+        return self.__qs_emp.primary_job.bu.ad_ou
     
     @property
     def title(self) -> str:
-        return self._job.name
+        return self.__qs_emp.primary_job.name
 
     @property
     def status(self) -> bool:
@@ -217,9 +206,9 @@ class EmployeeManager:
     def add_groups(self) -> list[str]:
         output = self._leave_groups_add
 
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job)|
-                                            Q(bu=self._bu)|
-                                            Q(loc=self.__qs_over.location))
+        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)|
+                                            Q(bu=self.__qs_emp.primary_job.bu.pk)|
+                                            Q(loc=self.__qs_over.location.pk))
 
         for group in gmaps:
             output.append(group.dn)
@@ -228,11 +217,11 @@ class EmployeeManager:
 
     @property
     def bu(self):
-        return self._bu.name
+        return self.__qs_emp.primary_job.bu.name
     
     @property
     def manager(self):
-        return EmployeeManager(self.__qs_emp.manager or self._bu.m)
+        return EmployeeManager(self.__qs_emp.manager.pk or self.__qs_emp.primary_job.bu.manager.pk)
 
     @property
     def remove_groups(self) -> list[str]:
@@ -311,7 +300,10 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     output = []
     
     if delta:
-        emps = Employee.objects.filter(updated_on__gt=get_config(GROUP_CONFIG,CONFIG_LAST_SYNC))
+        lastsync = get_config(CONFIG_CAT,CONFIG_LAST_SYNC)
+        logger.debug(f"Last sync date {lastsync}")
+        ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
+        emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
     else:
         emps = Employee.objects.all()
         
@@ -339,7 +331,7 @@ def get_pending() -> list[EmployeeManager]:
     return output
 
 def base_dn() -> str:
-    from hirs_integration.hirs_admin.helpers import config
+    from hirs_admin.helpers import config
     return config.get_config(config.GROUP_CONFIG,config.BASE_DN)
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
@@ -349,3 +341,7 @@ def fuzzy_employee(username:str) -> list[EmployeeManager]:
         output.append(EmployeeManager(employee.emp_id,employee))
     
     return output
+
+def set_last_run():
+    ls = Setting.o2.get_from_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
+    ls.value = str(datetime.utcnow())

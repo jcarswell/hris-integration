@@ -5,6 +5,7 @@ from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
 from django import conf
+from django.db.models import signals
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
 from random import choice
@@ -32,15 +33,21 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     invalid_char = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',',','<','>','.',' ','`','~']
     substitue = ''
     suffix = suffix or ""
+    if suffix == "0":
+        suffix = ""
     allowed_char = allowed_char or []
-        
-    u = first[0] + (last or first[1:])
-    
-    for x in range(len(u)):
-        if u[x] in invalid_char and not u[x] in allowed_char:
-            u[x] = substitue
-            
-    return u + suffix
+
+    logger.debug(f"validator got {first} {last} {suffix}")
+
+    output = ''
+    for x in first[0] + (last or first[1:]):
+        if x in invalid_char and not x in allowed_char:
+            output += substitue
+        else:
+            output += x
+
+    logger.debug(f"validator username is {output} suffix is {suffix}")
+    return output + suffix
 
 def set_username(instance, username:str =None) -> None:
     """Validate and set the username paramater
@@ -48,40 +55,41 @@ def set_username(instance, username:str =None) -> None:
     Args:
         username (str, optional): username for the user if blank we'll use the database feilds
     """
-    
+    logger.debug(f"Setting username for {instance}")
     if isinstance(instance,EmployeeOverrides):
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
-        employee = Employee.objects.get(instance.employee)
         if username:
             username = username_validator(username)
         else:
             username = username_validator(instance.firstname,instance.lastname)
 
-        if employee._username != username:
-            set_username(employee,username)
-            employee.save()
+        if instance.employee._username != username:
+            set_username(instance.employee,username)
+            instance.employee.save()
 
         return
 
     if username:
         username = username_validator(username)
     else:
-        username = username_validator(instance.givenname, instance.surename)
+        username = username_validator(instance.givenname, instance.surname)
     
     if instance._username == username:
+        logger.debug("Usernam already set correctly")
         return
-    
+    base = username
+
+    loop = 0
     while instance._username != username:
-        suffix = ''
-        username = username_validator(username, suffix=suffix)
-        if Employee.objects.filter(_username=username).exists():
-            if suffix == '':
-                suffix = '1'
-            else:
-                suffix = str(int(suffix) + 1)
-        else:
+        if loop >= 10:
+            logger.error("Something is wrong, unable to set user after 10 iters")
+        logger.debug(f"checking {username}")
+        username = username_validator(base, suffix=str(loop))
+        logger.debug(f"Validator returns {username}")
+        if not Employee.objects.filter(_username=username).exists():
             instance._username = username
+        loop += 1
 
 class FieldEncryption:
     def __init__(self) -> None:
@@ -248,17 +256,16 @@ class Employee(models.Model):
     updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     givenname = models.CharField(max_length=96, null=False, blank=False)
-    middlename = models.CharField(max_length=96)
+    middlename = models.CharField(max_length=96, null=True, blank=True)
     surname = models.CharField(max_length=96, null=False, blank=False)
-    suffix = models.CharField(max_length=20)
+    suffix = models.CharField(max_length=20, null=True, blank=True)
     start_date = models.DateField(default=datetime.utcnow)
-    end_date = models.DateField()
     state = models.BooleanField(default=True)
-    leave = models.BooleanField(default=True)
+    leave = models.BooleanField(default=False)
     _username = models.CharField(max_length=64)
     primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
-    photo = models.FileField(upload_to='uploads/')
+    photo = models.FileField(upload_to='uploads/', null=True, blank=True)
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
 
@@ -293,6 +300,22 @@ class Employee(models.Model):
             return "Active"
         else:
             return "Terminated"
+
+    @status.setter
+    def status(self,new_status):
+        if isinstance(new_status,(bool,int)):
+            self.leave = not bool(new_status)
+            self.state = bool(new_status)
+        elif isinstance(new_status,str) and new_status.lower in ['ac','ter','l','active','leave','terminated']:
+            if new_status.lower() in ['l','leave']:
+                self.leave = True
+                self.state = True
+            elif new_status.lower() in ['ter','terminated']:
+                self.leave = True
+                self.state = False
+            else:
+                self.leave = False
+                self.state = True
         
     def __str__(self):
         return f"{self.givenname} {self.surname}"
@@ -303,7 +326,7 @@ class Employee(models.Model):
             passwd = "".join(choice(ascii_letters + digits) for char in range(9))
             passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
 
-            instance.password(passwd)
+            instance.password = passwd
             instance.save()
 
     @classmethod
@@ -322,7 +345,7 @@ class Employee(models.Model):
             logger.info(f"{instance} transitioned from terminated to active")
             set_username(instance)
 
-        if instance.status == "Terminated" and instance._username:
+        elif instance.status == "Terminated" and instance._username:
             set_username(instance, f"{instance._username}{round(time.time())}")
         elif instance._username is None and instance.status != "Terminated":
             set_username(instance)
@@ -347,19 +370,16 @@ class EmployeeOverrides(models.Model):
         """
         Returns the Employees Username Exists for conitinuity
         """
-
-        employee = Employee.objects.get(self.employee)
-        return employee.username
+        return self.employee.username
     
     @username.setter
     def username(self,username:str) -> None:        
-        set_username(Employee.objects.get(emp_id=self.employee), username)
+        set_username(self.employee, username)
         
     @property
     def firstname(self):
         if not self._firstname:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.givenname
+            return self.employee.givenname
         return self._firstname
 
     @firstname.setter
@@ -369,8 +389,7 @@ class EmployeeOverrides(models.Model):
     @property
     def lastname(self):
         if not self._lastname:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.surname
+            return self.employee.surname
         return self._lastname
 
     @lastname.setter
@@ -380,8 +399,7 @@ class EmployeeOverrides(models.Model):
     @property
     def location(self):
         if not self._location:
-            employee = Employee.objects.get(emp_id=self.employee)
-            return employee.location
+            return self.employee.location
         return self._location
 
     @location.setter
@@ -400,7 +418,7 @@ class EmployeeOverrides(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        emp = Employee.objects.get(instance.employee)
+        emp = instance.employee
 
         if instance._email_alias and instance._email_alias != instance.username:
             try:
@@ -411,7 +429,7 @@ class EmployeeOverrides(models.Model):
                 raise IntegrityError("email alias cannot overlap with usernames")
 
         if instance.firstname is not None or instance.lastname is not None:
-            set_username(emp)
+            set_username(instance)
 
         emp.updated_on = datetime.utcnow()
         emp.save()

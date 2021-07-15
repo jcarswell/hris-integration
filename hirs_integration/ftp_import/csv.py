@@ -5,9 +5,17 @@ import importlib
 from string import ascii_letters,digits
 
 from .helpers import settings
-from .exceptions import CSVParsingException,ConfigurationError
+from .exceptions import ConfigurationError, ObjectCreationError
 
 logger = logging.getLogger('ftp_import.CSVImport')
+
+def decode(s) -> str:
+    if isinstance(s,bytes):
+        return s.decode('utf-8')
+    elif isinstance(s,str):
+        return s
+    else:
+        return str(s)
 
 class CsvImport():
     def __init__(self, file_handle) -> None:
@@ -25,6 +33,7 @@ class CsvImport():
         self.parse_headers(file_handle)
         self.parse_data(file_handle)
         self.add_data()
+        #TODO: if self.import_errors -> send notification email
 
     def parse_headers(self, file_handle) -> None:
         import_fields = settings.get_fields()
@@ -32,48 +41,58 @@ class CsvImport():
         # ensure we're at the start of the file to grab the header row
         file_handle.seek(0)
         
-        headers = file_handle.readline()
+        headers = decode(file_handle.readline())
+        logger.debug(f"parsing potentail header row {headers[0:60]}")
+        #TODO: add text qualifier
         while headers[0] not in string.ascii_letters + string.digits:
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
             logger.debug(f"line: {headers}")
             if headers[0] == self.sep:
                 logger.error("The csv file doesn't seem to have a vaild header row or we discarded it")
                 raise IndexError("The csv file does not seem to have a valid header row")
-            headers = file_handle.readline()
+            headers = decode(file_handle.readline())
+            logger.debug(f"parsing potentail header row {headers[0:60]}")
 
         new_fields = []
         for key in headers.split(self.sep):
-            key =  self._safe(key)
+            key = self._safe(key)
+            logger.debug(f"Processing header key: {key}")
             if key not in import_fields:
-                logger.warning(f"found new field in CSV File {key}")
+                logger.info(f"Found new field in CSV File {key}")
                 new_fields.append(key)
-            elif key in import_fields and import_fields[key]['import']:
+            elif key in import_fields:
+                logger.debug("Feild exists and will be imported")
+                #append the field config to the fields list
                 self.fields.append(import_fields[key])
+                #add the key name to the just added field dict
                 self.fields[-1]['field'] = key
-                self.data[key] = []
-            else:
-                self.fields.append(None)
 
         if len(new_fields) > 0:
-            #Add theh new fields to the configuration and re re-run parse_headers 
+            #Add the new fields to the configuration and re re-run parse_headers 
             #TODO: Added some smart logic to try and parse feilds automagically
             conf = settings.CsvSetting()
             conf.add(*new_fields)
             self.import_fields = conf.fields
             self.fields = []
             return self.parse_headers(file_handle)
-    
+        else:
+            logger.debug(f"There are {len(self.fields)} headers in the file")
+
     def parse_data(self, file_handle):
+        self.import_error = []
         for line in file_handle:
-            line_data = line.split(self.sep)
+            line_data = decode(line).split(self.sep)
+            logger.debug(f"There are {len(line_data)} fields for employee {line_data[0]}")
             row_data = {}
             if len(line_data) != len(self.fields):
-                raise CSVParsingException("Length of line is defferent than the header")
-
-            for x in range(len(self.fields)):
-                row_data[self.fields[x]['field']] = line_data[x]
-                    
-            self.data.append(row_data)
+                logger.error(f"Unable to parse employee {line_data[0]}")
+                self.import_error.append(line_data[0])
+            else:
+                for x in range(len(self.fields)):
+                    if self.fields[x]:
+                        row_data[self.fields[x]['field']] = line_data[x]
+                        
+                self.data.append(row_data)
 
     @staticmethod
     def _safe(val:str) -> str:
@@ -103,4 +122,9 @@ class CsvImport():
             raise ConfigurationError(f"Form module has no attribute form")
         
         for row in self.data:
-            form(self.fields,**row).save()
+            try:
+                form(self.fields,**row).save()
+            except ValueError:
+                logger.error("Failed to save Employee refere to previous logs for more details")
+            except ObjectCreationError:
+                logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")

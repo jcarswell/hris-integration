@@ -19,17 +19,18 @@ settings.
     ```
 3. Paste the two gernerated lines into hirs_integraion\hirs_integration\settings.py
 4. Setup your database configuration in hirs_integraion\hirs_integration\settings.py
-4. From the hirs_integraton folder run `manage.py runsetup`
-5. https://docs.microsoft.com/en-us/visualstudio/python/configure-web-apps-for-iis-windows?view=vs-2019[Configure IIS for python web apps]
-6. Login to the web interface with the credentials printed during setup
-7. Configure you settings and add your word expansions
-8. Manually run the jobs to verify everything is configued correctly
+5. From the hirs_integraton folder run `manage.py migrate`
+6. From the hirs_integraton folder run `manage.py runsetup`
+7. https://docs.microsoft.com/en-us/visualstudio/python/configure-web-apps-for-iis-windows?view=vs-2019[Configure IIS for python web apps]
+8. Login to the web interface with the credentials printed during setup
+9. Configure you settings and add your word expansions
+10. Manually run the jobs to verify everything is configued correctly
    ```
    manage.py runftpimport
    manage.py adexpoprt
    ```
    - You may want to configure overrides for employees before running the import
-9. Enable Cron in the settings
+11. Enable Cron in the settings
 
 ## Copyright
 HIRS Syncronization System is licenesed under GNU GLP v3
