@@ -2,7 +2,8 @@ import logging
 
 from typing import Union
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
-                               WordList, Employee, EmployeeAddress, EmployeePhone)
+                               WordList, Employee, EmployeeAddress, EmployeePhone,
+                               EmployeeOverrides, set_upn)
 from hirs_admin import forms
 from django.utils.datastructures import MultiValueDict
 from distutils.util import strtobool
@@ -258,6 +259,9 @@ class EmployeeForm():
                 emp = Employee.objects.get(pk=self.employee_id)
                 emp.status = self.kwargs['employee_status']
                 emp.save()
+                overrides,new = EmployeeOverrides.objects.get_or_create(employee=emp)
+                set_upn(overrides)
+                overrides.save()
             else:
                 logger.error(f"Failed to save form errors are:\n\t\t{self.employee.errors}")
                 raise ValueError("Failed to save employee")
