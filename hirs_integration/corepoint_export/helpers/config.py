@@ -208,5 +208,6 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     return output
 
 def set_last_run():
-    ls = Setting.o2.get_from_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
-    ls.value = str(datetime.utcnow())
+    ls = Setting.o2.get_by_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
+    ls.value = str(datetime.utcnow()).split('.')[0]
+    ls.save()
