@@ -49,6 +49,41 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     logger.debug(f"validator username is {output} suffix is {suffix}")
     return output + suffix
 
+def upn_validator(first:str, last:str, suffix:str =None, allowed_char:list =None) -> str:
+    """
+    user principle name creation and valudation helper. Ensures that usernames are built using standard
+    username rules and do not contain invalid characters.
+
+    Args:
+        first (str): Firstname or username/alias to be validate
+        last (str, optional): lastname of the user
+        suffix (str, optional): suffix for the username to ensure uniqueness
+        allowed_char (list, optional): override the default list of invalid characters
+
+    Returns:
+        str: valid username or alias
+    """
+    invalid_char = ['!','@','#','$','%','^','&','*','(',')',
+                    '_','+','=',';',':','\'','"',',','<','>',
+                    ',',' ','`','~','{','}','|']
+    substitue = ''
+    suffix = suffix or ""
+    if suffix == "0":
+        suffix = ""
+    allowed_char = allowed_char or []
+
+    logger.debug(f"validator got {first} {last} {suffix}")
+
+    output = ''
+    for x in f"{first}.{last}":
+        if x in invalid_char and not x in allowed_char:
+            output += substitue
+        else:
+            output += x
+
+    logger.debug(f"validator username is {output} suffix is {suffix}")
+    return output + suffix
+
 def set_username(instance, username:str =None) -> None:
     """Validate and set the username paramater
 
@@ -90,6 +125,37 @@ def set_username(instance, username:str =None) -> None:
         if not Employee.objects.filter(_username=username).exists():
             instance._username = username
         loop += 1
+
+def set_upn(instance) -> None:
+    """
+    Set the UPN/Email Alias for the EmployeeOverride model
+
+    Args:
+        instance (EmployeeOverrides): the Model instance for which we wil update
+
+    Raises:
+        ValueError: if the model is not EmployeeOverrides
+    """
+    logger.debug(f"Setting upn for {instance}")
+    if not isinstance(instance,EmployeeOverrides):
+        raise ValueError("Only supported for EmployeeOverrides")
+
+    loop = ''
+    upn = upn_validator(instance.firstname, instance.lastname, str(loop))
+    while instance._email_alias != upn:
+        if isinstance(loop,int) and loop >= 10:
+            logger.error("Something is wrong, unable to set user after 10 iters")
+        logger.debug(f"upn is {upn}")
+        if not Employee.objects.filter(_username=upn_validator(instance.firstname, instance.lastname, str(loop))).exists():
+            instance._email_alias = upn_validator(instance.firstname, instance.lastname, suffix=str(loop))
+            break
+
+        if loop == '':
+            loop = 1
+        else:
+            loop += 1
+        
+        upn = upn_validator(instance.firstname, instance.lastname, str(loop))
 
 class FieldEncryption:
     def __init__(self) -> None:
