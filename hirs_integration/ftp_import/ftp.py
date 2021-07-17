@@ -6,7 +6,7 @@ import os
 from django import conf
 from tempfile import TemporaryFile
 
-from .helpers import settings
+from .helpers import config
 from .helpers.text_utils import int_or_str
 from .exceptions import ConfigurationError,SFTPIOError
 from .models import FileTrack
@@ -29,13 +29,13 @@ class FTPClient:
             ConfigurationError: configured protocol is not supported.
         """
 
-        self.server = settings.get_config(settings.SERVER_CONFIG,settings.CONF_SERVER)
-        self.port = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PORT)
-        self.user = settings.get_config(settings.SERVER_CONFIG,settings.CONF_USER)
-        basepath = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PATH)
-        file_expr = settings.get_config(settings.SERVER_CONFIG,settings.CONG_FILE_EXP)
-        protocol = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PROTOCAL)
-        self.__password = settings.get_config(settings.SERVER_CONFIG,settings.CONF_PASSWORD)
+        self.server = config.get_config(config.CAT_SERVER,config.SERVER_SERVER)
+        self.port = config.get_config(config.CAT_SERVER,config.SERVER_PORT)
+        self.user = config.get_config(config.CAT_SERVER,config.SERVER_USER)
+        basepath = config.get_config(config.CAT_SERVER,config.SERVER_PATH)
+        file_expr = config.get_config(config.CAT_SERVER,config.SERVER_FILE_EXP)
+        protocol = config.get_config(config.CAT_SERVER,config.SERVER_PROTOCAL)
+        self.__password = config.get_config(config.CAT_SERVER,config.SERVER_PASSWORD)
         
         self.file_expr = re.compile(file_expr)
         self.basepath = ''
@@ -73,7 +73,7 @@ class FTPClient:
         """
 
         logger.info(f"Connecting to {self.server}")
-        paramiko.util.log_to_file(str(conf.settings.LOG_DIR) + '\\ftp_client.log')
+        paramiko.util.log_to_file(str(conf.config.LOG_DIR) + '\\ftp_client.log')
         
         self.sock = paramiko.Transport((self.server, self.port))
         try:

@@ -4,7 +4,7 @@ import importlib
 
 from string import ascii_letters,digits
 
-from .helpers import settings
+from .helpers import config
 from .exceptions import ConfigurationError, ObjectCreationError
 
 logger = logging.getLogger('ftp_import.CSVImport')
@@ -27,8 +27,8 @@ class CsvImport():
         
         self.fields = []
         self.data = []
-        self.sep = settings.get_config(settings.CSV_CONFIG,settings.CSV_FIELD_SEP)
-        self.form = settings.get_config(settings.CSV_CONFIG,settings.CSV_IMPORT_CLASS)
+        self.sep = config.get_config(config.CAT_CSV,config.CSV_FIELD_SEP)
+        self.form = config.get_config(config.CAT_CSV,config.CSV_IMPORT_CLASS)
 
         self.parse_headers(file_handle)
         self.parse_data(file_handle)
@@ -36,7 +36,7 @@ class CsvImport():
         #TODO: if self.import_errors -> send notification email
 
     def parse_headers(self, file_handle) -> None:
-        import_fields = settings.get_fields()
+        import_fields = config.get_fields()
         
         # ensure we're at the start of the file to grab the header row
         file_handle.seek(0)
@@ -70,7 +70,7 @@ class CsvImport():
         if len(new_fields) > 0:
             #Add the new fields to the configuration and re re-run parse_headers 
             #TODO: Added some smart logic to try and parse feilds automagically
-            conf = settings.CsvSetting()
+            conf = config.CsvSetting()
             conf.add(*new_fields)
             self.import_fields = conf.fields
             self.fields = []
