@@ -383,7 +383,11 @@ class Employee(models.Model):
                 self.leave = False
                 self.state = True
 
-    @property.setter
+    @property
+    def secondary_jobs(self):
+        return self.jobs
+
+    @secondary_jobs.setter
     def secondary_jobs(self,jobs):
         """
         Set the jobs field based on the provided value. The value can be
