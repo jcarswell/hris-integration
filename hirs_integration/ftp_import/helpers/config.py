@@ -72,6 +72,7 @@ class CsvSetting():
     def __init__(self) -> None:
         self.fields = {}
         self.get()
+        self.get_field_config()
 
     def get(self) -> None:
         fields = {}
@@ -95,6 +96,15 @@ class CsvSetting():
                 self.fields[field] = {}
             for key,val in fields[field].items():
                 self.fields[field][key] = val
+
+    def get_field_config(self):
+        for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
+            field = get_config(CAT_CSV,field_conf)
+            if field:
+                self.fields[field] = {
+                    'import': False,
+                    'map_to': ''
+                }
 
     def add(self, *args: str) -> None:
         if len(args) < 1:
