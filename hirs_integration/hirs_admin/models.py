@@ -382,7 +382,46 @@ class Employee(models.Model):
             else:
                 self.leave = False
                 self.state = True
+
+    @property.setter
+    def secondary_jobs(self,jobs):
+        """
+        Set the jobs field based on the provided value. The value can be
+        a list,tuple,dict*,int or string. for strings we will try and 
+        split the string either by whitespace or comma.
         
+        * For dicts we'll only use the values. 
+
+        Args:
+            jobs (Any): the job ID or list of job IDs
+
+        Raises:
+            ValueError: If we cannont conver the provided job(s) to a list
+            ValueError: If the Job ID is not a valid int
+        """
+        if isinstance(jobs,str):
+            jobs = jobs.split()
+            if len(jobs) == 1:
+                jobs = jobs[0].split(',')
+        
+        elif isinstance(jobs,dict):
+            jobs = jobs.values()
+        
+        elif isinstance(jobs,int):
+            jobs = [str(jobs)]
+
+        elif isinstance(jobs,tuple):
+            jobs = list(jobs)
+
+        if not isinstance(jobs,list):
+            raise ValueError(f"Unable to convert {type(jobs)} to list")  
+
+        for job in jobs:
+            try:
+                self.jobs.add(JobRole.objects.get(pk=int(job)))
+            except JobRole.DoesNotExist:
+                logger.warning(f"Job ID {job} doesn't exists yet")
+
     def __str__(self):
         return f"{self.givenname} {self.surname}"
 
