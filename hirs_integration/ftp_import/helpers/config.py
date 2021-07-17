@@ -22,7 +22,6 @@ SERVER_SSH_KEY = 'ssh_key'
 SERVER_PATH = 'base_path'
 SERVER_FILE_EXP = 'file_name_expression'
 CSV_FIELD_SEP = 'field_sperator'
-CSV_TXT_QULIFY = 'csv_text_qualifier'
 CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
@@ -51,7 +50,6 @@ CONFIG_DEFAULTS = {
     },
     CAT_CSV: {
         CSV_FIELD_SEP: ',',
-        CSV_TXT_QULIFY: '',
         CSV_FAIL_NOTIF: '',
         CSV_IMPORT_CLASS: 'ftp_import.forms',
         CSV_USE_EXP: 'True'
@@ -99,7 +97,7 @@ class CsvSetting():
 
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
-            field = get_config(CAT_CSV,field_conf)
+            field = get_config(CAT_FIELD,field_conf)
             if field and field in self.fields.keys():
                 self.fields[field] = {
                     'import': True,
@@ -199,5 +197,4 @@ def get_config(catagory:str ,item:str) -> str:
         logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
         raise ValueError(f"Unable to find requested item {item}")
 
-    return q[0].value
-        
+    return q[0].value  
