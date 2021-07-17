@@ -121,7 +121,7 @@ class FTPClient:
             if m and not FileTrack.objects.filter(name=f).exists():
                 logger.warning(f"Importing {f}")
                 
-                with TemporaryFile() as fh:
+                with TemporaryFile(newline='') as fh:
                     self.sftp.getfo(self.basepath+f,fh)
                     fh.seek(0)
                     logger.debug(f"header row of file should be {fh.readline(80)}")
