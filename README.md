@@ -35,3 +35,35 @@ settings.
 ## Copyright
 HIRS Syncronization System is licenesed under GNU GLP v3
 copyright 2021 West Country Hosting
+
+## Overriding import/export forms
+Where the configuration allows for it, an import/export form or module may be overridden
+to accomidate custom configuration. To do this setup a custom module that  will either be
+in the root directory of the Django app or will be installed into your global path.
+
+Your form will extend the base class with provides most of the basic interfaces and data.
+You will need to define the run method which is what will be called after class initalization.
+
+Once you have built your class you will need to define add a form variable that points to your
+custom class.
+
+If you have not worked with Django before, the app root is added to the path. When you are importing
+other classes you would not use hirs_integration.module, instead you just call the module directly.
+
+Base Froms:
+- ftp_import: ftp_import.forms.BaseImport
+- corepoint_export: corepoint_export.forms.BaseExport
+
+An example module would look something like:
+```
+from ftp_import.forms import BaseImport
+Class MyImportClass(BaseImport):
+    def run(self):
+        for key,value in self.kwargs:
+            if hasattr(self.employee):
+                setattr(self.employee,key,value)
+
+form = MyImportClass
+```
+
+Now update the config to be the import path for your form
