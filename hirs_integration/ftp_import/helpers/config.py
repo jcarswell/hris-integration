@@ -100,10 +100,10 @@ class CsvSetting():
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
             field = get_config(CAT_CSV,field_conf)
-            if field:
+            if field and field in self.fields.keys():
                 self.fields[field] = {
-                    'import': False,
-                    'map_to': ''
+                    'import': True,
+                    'map_to': '__config__'
                 }
 
     def add(self, *args: str) -> None:
