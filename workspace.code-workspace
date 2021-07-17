@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "..\\AdminLTE"
 		}
 	],
 	"settings": {
@@ -16,5 +13,20 @@
 			"**/templates/**/*": "django-txt",
 			"**/requirements{/**,*}.{txt,in}": "pip-requirements"
 		}
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: Django",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}\\hirs_integration\\manage.py",
+				"args": [
+					"runserver"
+				],
+				"django": true
+			}
+		]
 	}
 }
