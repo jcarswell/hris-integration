@@ -86,16 +86,16 @@ class CsvSetting():
                 fields[row.catagory][row.item] = row.value
 
         for field in fields:
-            fields[field]['import'] = strtobool(fields[field]['import'])
-
-            if fields[field]['import'] and not fields[field]['map_to']:
-                logging.warning(f'field "{field}" enabled for import with out mapping')
-                fields[field]['import'] = False
-
             if field not in self.fields.keys():
                 self.fields[field] = {}
-            for key,val in fields[field].items():
-                self.fields[field][key] = val
+            
+            self.fields[field]['import'] = strtobool(fields[field]['import'])
+
+            if self.fields[field]['import'] and not fields[field]['map_to']:
+                logger.warning(f'field "{field}" enabled for import with out mapping')
+                self.fields[field]['import'] = False
+
+            self.fields[field]['map_to'] = fields[field]['map_to']
 
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
