@@ -1,6 +1,7 @@
 import logging
 import string
 import importlib
+import csv
 
 from string import ascii_letters,digits
 
@@ -54,7 +55,7 @@ class CsvImport():
             logger.debug(f"parsing potentail header row {headers[0:60]}")
 
         new_fields = []
-        for key in headers.split(self.sep):
+        for key in csv.reader([headers],delimiter=self.sep):
             key = self._safe(key)
             logger.debug(f"Processing header key: {key}")
             if key not in import_fields:
@@ -80,19 +81,18 @@ class CsvImport():
 
     def parse_data(self, file_handle):
         self.import_error = []
-        for line in file_handle:
-            line_data = decode(line).split(self.sep)
-            logger.debug(f"There are {len(line_data)} fields for employee {line_data[0]}")
+        data = csv.reader(file_handle, delimiter=self.sep)
+        for row in data:
             row_data = {}
-            if len(line_data) != len(self.fields):
-                logger.error(f"Unable to parse employee {line_data[0]}")
-                self.import_error.append(line_data[0])
+            if len(row) != len(self.fields):
+                logger.error(f"Unable to parse employee {row[0]}")
+                self.import_error.append(row[0])
             else:
                 for x in range(len(self.fields)):
-                    if self.fields[x]:
-                        row_data[self.fields[x]['field']] = line_data[x]
-                        
-                self.data.append(row_data)
+                    if self.fields[x] and self.fields[x]['import']:
+                        row_data[self.fields[x]['field']] = row[x]
+
+            self.data.append(row_data)
 
     @staticmethod
     def _safe(val:str) -> str:
