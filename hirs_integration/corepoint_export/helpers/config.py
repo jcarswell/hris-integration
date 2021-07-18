@@ -69,7 +69,7 @@ CONFIG_DEFAULTS = {
         'map_SENIORITY_DATE': None,
         'map_COMPANY_SENIORITY_DATE': None,
         'map_STATUS_ID': 'status',
-        'map_EMPLOYEE_TYPE': 'employeetype',
+        'map_EMPLOYEE_TYPE': 'employeetype ',
         'map_EMAIL_ADDR': 'email',
         'map_ACTIVE_IND': None,
         'map_SIN': None,
@@ -164,6 +164,10 @@ class CPEmployeeManager(EmployeeManager):
             return True
         else:
             return False
+
+    @property
+    def employeetype(self):
+        return self.__qs_emp.type
 
 class MapSettings(dict):
     def __init__(self,) -> None:
