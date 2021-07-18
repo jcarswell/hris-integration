@@ -36,13 +36,13 @@ settings.
 HIRS Syncronization System is licenesed under GNU GLP v3
 copyright 2021 West Country Hosting
 
-## Overriding import/export forms
-Where the configuration allows for it, an import/export form or module may be overridden
-to accomidate custom configuration. To do this setup a custom module that  will either be
+## Overriding export forms
+Where the configuration allows for it, an export form or module may be overridden
+to accomidate custom configuration. To do this setup a custom module that will either be
 in the root directory of the Django app or will be installed into your global path.
 
-Your form will extend the base class with provides most of the basic interfaces and data.
-You will need to define the run method which is what will be called after class initalization.
+Your form will extend the base class which provides most of the basic interfaces and data.
+You will need to define the `run` method which is what will be called after class initalization.
 
 Once you have built your class you will need to define add a form variable that points to your
 custom class.
@@ -51,14 +51,53 @@ If you have not worked with Django before, the app root is added to the path. Wh
 other classes you would not use hirs_integration.module, instead you just call the module directly.
 
 Base Froms:
-- ftp_import: ftp_import.forms.BaseImport
 - corepoint_export: corepoint_export.forms.BaseExport
+
+An example module would look something like:
+```
+from corepoint_export.forms import BaseExport
+Class MyExportClass(BaseImport):
+    def run(self):
+        keys = []
+        for key,value in self.map.items():
+            if value:
+                keys.append(value)
+        with open(self.export_file, 'w') as output:
+            output.write(",".join(keys))
+            for employee in self.employees:
+                line = []
+                for key in keys:
+                    line.append(str(getattr(employee,key,'')))
+                output.write(",".join(line))
+        
+        subprocess.run(self.callable)
+        self.set_last_run()
+
+form = MyExportClass
+```
+
+Now update the config to be the import path for your form
+
+
+## Overriding import forms
+Similar to export forms some import forms may be overridden there the configuration allows for it.
+However a import form will be called once per object instead of expecting the form to to produce the
+output data.
+
+Your form will extend the base class which provides most of the basic interfaces and data.
+You will need to define the `save` method which is what will be called after class initalization.
+
+The class initailization will take the required data to be saved, do any general parsing required and
+make it availble in self to be utilized
+
+Base Froms:
+- ftp_import: ftp_import.forms.BaseImport
 
 An example module would look something like:
 ```
 from ftp_import.forms import BaseImport
 Class MyImportClass(BaseImport):
-    def run(self):
+    def save(self):
         for key,value in self.kwargs:
             if hasattr(self.employee):
                 setattr(self.employee,key,value)
