@@ -110,7 +110,9 @@ class CsvSetting():
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
             field = safe(get_config(CAT_FIELD,field_conf))
+            logger.debug(f"Field {field} is setup as a configuration field")
             if field and field in self.fields.keys():
+                logger.debug(f"Marking {field} for import")
                 self.fields[field] = {
                     'import': True,
                     'map_to': ''
