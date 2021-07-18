@@ -111,7 +111,8 @@ def setup_ftp_import():
         'phone_1': 'number',
         'll7': 'primary_job',
         'll4': 'location',
-        'reports_to': 'manager'
+        'reports_to': 'manager',
+        'secondarylabour': 'secondary_jobs',
     }
 
     for key,value in field_conf.items():

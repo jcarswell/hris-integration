@@ -425,11 +425,17 @@ class Employee(models.Model):
         if not isinstance(jobs,list):
             raise ValueError(f"Unable to convert {type(jobs)} to list")  
 
+        jl = []
         for job in jobs:
             try:
-                self.jobs.add(JobRole.objects.get(pk=int(job)))
+                jl.append(JobRole.objects.get(pk=int(job)))
             except JobRole.DoesNotExist:
                 logger.warning(f"Job ID {job} doesn't exists yet")
+        
+        try:
+            self.jobs.add(*jl)
+        except ValueError:
+            logger.info("Can't set the jobs until the model has been saved")
 
     def __str__(self):
         return f"{self.givenname} {self.surname}"
