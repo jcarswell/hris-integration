@@ -1,4 +1,5 @@
 from typing import Union
+from string import ascii_letters,digits
 
 def int_or_str(val:str) -> Union[int,str]:
     """
@@ -19,3 +20,15 @@ def int_or_str(val:str) -> Union[int,str]:
         return int(val)
     except ValueError:
         return val
+
+def safe(val:str) -> str:
+    output = []
+    for l in val:
+        if l == ' ':
+            output.append('_')
+        elif l not in ascii_letters+digits:
+            output.append('-')
+        else:
+            output.append(l.lower())
+    
+    return "".join(output)
