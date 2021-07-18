@@ -170,7 +170,7 @@ def configuration_fixures():
         PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
         hidden = False
-        
+
         if type(value) == list and value[0] in [True,False]:
             hidden=value[0]
             value = value[1]
@@ -180,11 +180,10 @@ def configuration_fixures():
 
         obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
         if new:
-            obj.setting = PATH % (catagory,item)
             obj.hidden = hidden
             obj.value = value
             obj.save()
-        
+
         return new
 
     for key,val in CONFIG_DEFAULTS.items():
@@ -199,7 +198,7 @@ def get_fields() -> dict:
 def get_config(catagory:str ,item:str) -> str:
     if not catagory in SETTINGS_CATAGORIES:
         return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
-    
+
     q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
     if len(q) == 0 and item in CONFIG_DEFAULTS[catagory]:
         configuration_fixures()
@@ -211,4 +210,4 @@ def get_config(catagory:str ,item:str) -> str:
         logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
         raise ValueError(f"Unable to find requested item {item}")
 
-    return q[0].value  
+    return q[0].value
