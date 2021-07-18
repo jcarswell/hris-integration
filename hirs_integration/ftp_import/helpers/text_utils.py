@@ -26,9 +26,17 @@ def safe(val:str) -> str:
     for l in val:
         if l == ' ':
             output.append('_')
-        elif l not in ascii_letters+digits:
+        elif l not in ascii_letters+digits+'_':
             output.append('-')
         else:
             output.append(l.lower())
     
     return "".join(output)
+
+def decode(s) -> str:
+    if isinstance(s,bytes):
+        return s.decode('utf-8')
+    elif isinstance(s,str):
+        return s
+    else:
+        return str(s)
