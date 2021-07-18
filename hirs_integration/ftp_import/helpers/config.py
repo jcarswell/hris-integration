@@ -3,6 +3,7 @@ import logging
 from distutils.util import strtobool
 from warnings import warn
 from hirs_admin.models import Setting
+from .text_utils import safe
 
 logger = logging.getLogger("ftp_import.helpers")
 
@@ -12,6 +13,7 @@ GROUP_MAP = 'ftp_import_feild_mapping'
 CAT_SERVER = 'server'
 CAT_CSV = 'csv_parse'
 CAT_FIELD = 'field_config'
+CAT_EXPORT = 'export options'
 SETTINGS_CATAGORIES = (CAT_SERVER,CAT_CSV,CAT_FIELD)
 SERVER_SERVER = 'server'
 SERVER_PROTOCAL = 'protocal'
@@ -30,6 +32,10 @@ FIELD_JD_NAME = 'job_description_name_field'
 FIELD_JD_BU = 'job_description_business_unit_field'
 FIELD_BU_NAME = 'business_unit_name_field'
 FIELD_BU_PARENT = 'business_unit_parent_field'
+FIELD_STATUS = 'employee_status_field'
+EXPORT_ACTIVE = 'actve_status_field_value'
+EXPORT_LEAVE = 'leave_status_field_value'
+EXPORT_TERM = 'terminated_status_field_value'
 FIELD_ITEMS = ('import','map_to')
 
 IMPORT_DEFAULTS = {
@@ -59,8 +65,14 @@ CONFIG_DEFAULTS = {
         FIELD_JD_NAME: None,
         FIELD_JD_BU: None,
         FIELD_BU_NAME: None,
-        FIELD_BU_PARENT: None
-        }
+        FIELD_BU_PARENT: None,
+        FIELD_STATUS: None,
+    },
+    CAT_EXPORT: {
+        EXPORT_ACTIVE: 'Active',
+        EXPORT_TERM: 'Terminated',
+        EXPORT_LEAVE: 'Leave',
+    },
 }
 
 
@@ -97,11 +109,11 @@ class CsvSetting():
 
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
-            field = get_config(CAT_FIELD,field_conf)
+            field = safe(get_config(CAT_FIELD,field_conf))
             if field and field in self.fields.keys():
                 self.fields[field] = {
                     'import': True,
-                    'map_to': '__config__'
+                    'map_to': ''
                 }
 
     def add(self, *args: str) -> None:
