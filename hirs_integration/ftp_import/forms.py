@@ -39,9 +39,11 @@ class BaseImport():
 
         self._set_status()
 
-        if self.new and self.status_field and kwargs[self.status_field] == 'terminated':
+        if self.new and self.status_field and kwargs[self.status_field] == Employee.STAT_TERM:
             logger.debug("Employee is doesn't exists and is already terminated not importing")
             self.save_user = False
+            self.employee.delete()
+            self.employee = None
         else:
             self.save_user = True
 
@@ -63,11 +65,11 @@ class BaseImport():
                 self.kwargs[self.status_field] in [status_leave,status_act,status_term]):
             logger.debug(f"Source status field is {self.kwargs[self.status_field]}")
             if self.kwargs[self.status_field].lower() == status_term.lower():
-                self.kwargs[self.status_field] = 'termintated'
+                self.kwargs[self.status_field] = Employee.STAT_TERM
             elif self.kwargs[self.status_field].lower() == status_act.lower():
-                self.kwargs[self.status_field] = 'active'
+                self.kwargs[self.status_field] = Employee.STAT_ACT
             elif status_leave and self.kwargs[self.status_field].lower() == status_leave.lower():
-                self.kwargs[self.status_field] = 'leave'
+                self.kwargs[self.status_field] = Employee.STAT_LEA
             logger.debug(f"revised status field is {self.kwargs[self.status_field]}")
 
     def _expand(self,data:str) -> str:
@@ -216,7 +218,7 @@ class BaseImport():
         """
 
     def post_save(self):
-        if self.new:
+        if self.new and self.save_user:
             pending = EmployeePending()
             pending.employee = Employee.objects.get(pk=int_or_str(self.employee_id))
 
@@ -347,7 +349,6 @@ class EmployeeForm(BaseImport):
                 phone.label = key
 
         if phone.number:
-            logger.debug(f"{phone.label} - {phone}")
             phone.primary = False
             phone.save()
 
@@ -412,21 +413,5 @@ class EmployeeForm(BaseImport):
         else:
             logger.info(f"Not saving employee {self.employee_id}, as the don't exist are terminated")
 
-        #status_field = self.get_field_name('status')
-        #if status_field in self.kwargs:
-        #    logger.debug(f"State is {self.kwargs[status_field]}")
-        #    if self.kwargs[status_field] == 'AC':
-        #        self.employee.state = True
-        #    elif self.kwargs[status_field] == 'L':
-        #        self.employee.state = True
-        #        self.employee.leave = True
-        #    else:
-        #        self.employee.state = False
-        #        self.employee.leave = True
-        #else:
-        #    logger.debug("missing employee status setting to leave")
-        #    self.employee.state = True
-        #    self.employee.leave = True
-        
 
 form = EmployeeForm
