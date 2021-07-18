@@ -328,6 +328,7 @@ class Employee(models.Model):
     start_date = models.DateField(default=datetime.utcnow)
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
+    type = models.CharField(max_length=64,null=True,blank=True)
     _username = models.CharField(max_length=64)
     primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
@@ -369,20 +370,67 @@ class Employee(models.Model):
 
     @status.setter
     def status(self,new_status):
+        logger.debug(f"setting new status {new_status}")
         if isinstance(new_status,(bool,int)):
             self.leave = not bool(new_status)
             self.state = bool(new_status)
-        elif isinstance(new_status,str) and new_status.lower in ['ac','ter','l','active','leave','terminated']:
-            if new_status.lower() in ['l','leave']:
+        elif isinstance(new_status,str) and new_status.lower() in ['active','leave','terminated']:
+            if new_status.lower() in ['leave']:
+                logger.debug(f"Setting to Leave")
                 self.leave = True
                 self.state = True
-            elif new_status.lower() in ['ter','terminated']:
+            elif new_status.lower() in ['terminated']:
+                logger.debug(f"Setting to Terminated")
                 self.leave = True
                 self.state = False
             else:
+                logger.debug(f"Setting to Active")
                 self.leave = False
                 self.state = True
+
+    @property
+    def secondary_jobs(self):
+        return self.jobs
+
+    @secondary_jobs.setter
+    def secondary_jobs(self,jobs):
+        """
+        Set the jobs field based on the provided value. The value can be
+        a list,tuple,dict*,int or string. for strings we will try and 
+        split the string either by whitespace or comma.
         
+        * For dicts we'll only use the values. 
+
+        Args:
+            jobs (Any): the job ID or list of job IDs
+
+        Raises:
+            ValueError: If we cannont conver the provided job(s) to a list
+            ValueError: If the Job ID is not a valid int
+        """
+        if isinstance(jobs,str):
+            jobs = jobs.split()
+            if len(jobs) == 1:
+                jobs = jobs[0].split(',')
+        
+        elif isinstance(jobs,dict):
+            jobs = jobs.values()
+        
+        elif isinstance(jobs,int):
+            jobs = [str(jobs)]
+
+        elif isinstance(jobs,tuple):
+            jobs = list(jobs)
+
+        if not isinstance(jobs,list):
+            raise ValueError(f"Unable to convert {type(jobs)} to list")  
+
+        for job in jobs:
+            try:
+                self.jobs.add(JobRole.objects.get(pk=int(job)))
+            except JobRole.DoesNotExist:
+                logger.warning(f"Job ID {job} doesn't exists yet")
+
     def __str__(self):
         return f"{self.givenname} {self.surname}"
 
@@ -511,12 +559,11 @@ class EmployeeDesignation(models.Model):
 class EmployeePhone(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     label = models.CharField(max_length=50, default="Primary")
-    number = models.IntegerField()
-    countrycode = models.IntegerField(default=1)
-    primary = models.BooleanField()
+    number = models.CharField(max_length=20)
+    primary = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.number
+        return f"{self.label} {self.number}"
 
 
 class EmployeeAddress(models.Model):

@@ -1,4 +1,5 @@
 from typing import Union
+from string import ascii_letters,digits
 
 def int_or_str(val:str) -> Union[int,str]:
     """
@@ -19,3 +20,34 @@ def int_or_str(val:str) -> Union[int,str]:
         return int(val)
     except ValueError:
         return val
+
+def safe(val:str) -> str:
+    output = []
+    for l in val:
+        if l == ' ':
+            output.append('_')
+        elif l not in ascii_letters+digits+'_':
+            output.append('-')
+        else:
+            output.append(l.lower())
+    
+    return "".join(output)
+
+def decode(s) -> str:
+    if isinstance(s,bytes):
+        return s.decode('utf-8')
+    elif isinstance(s,str):
+        return s
+    else:
+        return str(s)
+
+def clean_phone(s:str) -> int:
+    output = []
+    for l in s:
+        if l in digits:
+            output.append(l)
+    
+    if len(output) == 10:
+        return "(%s%s%s) %s%s%s-%s%s%s%s" % tuple(output)
+    else:
+        return "".join(output)

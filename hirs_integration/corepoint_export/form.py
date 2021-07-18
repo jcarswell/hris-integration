@@ -15,11 +15,11 @@ class BaseExport:
         self.get_employees(delta)
         self.map = config.MapSettings()
 
-        self.export_file = config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) + self.CSV_FILENAME
-        self.callable = (config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) +
-                      config.get_config(config.CONFIG_CAT,config.CONFIG_EXEC))
+        self.export_file = config.get_config(config.CAT_CONFIG,config.CONFIG_PATH) + self.CSV_FILENAME
+        self.callable = (config.get_config(config.CAT_CONFIG,config.CONFIG_PATH) +
+                      config.get_config(config.CAT_CONFIG,config.CONFIG_EXEC))
 
-        if (not os.path.isdir(config.get_config(config.CONFIG_CAT,config.CONFIG_PATH)) or
+        if (not os.path.isdir(config.get_config(config.CAT_CONFIG,config.CONFIG_PATH)) or
             not os.path.isfile(self.callable)):
             logger.critical(f"Corepoint WebService Module is not availbe at {self.callable}")
             raise ConfigError("It appears that Corepoint web service module is not installed, please install it or check the config")
@@ -37,15 +37,15 @@ class BaseExport:
                           autoescape=select_autoescape(['XML']))
 
         attribs = {
-            'API_URL': config.get_config(config.CONFIG_CAT,config.CONFIG_URL),
-            'PUBLIC_KEY': config.get_config(config.CONFIG_CAT,config.CONFIG_PUB_KEY),
-            'CUSTOMER_TOKEN': config.get_config(config.CONFIG_CAT,config.CONFIG_TOKEN),
-            'CUSTOMER_ID': config.get_config(config.CONFIG_CAT,config.CONFIG_ID),
-            'EXPORT_PATH': config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) + self.CSV_FILENAME,
+            'API_URL': config.get_config(config.CAT_CONFIG,config.CONFIG_URL),
+            'PUBLIC_KEY': config.get_config(config.CAT_CONFIG,config.CONFIG_PUB_KEY),
+            'CUSTOMER_TOKEN': config.get_config(config.CAT_CONFIG,config.CONFIG_TOKEN),
+            'CUSTOMER_ID': config.get_config(config.CAT_CONFIG,config.CONFIG_ID),
+            'EXPORT_PATH': config.get_config(config.CAT_CONFIG,config.CONFIG_PATH) + self.CSV_FILENAME,
             'map_values': self.map
         }
-        path = (config.get_config(config.CONFIG_CAT,config.CONFIG_PATH) +
-                config.get_config(config.CONFIG_CAT,config.CONFIG_EXEC) + 
+        path = (config.get_config(config.CAT_CONFIG,config.CONFIG_PATH) +
+                config.get_config(config.CAT_CONFIG,config.CONFIG_EXEC) + 
                 '.config')
         
         j2 = env.get_template('CorePointWebServiceConnector.exe.config.j2')

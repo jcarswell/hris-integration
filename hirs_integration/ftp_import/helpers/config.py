@@ -3,27 +3,27 @@ import logging
 from distutils.util import strtobool
 from warnings import warn
 from hirs_admin.models import Setting
-
-__all__ = ('CsvSetting','get_fields','get_config','SERVER_CONFIG','CSV_CONFIG','FIELD_CONFIG')
+from .text_utils import safe
 
 logger = logging.getLogger("ftp_import.helpers")
 
 #CONSTANTS
-SERVER_CONFIG = 'server'
-CSV_CONFIG = 'csv_parse'
-FIELD_CONFIG = 'field_config'
-SETTINGS_GROUP = 'ftp_import_config'
-SETTINGS_CATAGORIES = (SERVER_CONFIG,CSV_CONFIG,FIELD_CONFIG)
-CONF_SERVER = 'server'
-CONF_PROTOCAL = 'protocal'
-CONF_PORT = 'port'
-CONF_USER = 'user'
-CONF_PASSWORD = 'password'
-CONF_SSH_KEY = 'ssh_key'
-CONF_PATH = 'base_path'
-CONG_FILE_EXP = 'file_name_expression'
+GROUP_CONFIG = 'ftp_import_config'
+GROUP_MAP = 'ftp_import_feild_mapping'
+CAT_SERVER = 'server'
+CAT_CSV = 'csv_parse'
+CAT_FIELD = 'field_config'
+CAT_EXPORT = 'export options'
+SETTINGS_CATAGORIES = (CAT_SERVER,CAT_CSV,CAT_FIELD,CAT_EXPORT)
+SERVER_SERVER = 'server'
+SERVER_PROTOCAL = 'protocal'
+SERVER_PORT = 'port'
+SERVER_USER = 'user'
+SERVER_PASSWORD = 'password'
+SERVER_SSH_KEY = 'ssh_key'
+SERVER_PATH = 'base_path'
+SERVER_FILE_EXP = 'file_name_expression'
 CSV_FIELD_SEP = 'field_sperator'
-CSV_TXT_QULIFY = 'csv_text_qualifier'
 CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
@@ -32,50 +32,61 @@ FIELD_JD_NAME = 'job_description_name_field'
 FIELD_JD_BU = 'job_description_business_unit_field'
 FIELD_BU_NAME = 'business_unit_name_field'
 FIELD_BU_PARENT = 'business_unit_parent_field'
-MAP_GROUP = 'ftp_import_feild_mapping'
+FIELD_STATUS = 'employee_status_field'
+EXPORT_ACTIVE = 'actve_status_field_value'
+EXPORT_LEAVE = 'leave_status_field_value'
+EXPORT_TERM = 'terminated_status_field_value'
 FIELD_ITEMS = ('import','map_to')
-DEFAULTS = {
+
+IMPORT_DEFAULTS = {
     'import': 'False',
     'map_to': ''
 }
+
 CONFIG_DEFAULTS = {
-    SERVER_CONFIG: {
-        CONF_SERVER: None,
-        CONF_PROTOCAL: 'sftp',
-        CONF_PORT: '22',
-        CONF_USER: None,
-        CONF_PASSWORD: [None,True],
-        CONF_SSH_KEY: [None,True],
-        CONF_PATH: '.',
-        CONG_FILE_EXP: '.*'
+    CAT_SERVER: {
+        SERVER_SERVER: None,
+        SERVER_PROTOCAL: 'sftp',
+        SERVER_PORT: '22',
+        SERVER_USER: None,
+        SERVER_PASSWORD: [None,True],
+        SERVER_SSH_KEY: [None,True],
+        SERVER_PATH: '.',
+        SERVER_FILE_EXP: '.*'
     },
-    CSV_CONFIG: {
+    CAT_CSV: {
         CSV_FIELD_SEP: ',',
-        CSV_TXT_QULIFY: '',
         CSV_FAIL_NOTIF: '',
         CSV_IMPORT_CLASS: 'ftp_import.forms',
         CSV_USE_EXP: 'True'
     },
-    FIELD_CONFIG: {
+    CAT_FIELD: {
         FIELD_LOC_NAME: None,
         FIELD_JD_NAME: None,
         FIELD_JD_BU: None,
         FIELD_BU_NAME: None,
-        FIELD_BU_PARENT: None
-        }
+        FIELD_BU_PARENT: None,
+        FIELD_STATUS: None,
+    },
+    CAT_EXPORT: {
+        EXPORT_ACTIVE: 'Active',
+        EXPORT_TERM: 'Terminated',
+        EXPORT_LEAVE: 'Leave',
+    },
 }
 
 
 class CsvSetting():
-    PATH_FORMAT = MAP_GROUP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+    PATH_FORMAT = GROUP_MAP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
     def __init__(self) -> None:
         self.fields = {}
         self.get()
+        self.get_field_config()
 
     def get(self) -> None:
         fields = {}
-        for row in Setting.o2.get_by_path(MAP_GROUP):
+        for row in Setting.o2.get_by_path(GROUP_MAP):
             if row.catagory not in fields:
                 fields[row.catagory] = {
                     "import": 'False',
@@ -85,16 +96,25 @@ class CsvSetting():
                 fields[row.catagory][row.item] = row.value
 
         for field in fields:
-            fields[field]['import'] = strtobool(fields[field]['import'])
-
-            if fields[field]['import'] and not fields[field]['map_to']:
-                logging.warning(f'field "{field}" enabled for import with out mapping')
-                fields[field]['import'] = False
-
             if field not in self.fields.keys():
                 self.fields[field] = {}
-            for key,val in fields[field].items():
-                self.fields[field][key] = val
+            
+            self.fields[field]['import'] = strtobool(fields[field]['import'])
+
+            if self.fields[field]['import'] and not fields[field]['map_to']:
+                logger.warning(f'field "{field}" enabled for import with out mapping')
+                self.fields[field]['import'] = False
+
+            self.fields[field]['map_to'] = fields[field]['map_to']
+
+    def get_field_config(self):
+        for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
+            field = safe(get_config(CAT_FIELD,field_conf))
+            logger.debug(f"Field {field} is setup as a configuration field")
+            if field and field in self.fields.keys():
+                logger.debug(f"Marking {field} for import")
+                self.fields[field]['import'] = True
+                self.fields[field]['map_to'] = self.fields[field]['map_to'] or ''
 
     def add(self, *args: str) -> None:
         if len(args) < 1:
@@ -108,7 +128,7 @@ class CsvSetting():
                 for item in FIELD_ITEMS:
                     s = Setting()
                     s.setting = self.PATH_FORMAT % (arg,item)
-                    s.value = DEFAULTS[item]
+                    s.value = IMPORT_DEFAULTS[item]
                     logger.info(f"Adding new field: {s}")
                     s.save()
 
@@ -145,10 +165,10 @@ class CsvSetting():
 
 def configuration_fixures():
     def add_fixture(catagory,item,value):
-        PATH = SETTINGS_GROUP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
         hidden = False
-        
+
         if type(value) == list and value[0] in [True,False]:
             hidden=value[0]
             value = value[1]
@@ -158,11 +178,10 @@ def configuration_fixures():
 
         obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
         if new:
-            obj.setting = PATH % (catagory,item)
             obj.hidden = hidden
             obj.value = value
             obj.save()
-        
+
         return new
 
     for key,val in CONFIG_DEFAULTS.items():
@@ -177,17 +196,16 @@ def get_fields() -> dict:
 def get_config(catagory:str ,item:str) -> str:
     if not catagory in SETTINGS_CATAGORIES:
         return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
-    
-    q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
+
+    q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
     if len(q) == 0 and item in CONFIG_DEFAULTS[catagory]:
         configuration_fixures()
-        q = Setting.o2.get_by_path(SETTINGS_GROUP,catagory,item)
+        q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
         if len(q) == 0:
             logger.fatal("Failed to install fixture data")
             raise SystemError(f"Installation of fixture data failed.")
     elif len(q) == 0:
-        logger.error(f"Setting {SETTINGS_GROUP}/{catagory}/{item} was requested but does not exist")
+        logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
         raise ValueError(f"Unable to find requested item {item}")
 
     return q[0].value
-        

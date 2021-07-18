@@ -6,10 +6,10 @@ from hirs_admin.models import Setting,Employee
 from datetime import datetime
 
 GROUP_CONFIG = 'corepoint_export'
-CONFIG_CAT = 'configuration'
-EXPORT_CAT = 'field_mappings'
-EMPLOYEE_CAT = 'export_config'
-CATAGORY_SETTINGS = (CONFIG_CAT,EXPORT_CAT)
+CAT_CONFIG = 'configuration'
+CAT_EXPORT = 'field_mappings'
+CAT_EMPLOYEE = 'export_config'
+CATAGORY_SETTINGS = (CAT_CONFIG,CAT_EXPORT,CAT_EMPLOYEE)
 CONFIG_MODEL_FORM = 'model_export_form'
 CONFIG_PUB_KEY = 'public_key'
 CONFIG_TOKEN = 'api_token'
@@ -33,7 +33,7 @@ COREPOINT_FIELDS = ['map_Employee_no','map_Full_Name','map_Last_Name','map_First
                     'map_PR_SYSTEM_CODE','map_SENIORITY_RANK','map_COMPANY_SENIORITY_RANK']
 
 CONFIG_DEFAULTS = {
-    CONFIG_CAT: {
+    CAT_CONFIG: {
         CONFIG_MODEL_FORM: 'corepoint_export.form',
         CONFIG_PUB_KEY: ['',True],
         CONFIG_TOKEN: ['',True],
@@ -43,11 +43,11 @@ CONFIG_DEFAULTS = {
         CONFIG_EXEC: 'CorePointWebServiceConnector.exe',
         CONFIG_LAST_SYNC: '1999-01-01 00:00'
     },
-    EMPLOYEE_CAT: {
+    CAT_EMPLOYEE: {
         EMPLOYEE_EMAIL_DOMAIN: 'example.com',
         EMPLOYEE_SUPER_DESIGNATIONS: '([sS]upervisor|[lL]ead|[Mm]anager|[dD]irector|[vV]Vice [Pp]resident|[Vv][Pp]|[Cc][Ee][Oo])'
     },
-    EXPORT_CAT: {
+    CAT_EXPORT: {
         'map_Employee_no': 'id',
         'map_Full_Name': None,
         'map_Last_Name': 'lastname',
@@ -69,7 +69,7 @@ CONFIG_DEFAULTS = {
         'map_SENIORITY_DATE': None,
         'map_COMPANY_SENIORITY_DATE': None,
         'map_STATUS_ID': 'status',
-        'map_EMPLOYEE_TYPE': 'employeetype',
+        'map_EMPLOYEE_TYPE': 'employeetype ',
         'map_EMAIL_ADDR': 'email',
         'map_ACTIVE_IND': None,
         'map_SIN': None,
@@ -151,7 +151,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def email(self):
-        return f"{self.email_alias}@{get_config(CONFIG_CAT,EMPLOYEE_EMAIL_DOMAIN)}"
+        return f"{self.email_alias}@{get_config(CAT_CONFIG,EMPLOYEE_EMAIL_DOMAIN)}"
 
     @property
     def bu_id(self):
@@ -159,11 +159,15 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def is_supervisor(self):
-        search = re.compile(get_config(EMPLOYEE_CAT,EMPLOYEE_SUPER_DESIGNATIONS))
+        search = re.compile(get_config(CAT_EMPLOYEE,EMPLOYEE_SUPER_DESIGNATIONS))
         if search.search(self.title):
             return True
         else:
             return False
+
+    @property
+    def employeetype(self):
+        return self.__qs_emp.type
 
 class MapSettings(dict):
     def __init__(self,) -> None:
@@ -171,7 +175,7 @@ class MapSettings(dict):
         self.get_config()
 
     def get_config(self):
-        for row in Setting.o2.get_by_path(CONFIG_CAT,EXPORT_CAT):
+        for row in Setting.o2.get_by_path(GROUP_CONFIG,CAT_EXPORT):
             self[row.item] = row.value
 
 def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManager]:
@@ -191,7 +195,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     output = []
     
     if delta:
-        lastsync = get_config(CONFIG_CAT,CONFIG_LAST_SYNC)
+        lastsync = get_config(CAT_CONFIG,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
         ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
         emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
@@ -208,5 +212,6 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     return output
 
 def set_last_run():
-    ls = Setting.o2.get_from_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
-    ls.value = str(datetime.utcnow())
+    ls = Setting.o2.get_by_path(GROUP_CONFIG,CAT_CONFIG,CONFIG_LAST_SYNC)[0]
+    ls.value = str(datetime.utcnow()).split('.')[0]
+    ls.save()
