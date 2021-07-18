@@ -328,6 +328,7 @@ class Employee(models.Model):
     start_date = models.DateField(default=datetime.utcnow)
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
+    type = models.CharField(max_length=64,null=True,blank=True)
     _username = models.CharField(max_length=64)
     primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
