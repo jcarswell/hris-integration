@@ -1,100 +1,74 @@
 import logging
 
-from typing import Union
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
                                WordList, Employee, EmployeeAddress, EmployeePhone,
                                EmployeeOverrides, set_upn)
-from hirs_admin import forms
-from django.utils.datastructures import MultiValueDict
+from django.db.utils import IntegrityError
+from django.db.models import Q
 from distutils.util import strtobool
 
 from .helpers import config
 from .exceptions import ObjectCreationError
-from .helpers.text_utils import int_or_str
+from .helpers.text_utils import int_or_str,clean_phone
 
 __all__ = ('form')
 
 logger = logging.getLogger('ftp_import.EmployeeForm')
-
-def get_fields(*args,exclude=None) -> list:
-    output = []
-    if not exclude:
-        exclude = []
-
-    for arg in args:
-        if hasattr(arg,'_meta'):
-            for f in arg._meta.fields:
-                if not f.name in exclude:
-                    output.append(f.name)
-
-    return output
 
 def get_pk(model) -> str:
     for f in model._meta.fields:
         if f.primary_key:
             return f.name
 
-class EmployeeForm():
-    def __init__(self,fields_config:list, **kwargs) -> None:
-        self.employee = forms.Employee
-        self.phone = forms.EmployeePhone
-        self.address = forms.EmployeeAddress
+class BaseImport():
+    def __init__(self,field_config:list, **kwargs) -> None:
         self.kwargs = kwargs
-        self._feild_config = fields_config
+        self.field_config = field_config
         self.expand = strtobool(config.get_config(config.CAT_CSV,config.CSV_USE_EXP))
-        
-        #FIXME: Should get fields from from note model
-        fields = get_fields(Employee,EmployeePhone,EmployeeAddress,exclude="employee")
-        
-        data = MultiValueDict()
-        
+
         emp_id_field = get_pk(Employee)
-        employee_id_field = self._get_feild_name(emp_id_field)
+        employee_id_field = self.get_field_name(emp_id_field)
+
         if employee_id_field == None or employee_id_field not in kwargs:
             logger.fatal("Row data does not contain an employee id field mapping")
             raise ValueError("emp_id is missing from fields, can not continue")
+        else:
+            self.employee_id = int_or_str(kwargs[employee_id_field])
         
-        employee,self.new = Employee.objects.get_or_create(pk=int_or_str(kwargs[employee_id_field]))
-        #logger.debug(kwargs)
-        if self.new and 'employee_status' in kwargs and kwargs['employee_status'] == 'TER':
+        self.employee,self.new = Employee.objects.get_or_create(pk=self.employee_id)
+
+        self._set_status()
+
+        if self.new and self.status_field and kwargs[self.status_field] == 'terminated':
             logger.debug("Employee is doesn't exists and is already terminated not importing")
             self.save_user = False
-            employee.delete()
         else:
             self.save_user = True
-            for field in fields_config:
-                if field and field['map_to'] in fields and field['import']:
-                    if field['map_to'] == 'location':
-                        self._location_check(int_or_str(kwargs[field['field']]))                
-                    if field['map_to'] in ['primary_job']:
-                        self._jobs_check(int_or_str(kwargs[field['field']]))
-                    if field['map_to'] == emp_id_field:
-                        data['employee'] = int_or_str(kwargs[field['field']])
-                        self.employee_id = int_or_str(kwargs[field['field']])
 
-                    try:
-                        data[field['map_to']] = int_or_str(kwargs[field['field']])
-                    except KeyError:
-                        pass
+    def _set_status(self):
+        self.status_field = config.get_config(config.CAT_FIELD,config.FIELD_STATUS)
+        status_term = config.get_config(config.CAT_EXPORT,config.EXPORT_TERM)
+        status_act = config.get_config(config.CAT_EXPORT,config.EXPORT_ACTIVE)
+        status_leave = config.get_config(config.CAT_EXPORT,config.EXPORT_LEAVE)
+        
+        logger.debug(f"teminated: '{status_term}', active:'{status_act}, leave:'{status_leave}'")
 
-            if 'employee_status' in kwargs:
-                logger.debug(f"State is {kwargs['employee_status']}")
-                if kwargs['employee_status'] == 'AC':
-                    field['state'] = True
-                elif kwargs['employee_status'] == 'L':
-                    field['state'] = True
-                    field['leave'] = True
-                else:
-                    field['state'] = True
-                    field['leave'] = False
-            else:
-                logger.debug("missing employee status setting to leave")
-                field['state'] = True
-                field['leave'] = True                
+        if not self.status_field:
+            self.status_field = self.get_field_name('status')
 
-            self.employee = forms.Employee(data,instance=employee)
-            self.address = forms.EmployeeAddress(data)
-            self.phone = forms.EmployeePhone(data)
+        logger.debug(f"status field is {self.status_field}")
+
+        if (self.status_field and
+                self.status_field in self.kwargs and
+                self.kwargs[self.status_field] in [status_leave,status_act,status_term]):
+            logger.debug(f"Source status field is {self.kwargs[self.status_field]}")
+            if self.kwargs[self.status_field].lower() == status_term.lower():
+                self.kwargs[self.status_field] = 'termintated'
+            elif self.kwargs[self.status_field].lower() == status_act.lower():
+                self.kwargs[self.status_field] = 'active'
+            elif status_leave and self.kwargs[self.status_field].lower() == status_leave.lower():
+                self.kwargs[self.status_field] = 'leave'
+            logger.debug(f"revised status field is {self.kwargs[self.status_field]}")
 
     def _expand(self,data:str) -> str:
         if not self.expand:
@@ -120,7 +94,7 @@ class EmployeeForm():
         logger.debug(f"Expanded Value is {' '.join(output)}")
         return " ".join(output)
 
-    def _location_check(self,data):
+    def location_check(self,data):
         loc,new = Location.objects.get_or_create(pk=data)
         loc_desc = config.get_config(config.CAT_FIELD,config.FIELD_LOC_NAME)
 
@@ -133,10 +107,15 @@ class EmployeeForm():
             loc.bld_id = data
             loc.name = self._expand(self.kwargs[loc_desc])
             loc.save()
-            
-            logger.info(f"Created Location {str(loc)}")
 
-    def _jobs_check(self,data:int) -> None:
+            logger.info(f"Created Location {str(loc)}")
+            return True
+        elif not new:
+            return True
+
+        return False
+
+    def jobs_check(self,data:int) -> bool:
         """
         Check if a Job description exists, if it doesn't create it.
 
@@ -160,7 +139,7 @@ class EmployeeForm():
 
             if bu_id in self.kwargs:
                 try:
-                    self._business_unit_check(self.kwargs[bu_id])
+                    self.business_unit_check(self.kwargs[bu_id])
                     job.bu = BusinessUnit.objects.get(pk=self.kwargs[bu_id])
                 except ObjectCreationError:
                     logger.warning(f"Failed to create business unit for JobRole {data}")
@@ -169,11 +148,15 @@ class EmployeeForm():
             except Exception as e:
                 logger.exception(e)
             logger.info(f"Created Job {str(job)}")
-        else:
+            return True
+        elif not new:
             logger.debug(f"Job Role Exists {job}")
+            return True
+
+        return False
 
     @staticmethod
-    def _business_unit_exists(data:int) -> bool:
+    def business_unit_exists(data:int) -> bool:
         """
         Check if the business unit exists
         Args:
@@ -184,8 +167,7 @@ class EmployeeForm():
         """
         return BusinessUnit.objects.filter(pk=data).exists()
 
-
-    def _business_unit_check(self,data:int) -> None:
+    def business_unit_check(self,data:int) -> bool:
         """
         Check if the Business unit exists, if it doesn't create it.
 
@@ -207,12 +189,9 @@ class EmployeeForm():
             if bu_parent_field and bu_parent_field in self.kwargs:
                 bu_parent = self.kwargs[bu_parent_field]
             else:
-                if str(data)[2:3] == '00':
-                    bu_parent = int(str(data)[0] + '000')
-                elif str(data)[3] == '0':
-                    bu_parent = int(str(data)[0:2] + '0')
-                    
-            if not self._business_unit_exists(bu_parent):
+                bu_parent = None
+
+            if bu_parent and not self.business_unit_exists(bu_parent):
                 bu_parent = None
                 logger.warning(f"Business Unit parent id {bu_parent} does not exist for {data}")
 
@@ -221,74 +200,233 @@ class EmployeeForm():
             bu.parent = BusinessUnit.objects.get(pk=bu_parent)
             bu.save()
             logger.info(f"Created Business Unit {str(bu)}")
-        else:
+            return True
+        elif not new:
             logger.debug(f"Business Unit Exists")
+            return True
 
-    def _get_feild_name(self,map_val:str) -> Union[str,None]:
-        """
-        Get the field name based on the map to value 
-
-        Args:
-            map_val (str): the map to value to look up
-
-        Returns:
-            str: the field name or None if it doesn't exist
-        """
-        for field in self._feild_config:
-            if field and field['map_to'] == map_val:
-                return field['field']
-        
-        return None
+        return False
 
     def save(self):
         """
-        Save the data to the database using the native form methods
+        This method must be defined in a sub class
 
         Raises:
             ValueError: Raised from the ValueError thrown by the form.
         """
-        if not self.save_user:
-            logger.debug("Not Adding an already terminated employee")
-            return
 
-        logger.debug(f"Saving Employee {self.employee_id}")
-        try:
-            if self.employee.is_valid():
-                logger.debug(f"employee is valid saving")
-                self.employee.save()
-                emp = Employee.objects.get(pk=self.employee_id)
-                emp.status = self.kwargs['employee_status']
-                emp.save()
-                overrides,new = EmployeeOverrides.objects.get_or_create(employee=emp)
-                set_upn(overrides)
-                overrides.save()
-            else:
-                logger.error(f"Failed to save form errors are:\n\t\t{self.employee.errors}")
-                raise ValueError("Failed to save employee")
-        except ValueError as e:
-            logger.fatal(f"Faild to save Employee")
-            raise ValueError from e
-        
+    def post_save(self):
         if self.new:
             pending = EmployeePending()
             pending.employee = Employee.objects.get(pk=int_or_str(self.employee_id))
+
+    def get_map_to(self,key:str) -> str:
+        """
+        Get the map value based on the field value 
+
+        Args:
+            key (str): the field value to look up
+
+        Returns:
+            str: the map to field or an empty string
+        """
+        for field in self.field_config:
+            if field['field'] == key:
+                return field['map_to']
+
+        return ''
+
+    def get_field_name(self,key:str) -> str:
+        """
+        Get the field name based on the map to value 
+
+        Args:
+            key (str): the map to value to look up
+
+        Returns:
+            str: the field name or an empty string
+        """
+        for field in self.field_config:
+            if field['map_to'] == key:
+                return field['field']
+
+        return ''
+
+
+class EmployeeForm(BaseImport):
+
+    def save_overrides(self):
+        eo,new = EmployeeOverrides.objects.get_or_create(employee=self.employee)
+        upn = eo.email_alias
+        set_upn(eo)
+        if new or upn != eo.email_alias:
+            eo.save()
+
+    def save_employee(self):
+        changed = False
+        for key,value in self.kwargs.items():
+            map_val = self.get_map_to(key)
+            if hasattr(self.employee,map_val):
+                logger.debug(f"setting {map_val}")
+                if map_val == 'manager':
+                    try:
+                        manager = Employee.objects.get(pk=int_or_str(value))
+                        if self.employee.manager != manager:
+                            self.employee.manager = manager
+                            changed = True
+                    except Employee.DoesNotExist:
+                        logger.warning(f"Manager {value} doesn't exist yet")
+
+                elif map_val == 'primary_job':
+                    if self.jobs_check(int_or_str(value)):
+                        primary_job = JobRole.objects.get(pk=int_or_str(value))
+                        if self.employee.primary_job != primary_job:
+                            self.employee.primary_job = primary_job
+                            changed = True
+                    else:
+                        logger.warning(f"Job {value} doesn't exist yet")
+                elif map_val == 'location':
+                    if self.location_check(int_or_str(value)):
+                        location = Location.objects.get(pk=int_or_str(value))
+                        if self.employee.location != location:
+                            self.employee.location = location
+                            changed = True
+                else:
+                    if getattr(self.employee,map_val) != value:
+                        setattr(self.employee,map_val,value)
+                        changed = True
         
-        try:
-            if self.phone.is_valid():
-                logger.debug(f"employee phone is valid, saving")
-                self.phone.save()
-            else:
-                logger.error(f"Failed to save form errors are:\n\t\t{self.phone.errors}")      
-        except ValueError as e:
-            logger.error("Faild to save Employee Phone error continuing. Error was:\n\t" + {e.message})
+        if changed:
+            self.employee.save()
+
+    def save_employee_new(self) -> bool:
+        for key,value in self.kwargs.items():
+            map_val = self.get_map_to(key)
+            if hasattr(self.employee,map_val):
+                if map_val == 'manager':
+                    try:
+                        self.employee.manager = Employee.objects.get(pk=int_or_str(value))
+                    except Employee.DoesNotExist:
+                        logger.warning(f"Manager {value} doesn't exist yet")
+
+                elif map_val == 'primary_job':
+                    if self.jobs_check(int_or_str(value)):
+                        self.employee.primary_job = JobRole.objects.get(pk=int_or_str(value))
+                    else:
+                        logger.warning(f"Job {value} doesn't exist yet")
+                elif map_val == 'location':
+                    if self.location_check(int_or_str(value)):
+                        self.employee.location = Location.objects.get(pk=int_or_str(value))
+                else:
+                    setattr(self.employee,self.get_map_to(key),value)
         
+        self.employee.save()
+
+    def _get_phone(self) -> EmployeePhone:
+        addrs = EmployeePhone.objects.filter(Q(employee=self.employee))
+        if len(addrs) > 1:
+            raise EmployeePhone.MultipleObjectsReturned
+        elif len(addrs) < 1:
+            addr = EmployeePhone()
+            addr.employee = self.employee
+            return addr
+        else:
+            return addrs[0]
+
+    def save_phone(self):
         try:
-            if self.address.is_valid():
-                logger.debug(f"employee address is valid, saving")
-                self.address.save()
-            else:
-                logger.error(f"Failed to save form errors are:\n\t\t{self.address.errors}")      
-        except ValueError as e:
-            logger.error("Faild to save Employee Address error continuing. Error was:\n\t" + {e.message})
+            phone = self._get_phone()
+        except EmployeePhone.MultipleObjectsReturned:
+            logger.warning("More than one phone number exists. Cowardly not doing anything")
+            return
+
+        for key,value in self.kwargs.items():
+            map_val = self.get_map_to(key)
+            if hasattr(phone,map_val) and value:
+                setattr(phone,map_val,clean_phone(value))
+                phone.label = key
+
+        if phone.number:
+            logger.debug(f"{phone.label} - {phone}")
+            phone.primary = False
+            phone.save()
+
+    def _get_address(self) -> EmployeeAddress:
+        addrs = EmployeeAddress.objects.filter(Q(employee=self.employee) & Q(label="Imported Value"))
+        if len(addrs) > 1:
+            raise EmployeeAddress.MultipleObjectsReturned
+        elif len(addrs) < 1:
+            addr = EmployeeAddress()
+            addr.employee = self.employee
+            addr.label = 'Imported Value'
+            return addr
+        else:
+            return addrs[0]
+
+    def save_address(self):
+        try:
+            address = self._get_address()
+        except EmployeeAddress.MultipleObjectsReturned:
+            logger.warning("More than one address exists. Cowardly not doing anything")
+
+        for key,value in self.kwargs.items():
+            map_val = self.get_map_to(key)
+            if hasattr(address,map_val):
+                if map_val[:6] == 'street':
+                    if 1 < len(value.split(',')) < 4:
+                        value = value.split(',')
+                        for x in range(len(value)):
+                            setattr(address,f"street{x}",value[x])
+                    else:
+                        setattr(address,map_val,value)
+
+                setattr(address,map_val,value)
+
+        if address.street1:
+            address.primary = False
+            address.save()
+
+    def save(self):
+        if self.save_user:
+            try:
+                if self.new:
+                    self.save_employee_new()
+                else:
+                    self.save_employee()
+            except IntegrityError as e:
+                logger.exception(f"Failed to save employee {self.employee_id}")
+                raise ValueError("Failed to save Employee object") from e
+
+            try:
+                self.save_overrides()
+            except IntegrityError as e:
+                logger.exception(f"Failed to save employee overrides for {self.employee_id}")
+            try:
+                self.save_address()
+            except IntegrityError as e:
+                logger.exception(f"Failed to save employee address for {self.employee_id}")
+            try:
+                self.save_phone()
+            except IntegrityError as e:
+                logger.exception(f"Failed to save employee phone for {self.employee_id}")
+        else:
+            logger.info(f"Not saving employee {self.employee_id}, as the don't exist are terminated")
+
+        #status_field = self.get_field_name('status')
+        #if status_field in self.kwargs:
+        #    logger.debug(f"State is {self.kwargs[status_field]}")
+        #    if self.kwargs[status_field] == 'AC':
+        #        self.employee.state = True
+        #    elif self.kwargs[status_field] == 'L':
+        #        self.employee.state = True
+        #        self.employee.leave = True
+        #    else:
+        #        self.employee.state = False
+        #        self.employee.leave = True
+        #else:
+        #    logger.debug("missing employee status setting to leave")
+        #    self.employee.state = True
+        #    self.employee.leave = True
+        
 
 form = EmployeeForm
