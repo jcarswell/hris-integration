@@ -259,10 +259,11 @@ class EmployeeForm(BaseImport):
 
     def save_overrides(self):
         eo,new = EmployeeOverrides.objects.get_or_create(employee=self.employee)
-        upn = eo.email_alias
+        if not new and eo._email_alias:
+            return
+
         set_upn(eo)
-        if new or upn != eo.email_alias:
-            eo.save()
+        eo.save()
 
     def save_employee(self):
         changed = False
