@@ -113,10 +113,8 @@ class CsvSetting():
             logger.debug(f"Field {field} is setup as a configuration field")
             if field and field in self.fields.keys():
                 logger.debug(f"Marking {field} for import")
-                self.fields[field] = {
-                    'import': True,
-                    'map_to': ''
-                }
+                self.fields[field]['import'] = True
+                self.fields[field]['map_to'] = self.fields[field]['map_to'] or ''
 
     def add(self, *args: str) -> None:
         if len(args) < 1:
