@@ -317,6 +317,11 @@ class Employee(models.Model):
     """ Employees Table """
     class Meta:
         db_table = 'employee'
+
+    STAT_TERM = 'terminated'
+    STAT_ACT = 'active'
+    STAT_LEA = 'leave'
+
     emp_id = models.IntegerField(primary_key=True)
     created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
@@ -374,16 +379,16 @@ class Employee(models.Model):
         if isinstance(new_status,(bool,int)):
             self.leave = not bool(new_status)
             self.state = bool(new_status)
-        elif isinstance(new_status,str) and new_status.lower() in ['active','leave','terminated']:
-            if new_status.lower() in ['leave']:
+        elif isinstance(new_status,str) and new_status.lower() in [self.STAT_ACT,self.STAT_LEA,self.STAT_TERM]:
+            if new_status.lower() == self.STAT_LEA:
                 logger.debug(f"Setting to Leave")
                 self.leave = True
                 self.state = True
-            elif new_status.lower() in ['terminated']:
+            elif new_status.lower() == self.STAT_TERM:
                 logger.debug(f"Setting to Terminated")
                 self.leave = True
                 self.state = False
-            else:
+            elif new_status.lower() == self.STAT_ACT:
                 logger.debug(f"Setting to Active")
                 self.leave = False
                 self.state = True
