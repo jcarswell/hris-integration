@@ -3,20 +3,11 @@ import string
 import importlib
 import csv
 
-from string import ascii_letters,digits
-
 from .helpers import config
+from .helpers.text_utils import safe,decode
 from .exceptions import ConfigurationError, ObjectCreationError
 
 logger = logging.getLogger('ftp_import.CSVImport')
-
-def decode(s) -> str:
-    if isinstance(s,bytes):
-        return s.decode('utf-8')
-    elif isinstance(s,str):
-        return s
-    else:
-        return str(s)
 
 class CsvImport():
     def __init__(self, file_handle) -> None:
@@ -44,7 +35,7 @@ class CsvImport():
         
         headers = decode(file_handle.readline())
         logger.debug(f"parsing potentail header row {headers[0:60]}")
-        #TODO: add text qualifier
+
         while headers[0] not in string.ascii_letters + string.digits:
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
             logger.debug(f"line: {headers}")
@@ -55,8 +46,8 @@ class CsvImport():
             logger.debug(f"parsing potentail header row {headers[0:60]}")
 
         new_fields = []
-        for key in csv.reader([headers],delimiter=self.sep):
-            key = self._safe(key)
+        for key in next(csv.reader([headers],delimiter=self.sep)):
+            key = safe(key)
             logger.debug(f"Processing header key: {key}")
             if key not in import_fields:
                 logger.info(f"Found new field in CSV File {key}")
@@ -81,33 +72,21 @@ class CsvImport():
 
     def parse_data(self, file_handle):
         self.import_error = []
-        data = csv.reader(file_handle, delimiter=self.sep)
-        for row in data:
-            row_data = {}
-            if len(row) != len(self.fields):
-                logger.error(f"Unable to parse employee {row[0]}")
-                self.import_error.append(row[0])
-            else:
-                for x in range(len(self.fields)):
-                    if self.fields[x] and self.fields[x]['import']:
-                        row_data[self.fields[x]['field']] = row[x]
-
-            self.data.append(row_data)
-
-    @staticmethod
-    def _safe(val:str) -> str:
-        output = []
-        for l in val:
-            if l == ' ':
-                output.append('_')
-            elif l not in ascii_letters+digits:
-                output.append('-')
-            else:
-                output.append(l.lower())
         
-        return "".join(output)
-        
-    
+        for row in file_handle:
+            for vals in csv.reader([decode(row)]):
+                row_data = {}
+                if len(vals) != len(self.fields):
+                    logger.debug(f"Headers: {len(self.fields)} This row: {len(vals)}")
+                    logger.error(f"Unable to parse employee {vals[0]}")
+                    self.import_error.append(vals[0])
+                else:
+                    for x in range(len(self.fields)):
+                        if self.fields[x] and self.fields[x]['import']:
+                            row_data[self.fields[x]['field']] = vals[x]
+                    logger.debug(f"Parsed keys for row: {row_data.keys()}")
+                    self.data.append(row_data)
+
     def add_data(self):
         try:
             form_module = importlib.import_module(self.form)
@@ -123,7 +102,9 @@ class CsvImport():
         
         for row in self.data:
             try:
-                form(self.fields,**row).save()
+                f = form(self.fields,**row)
+                f.save()
+                f.post_save()
             except ValueError:
                 logger.error("Failed to save Employee refere to previous logs for more details")
             except ObjectCreationError:
