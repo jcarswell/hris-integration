@@ -372,7 +372,7 @@ class Employee(models.Model):
         if isinstance(new_status,(bool,int)):
             self.leave = not bool(new_status)
             self.state = bool(new_status)
-        elif isinstance(new_status,str) and new_status.lower in ['ac','ter','l','active','leave','terminated']:
+        elif isinstance(new_status,str) and new_status.lower() in ['ac','ter','l','active','leave','terminated']:
             if new_status.lower() in ['l','leave']:
                 self.leave = True
                 self.state = True
