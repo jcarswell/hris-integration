@@ -367,11 +367,11 @@ class Employee(models.Model):
     @property
     def status(self):
         if self.state and self.leave:
-            return "Leave"
+            return self.STAT_LEA
         elif self.state:
-            return "Active"
+            return self.STAT_ACT
         else:
-            return "Terminated"
+            return self.STAT_TERM
 
     @status.setter
     def status(self,new_status):
