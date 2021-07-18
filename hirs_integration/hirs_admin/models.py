@@ -554,12 +554,11 @@ class EmployeeDesignation(models.Model):
 class EmployeePhone(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     label = models.CharField(max_length=50, default="Primary")
-    number = models.IntegerField()
-    countrycode = models.IntegerField(default=1)
-    primary = models.BooleanField()
+    number = models.CharField(max_length=20)
+    primary = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.number
+        return f"{self.label} {self.number}"
 
 
 class EmployeeAddress(models.Model):
