@@ -110,25 +110,26 @@ def get_config(catagory:str ,item:str) -> str:
 
 
 class EmployeeManager:
-    def __init__(self,id:int,emp_object:Employee =None) -> None:
-        if emp_object and emp_object.emp_id == id:
+    def __init__(self,_id:int,emp_object:Employee =None) -> None:
+        if emp_object and emp_object.emp_id == _id:
             self.__qs_emp = emp_object
         else:
             self.__qs_emp = None
 
-        self.get(id)
+        self.get(_id)
 
-    def get(self,id=None):
-        if id == None:
-            id = self.id
-            self.__qs_emp = Employee.objects.get(pk=id)
+    def get(self,_id=None):
+        if _id == None and not self.__qs_emp:
+            raise ValueError("ID is required when employee object is not set")
+        elif _id == None:
+            _id = self.id
         if not self.__qs_emp:
-            self.__qs_emp = Employee.objects.get(pk=id)
+            self.__qs_emp = Employee.objects.get(pk=_id)
 
-        self.__qs_over,_ = EmployeeOverrides.objects.get_or_create(employee=id)
-        self.__qs_desig = EmployeeDesignation.objects.filter(employee=id)
-        self.__qs_phone = EmployeePhone.objects.filter(employee=id)
-        self.__qs_addr = EmployeeAddress.objects.filter(employee=id)
+        self.__qs_over,_ = EmployeeOverrides.objects.get_or_create(employee=self.__qs_emp)
+        self.__qs_desig = EmployeeDesignation.objects.filter(employee=self.__qs_emp)
+        self.__qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
+        self.__qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
 
     def __str__(self) -> str:
         return self.username
