@@ -369,17 +369,21 @@ class Employee(models.Model):
 
     @status.setter
     def status(self,new_status):
+        logger.debug(f"setting new status {new_status}")
         if isinstance(new_status,(bool,int)):
             self.leave = not bool(new_status)
             self.state = bool(new_status)
-        elif isinstance(new_status,str) and new_status.lower() in ['ac','ter','l','active','leave','terminated']:
-            if new_status.lower() in ['l','leave']:
+        elif isinstance(new_status,str) and new_status.lower() in ['active','leave','terminated']:
+            if new_status.lower() in ['leave']:
+                logger.debug(f"Setting to Leave")
                 self.leave = True
                 self.state = True
-            elif new_status.lower() in ['ter','terminated']:
+            elif new_status.lower() in ['terminated']:
+                logger.debug(f"Setting to Terminated")
                 self.leave = True
                 self.state = False
             else:
+                logger.debug(f"Setting to Active")
                 self.leave = False
                 self.state = True
 
