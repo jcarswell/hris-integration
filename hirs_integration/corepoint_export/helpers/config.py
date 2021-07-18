@@ -151,7 +151,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def email(self):
-        return f"{self.email_alias}@{get_config(CAT_CONFIG,EMPLOYEE_EMAIL_DOMAIN)}"
+        return f"{self.email_alias}@{get_config(CAT_EMPLOYEE,EMPLOYEE_EMAIL_DOMAIN)}"
 
     @property
     def bu_id(self):
