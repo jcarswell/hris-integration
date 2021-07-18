@@ -73,7 +73,7 @@ class FTPClient:
         """
 
         logger.info(f"Connecting to {self.server}")
-        paramiko.util.log_to_file(str(conf.config.LOG_DIR) + '\\ftp_client.log')
+        paramiko.util.log_to_file(str(conf.settings.LOG_DIR) + '\\ftp_client.log')
         
         self.sock = paramiko.Transport((self.server, self.port))
         try:
