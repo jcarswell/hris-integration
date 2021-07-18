@@ -6,8 +6,12 @@ from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,EmployeeDesignation,
                                EmployeePending,Location,GroupMapping)
-from hirs_admin.models.Employee import STAT_LEA,STAT_TERM,STAT_ACT
 from datetime import datetime
+
+#CONST REFERANCES
+STAT_LEA = Employee.STAT_LEA
+STAT_TERM = Employee.STAT_TERM
+STAT_ACT = Employee.STAT_ACT
 
 GROUP_CONFIG = 'ad_export'
 CONFIG_CAT = 'configuration'
