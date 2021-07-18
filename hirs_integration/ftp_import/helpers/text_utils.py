@@ -40,3 +40,14 @@ def decode(s) -> str:
         return s
     else:
         return str(s)
+
+def clean_phone(s:str) -> int:
+    output = []
+    for l in s:
+        if l in digits:
+            output.append(l)
+    
+    if len(output) == 10:
+        return "(%s%s%s) %s%s%s-%s%s%s%s" % tuple(output)
+    else:
+        return "".join(output)
