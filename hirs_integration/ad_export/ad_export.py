@@ -210,7 +210,7 @@ class Export:
         
         if employee.status:
             user.enable()
-            if employee.employee.status == "Leave":
+            if employee.employee.status == config.STAT_LEA:
                 attribs['acsCard1State'] = False
                 attribs['acsCard2Status'] = False
                 user.clear_managedby()
