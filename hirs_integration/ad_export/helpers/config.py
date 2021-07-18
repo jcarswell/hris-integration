@@ -6,6 +6,7 @@ from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,EmployeeDesignation,
                                EmployeePending,Location,GroupMapping)
+from hirs_admin.models.Employee import STAT_LEA,STAT_TERM,STAT_ACT
 from datetime import datetime
 
 GROUP_CONFIG = 'ad_export'
@@ -187,9 +188,9 @@ class EmployeeManager:
     @property
     def status(self) -> bool:
         if strtobool(get_config(EMPLOYEE_CAT,EMPLOYEE_DISABLE_LEAVE)):
-            if self.__qs_emp.status != "Active":
+            if self.__qs_emp.status != STAT_ACT:
                 return False
-        elif self.__qs_emp.status == "Terminated":
+        elif self.__qs_emp.status == STAT_TERM:
             return False
         
         return True
