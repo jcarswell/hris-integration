@@ -139,12 +139,15 @@ def setup_ad_export():
             config.CONFIG_AD_USER: 'importadmin',
             config.CONFIF_AD_PASSWORD: 'quiuj5Aegh$ief3iXee1d',
             config.CONFIG_UPN: 'wch.net',
+            config.CONFIG_ROUTE_ADDRESS: 'thecarswells-ca.mail.onmicrosoft.com',
+            config.CONFIG_ENABLE_MAILBOXES: 'True',
+            config.CONFIG_MAILBOX_TYPE: 'remote',
             config.CONFIG_LAST_SYNC:'1999-01-01 00:00'
         },
         config.EMPLOYEE_CAT: {
             config.EMPLOYEE_DISABLE_LEAVE: 'False',
-            config.EMPLOYEE_LEAVE_GROUP_ADD: '\'active user\'',
-            config.EMPLOYEE_LEAVE_GROUP_DEL: '\'leave user\'',
+            config.EMPLOYEE_LEAVE_GROUP_ADD: 'active user',
+            config.EMPLOYEE_LEAVE_GROUP_DEL: 'leave user',
         },
         config.DEFAULTS_CAT: {
             config.DEFAULT_ORG: 'Constco',
