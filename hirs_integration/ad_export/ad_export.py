@@ -1,4 +1,6 @@
 import logging
+import subprocess
+import os
 
 from typing import Union
 from pyad import pyadexceptions
@@ -9,6 +11,11 @@ from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from base64 import b64encode
 from hirs_admin.models import set_username
+from distutils.util import strtobool
+from time import time
+from jinja2 import Environment,PackageLoader,select_autoescape
+from django.conf import settings
+from pywintypes import com_error
 
 from .helpers import config
 from ad_export.excpetions import ADResultsError,UserDoesNotExist
@@ -20,10 +27,12 @@ class Export:
     
     def __init__(self,full=False) -> None:
         self._delta = not full
-        self.get_employees()
         self.connect_ad()
+        logger.debug(f"Getting Employees - Delta is {self._delta}")
+        self.get_employees()
         
     def connect_ad(self):
+        return #Current bug in the impmentation that throws and error when the user id and password are set
         user = config.get_config(config.CONFIG_CAT, config.CONFIG_AD_USER)
         passwd = config.get_config(config.CONFIG_CAT, config.CONFIF_AD_PASSWORD)
 
@@ -31,58 +40,90 @@ class Export:
             set_defaults(username=user,password=passwd)
 
     def get_employees(self):
-        self.employees = config.get_employees(delta=self._delta)
+        if self.reprocess:
+            self.employees = config.get_pending()
+        else:
+            self.employees = config.get_employees(delta=self._delta)
 
     def run(self):
+        logger.debug("Starting Run")
         new_user=[]
-
-        for employee in self.employees:
-            self.check_user(employee)
-
-        self.get_employees()
+        mailboxes=[]
 
         for employee in self.employees:
             try:
-                ad_user = self.ad_user(employee.username,employee.id)
+                logger.debug(f"Checking user {employee} for conflicts")
+                self.check_user(employee)
+            except UserDoesNotExist:
+                logger.debug("No conflicts found")
+                #The user doesn't exist or more importantly a conflicting user
+
+        # Get a fresh copy of the employee database incase something has changed
+        self.get_employees()
+
+        for employee in self.employees:
+            logger.debug(f"getting user object for {employee}")
+            try:
+                user = self.ad_user(employee.username,employee.id)
+                logger.debug(f"Got existing AD User {user}")
             except ADResultsError:
-                ad_user = None
+                logger.debug("No user exists")
+                user = None
 
             ou = ADContainer.from_dn(employee.ou)
             
-            if ad_user:
+            if user:
                 try:
-                    if (int(ad_user.get_attribute('employeeNumber')[0]) == employee.id and 
-                            ad_user.parent_container != ou):
-                        ad_user.move(ou)
+                    if (int(user.get_attribute('employeeNumber')[0]) == employee.id and 
+                            user.parent_container != ou):
+                        logger.debug(f"Employee has changed OU's")
+                        try:
+                            user.move(ou)
+                        except com_error:
+                            #This is expected???
+                            pass
 
                 except IndexError:
-                    if ad_user.parent_container == ou:
-                        ad_user.update_attribute('employeeNumber',employee.id)
+                    logger.debug("Matched user with no EmployeeNumber")
+                    if user.parent_container == ou:
+                        user.update_attribute('employeeNumber',employee.id)
 
-            elif employee.status: 
-                ad_user = self.create_aduser(ou,employee)
+            elif employee.status: #Don't create a disabled user
+                logger.debug("Employee is active and doesn't have a user object")
+                user = self.create_aduser(ou,employee)
                 new_user.append(employee)
 
-            self.update_user(employee,ad_user)
-            self.update_groups(ad_user,employee.add_groups,employee.remove_groups)
+            if user:
+                logger.debug("Updating Attibs")
+                self.update_user(employee,user)
+                logger.debug("Updating Group Memberships")
+                self.update_groups(user,employee.add_groups,employee.remove_groups)
 
-            for user in new_user:
-                config.commit_employee(user.id)
+        for user in new_user:
+            logger.debug("Clearing pending flags")
+            config.commit_employee(user.id)
+            mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+        
+        if mailboxes:
+            self.setup_mailboxes(mailboxes)
+            
 
-            pending = config.get_pending()
+        config.set_last_run()
+        #pending = config.get_pending()
 
-            if len(pending) != 0 and not self.reprocess:
-                logger.error(f"{len(pending)} users are still pending after import. retrying")
-                self.employees = pending
-                self.reprocess = True
-                self.run()
-            elif self.reprocess:
-                logger.critical(f"There are still {len(pending)} pending: {pending}. Clearing out")
-                for user in pending:
-                    config.commit_employee(user.id)
+        #if len(pending) != 0 and not self.reprocess:
+        #    logger.error(f"{len(pending)} users are still pending after import. retrying")
+        #    self.employees = pending
+        #    self.reprocess = True
+        #    self.run()
+        #elif self.reprocess:
+        #    logger.critical(f"There are still {len(pending)} pending: {pending}. Clearing out")
+        #    for user in pending:
+        #        config.commit_employee(user.id)
 
     def create_aduser(self,ou,employee:config.EmployeeManager) -> ADUser:
-        ad_user = ou.create_user(f"{employee.firstname} {employee.lastname}",
+        logger.debug(f"Creating user")
+        user = ou.create_user(f"{employee.firstname} {employee.lastname}",
                                     employee.password,
                                     config.get_config(config.CONFIG_CAT,config.CONFIG_UPN),
                                     employee.status,
@@ -99,9 +140,10 @@ class Export:
                                         'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
                                         })
 
-        ad_user.force_pwd_change_on_login()
+        user.force_pwd_change_on_login()
+        logger.debug(f"Created AD Users {user}")
 
-        return ad_user
+        return user
 
     def ad_user(self,username:str,id:int =None) -> Union[ADUser,None]:
         """
@@ -126,7 +168,7 @@ class Export:
 
     def get_aduser_by_username(self,username:str) -> ADUser:
         ad = ADQuery()
-        ad.execute_query(attributes=["sAMAccontName","distinguishedName"], 
+        ad.execute_query(attributes=["sAMAccountName","distinguishedName"], 
                          where_clause="sAMAccountName='%s'"%username,
                          base_dn=config.base_dn())
         
@@ -179,8 +221,15 @@ class Export:
         else:
             return False
 
-        if adu.get_last_login():
-            employee.employee.clear_password(True)
+        try:
+            if adu.get_last_login():
+                employee.employee.clear_password(True)
+        except AttributeError:
+            #Bug in pyad, no typechecking
+            # pyad\pyadutils.py" line 71, in convert_datetime
+            #  high_part = int(adsi_time_com_obj.highpart) << 32
+            # adsi_time_com_obj is None if the user has never logged on
+            pass
 
         return True
 
@@ -197,25 +246,28 @@ class Export:
             'department': employee.bu,
             'title': employee.title
         }
-        
+
         if employee.photo:
             with open(employee.photo, 'rb') as photo:
                 attribs['thumbnailPhoto'] = b64encode(photo.read())
 
-        manager = self.get_aduser_by_id(employee.manager.id)
-        if manager:
-            attribs['managedBy'] = manager.dn
-        else:
-            user.clear_managedby()
-        
+        try:
+            attribs['manager'] = self.get_aduser_by_id(employee.manager.id).dn
+        except AttributeError:
+            #employee.manager.id is None when no manager exists but employee.manager is not none
+            user.clear_attribute('manager')
+        except ADResultsError:
+            #Clear the manager to be safe, this is likely happening as the manager hasn't been created yet
+            user.clear_attribute('manager')
+
         if employee.status:
             user.enable()
             if employee.employee.status == config.STAT_LEA:
                 attribs['acsCard1State'] = False
                 attribs['acsCard2Status'] = False
-                user.clear_managedby()
-                if 'managedBy' in attribs.keys():
-                    attribs.pop('managedBy')
+                user.clear_attribute('manager')
+                if 'manager' in attribs.keys():
+                    attribs.pop('manager')
             else:
                 attribs['acsCard1State'] = True
                 attribs['acsCard2Status'] = True
@@ -224,32 +276,51 @@ class Export:
             user.disable()
             attribs['acsCard1State'] = False
             attribs['acsCard2Status'] = False
-            user.clear_managedby()
+            user.clear_attribute('manager')
 
-        user.update_attributes(attribs)
+        logger.debug(f"Setting Attributes for {user}: {attribs}")
+        for k,v in attribs.items():
+            try:
+                user.update_attribute(k,v)
+            except com_error:
+                logger.error(f"failed to set attribute {k} to {v}")
+                
 
-    def update_groups(self,user,add,remove):
+    @staticmethod
+    def update_groups(user,add,remove):
+        logger.debug(f"Adding groups: {add}")
         for group in add:
             g = ADGroup.from_dn(group)
-            g.add_members(user)
-        
+            try:
+                g.add_members(user)
+            except Exception:
+                logger.exception(f"failed to add {g} for {user}")
+
+        logger.debug(f"Removing Groups: {remove}")
         for group in remove:
             g = ADGroup.from_dn(group)
-            g.remove_members(user)
+            try:
+                g.remove_members(user)
+            except Exception:
+                pass
 
     def fix_username(self,employee_source:config.EmployeeManager, user:str) -> bool:
+        logger.debug("Attempting to fix username in database to match AD")
         query = ADQuery()
         employees = config.fuzzy_employee(user)
 
         if len(employees) == 0:
+            logger.debug("No conflict found!")
             set_username(employee_source.employee,user)
+            employee_source.employee.save()
             return True
 
         for employee in employees:
             if employee.username == user and employee.id == employee_source.id:
-                logger.info(f"fix_username for {id} already correct in database")
+                logger.debug(f"fix_username for {id} already correct in database")
                 return True
             elif employee.username == user:
+                logger.info(f"found conflicting username with {employee.id}")
                 try:
                     prefix = int(employee.username[-1]) + 1
                     luser =  employee.username[:-1]
@@ -263,11 +334,51 @@ class Export:
                                         where_clause="sAMAccountName='%s'"% lpuser)
 
                     if query.get_row_count() == 0:
+                        logger.info(f"{lpuser} is clear in AD trying to set")
                         return self.fix_username(employee,lpuser)
 
                     prefix = prefix + 1
             else:
+                logger.debug(f"Trying {user} for {employee_source.id}")
                 set_username(employee_source.employee,user)
                 if employee_source.username != user:
                     return False
+                employee_source.employee.save()
                 return True
+
+    @staticmethod
+    def enable_mailbox(username,email_alias):
+        route_address = config.get_config(config.CONFIG_CAT,config.CONFIG_ROUTE_ADDRESS)
+        type = config.get_config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
+        if type.lower() == 'local':
+            return f"Enable-Mailbox {username}"
+        elif type.lower() == 'remote':
+            return f"Enable-RemoteMailbox {username} -RemoteRoutingAddress {email_alias}@{route_address}"
+        else:
+            logger.warning(f"mailbox type {type} is not suppoted use either remote or local")
+            return ''
+
+    @staticmethod
+    def setup_mailboxes(mailboxes):
+        if not strtobool(config.get_config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES)):
+            return
+
+        logger.debug('Setting up Jinja 2 Environment')
+        env = Environment(loader=PackageLoader('ad_export','templates'),
+                          autoescape=False)
+
+        path = str(settings.BASE_DIR) +'\\mailbox_scripts'
+        logger.debug(f'Making sure {path} exists')
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+
+        path = path + '\\enable-mailboxes_' + str(time()).split('.')[0] + '.ps1'
+        logger.debug(f'Mailbox script saving to {path}')
+        j2 = env.get_template('Enable-Mailboxes.ps1.j2')
+
+        with open(path,'w') as f:
+            f.write(j2.render(mailboxes=mailboxes))
+
+        logger.debug("Running script")
+        subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path])
