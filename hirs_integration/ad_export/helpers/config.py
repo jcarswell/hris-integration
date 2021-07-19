@@ -7,6 +7,7 @@ from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,EmployeeDesignation,
                                EmployeePending,Location,GroupMapping)
 from datetime import datetime
+from pyad.adgroup import ADGroup
 
 #CONST REFERANCES
 STAT_LEA = Employee.STAT_LEA
@@ -35,6 +36,9 @@ CONFIG_LAST_SYNC = 'last_sycronization_run'
 CONFIG_AD_USER = 'ad_export_user'
 CONFIF_AD_PASSWORD = 'ad_export_password'
 CONFIG_UPN = 'ad_upn_suffix'
+CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
+CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
+CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
 
 CONFIG_DEFAULTS = {
     CONFIG_CAT: {
@@ -42,6 +46,9 @@ CONFIG_DEFAULTS = {
         CONFIG_AD_USER: '',
         CONFIF_AD_PASSWORD: ['',True],
         CONFIG_UPN: '',
+        CONFIG_ROUTE_ADDRESS: 'you.mail.onmicrosoft.com',
+        CONFIG_ENABLE_MAILBOXES: 'False',
+        CONFIG_MAILBOX_TYPE: 'local',
         CONFIG_LAST_SYNC:'1999-01-01 00:00'
     },
     EMPLOYEE_CAT: {
@@ -210,14 +217,15 @@ class EmployeeManager:
 
     @property
     def add_groups(self) -> list[str]:
-        output = self._leave_groups_add
+        output = self._leave_groups_add()
 
         gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)|
                                             Q(bu=self.__qs_emp.primary_job.bu.pk)|
                                             Q(loc=self.__qs_over.location.pk))
 
         for group in gmaps:
-            output.append(group.dn)
+            if group.dn not in output:
+                output.append(group.dn)
 
         return output
 
@@ -231,61 +239,49 @@ class EmployeeManager:
 
     @property
     def remove_groups(self) -> list[str]:
-        return self._leave_groups_del
-    
-    def _leave_groups_add(self) -> list:
+        return self._leave_groups_del()
+
+    @staticmethod
+    def parse_group(groups:str):
         output = []
         ou = []
+        for group in groups.split(','):
+            if group[0:2].lower() == "cn=" and ou:
+                output.append(','.join(ou))
+                ou = []
+            elif '=' in group:
+                ou.append(group)
+            else:
+                if ou:
+                    output.append(','.join(ou))
+                    ou = []
+                try:
+                    g = ADGroup.from_cn(group)
+                    output.append(g.dn)
+                except Exception:
+                    #not sure what the exception will be
+                    logger.warning(f"{group} doesn't appear to be valid") 
+
+        return output
+
+    def _leave_groups_add(self) -> list:
+        output = []
 
         if self.__qs_emp.status == "Leave":
-            for group in get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD).split(','):
-                if group[0:2].lower() == "cn=" and ou:
-                    output.append(','.join(ou))
-                    ou = []
-
-                if '=' in group:
-                    ou.append(group)
-                else:
-                    logger.warning(f"got {group} in {EMPLOYEE_LEAVE_GROUP_ADD} which does not appear to be part of a valid dn string")
+            output = output + self.parse_group(get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD))
 
         elif self.__qs_emp.status == "Active":
-            for group in get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL).split(','):
-                if group[0:2].lower() == "cn=" and ou:
-                    output.append(','.join(ou))
-                    ou = []
-
-                if '=' in group:
-                    ou.append(group)
-                else:
-                    logger.warning(f"got {group} in {EMPLOYEE_LEAVE_GROUP_DEL} which does not appear to be part of a valid dn string")
+            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL)
 
         return output
             
     def _leave_groups_del(self) -> list:
         output = []
-        ou = []
 
         if self.__qs_emp.status == "Leave":
-            for group in get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL).split(','):
-                if group[0:2].lower() == "cn=" and ou:
-                    output.append(','.join(ou))
-                    ou = []
-
-                if '=' in group:
-                    ou.append(group)
-                else:
-                    logger.warning(f"got {group} in {EMPLOYEE_LEAVE_GROUP_DEL} which does not appear to be part of a valid dn string")
-
+            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL)
         elif self.__qs_emp.status == "Active":
-            for group in get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD).split(','):
-                if group[0:2].lower() == "cn=" and ou:
-                    output.append(','.join(ou))
-                    ou = []
-
-                if '=' in group:
-                    ou.append(group)
-                else:
-                    logger.warning(f"got {group} in {EMPLOYEE_LEAVE_GROUP_ADD} which does not appear to be part of a valid dn string")
+            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD)
 
         return output
 
@@ -332,13 +328,13 @@ def commit_employee(id:int) -> bool:
 def get_pending() -> list[EmployeeManager]:
     output = []
     for employee in EmployeePending.objects.all():
-        output.append(EmployeeManager(employee.employee))
+        output.append(EmployeeManager(employee.employee.pk,employee.employee))
 
     return output
 
 def base_dn() -> str:
     from hirs_admin.helpers import config
-    return config.get_config(config.GROUP_CONFIG,config.BASE_DN)
+    return config.get_config(config.CONFIG_CAT,config.BASE_DN)
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
     users = Employee.objects.filter(_username__startswith=username)

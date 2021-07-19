@@ -390,6 +390,7 @@ venv/
 
 # Log Files
 *.log
+*.log.[0-9]*
 
 # Sphinx documentation
 docs/_build/
@@ -399,3 +400,6 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+#project folders and files
+mailbox_scripts/
