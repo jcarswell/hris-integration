@@ -305,7 +305,7 @@ class Export:
         output.append(f"Set-ADUser {employee.username} -Title '{employee.title}'\n")
 
         try:
-            _ = adu.get_attribute('lastLogon')[0]
+            _ = user.get_attribute('lastLogon')[0]
         except IndexError:
             output.append(f"Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring '{employee.password}' -AsPlainText -Force)")
 
