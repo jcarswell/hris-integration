@@ -140,7 +140,7 @@ def get_config(catagory:str ,item:str) -> str:
 class CPEmployeeManager(EmployeeManager):
     @property
     def status(self) -> bool:
-        if self.__qs_emp.status != "Active":
+        if self.employee.status != "Active":
             return False
 
         return True
@@ -155,7 +155,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def bu_id(self):
-        return self.__qs_emp.primary_job.bu.pk
+        return self.employee.primary_job.bu.pk
 
     @property
     def is_supervisor(self):
@@ -167,7 +167,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def employeetype(self):
-        return self.__qs_emp.type
+        return self.employee.type
 
 class MapSettings(dict):
     def __init__(self,) -> None:
