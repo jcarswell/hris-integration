@@ -264,6 +264,10 @@ class EmployeeManager:
 
         return output
 
+    @property
+    def upn(self) -> str:
+        return f'{self.email_alias}@{get_config(CONFIG_CAT,CONFIG_UPN)}'
+
     def _leave_groups_add(self) -> list:
         output = []
 
