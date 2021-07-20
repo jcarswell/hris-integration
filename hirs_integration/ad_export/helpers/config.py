@@ -314,7 +314,10 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
         #   or
         # if user status is not Terminated
         if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
-            output.append(EmployeeManager(employee.emp_id,employee))
+            try:
+                output.append(EmployeeManager(employee.emp_id,employee))
+            except Exception:
+                logger.error(f"Failed to get Employee {employee.emp_id}")
 
     return output
 
