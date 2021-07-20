@@ -48,7 +48,7 @@ class Export:
     def run(self):
         logger.debug("Starting Run")
         new_user=[]
-        mailboxes=[]
+        self.mailboxes=[]
 
         for employee in self.employees:
             try:
@@ -102,10 +102,10 @@ class Export:
         for user in new_user:
             logger.debug("Clearing pending flags")
             config.commit_employee(user.id)
-            mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+            self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
         
-        if mailboxes:
-            self.setup_mailboxes(mailboxes)
+        if self.mailboxes:
+            self.setup_mailboxes(self.mailboxes)
             
 
         config.set_last_run()
@@ -382,3 +382,11 @@ class Export:
 
         logger.debug("Running script")
         subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path])
+
+    def __del__(self):
+        if self.mailboxes:
+            try:
+                self.setup_mailboxes(self.mailboxes)
+            except Exception:
+                lines = '\n'.join(self.mailboxes)
+                logger.error(f"Failed to write out mailboxes pending, so here they are:\n{lines}")
