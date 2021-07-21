@@ -47,7 +47,10 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
             output += x
 
     logger.debug(f"validator username is {output} suffix is {suffix}")
-    return output + suffix
+    if suffix:
+        return output[:19] + suffix
+    else:
+        return output[:20]
 
 def upn_validator(first:str, last:str, suffix:str =None, allowed_char:list =None) -> str:
     """
