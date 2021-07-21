@@ -197,7 +197,7 @@ class Export:
             output.append(f"Set-ADUser {employee.username} -Clear manager\n")
 
         output.append("} catch {\n")
-        output.append(f"Write-Output Caught error creating user {employee.upn}\n")
+        output.append(f'Write-Output "Caught error creating user {employee.upn}"\n')
         output.append(f'Write-Host $_\n')
         output.append("}\n")
 
@@ -303,7 +303,7 @@ class Export:
         try:
             _ = user.get_attribute('lastLogon')[0]
         except IndexError:
-            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)')
+            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)\n')
 
 
 
