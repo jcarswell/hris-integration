@@ -63,7 +63,6 @@ class Export:
         self.get_employees()
 
         for employee in self.employees:
-            lines = []
             logger.debug(f"getting user object for {employee}")
             try:
                 user = self.ad_user(employee.upn,employee.id)
@@ -281,13 +280,10 @@ class Export:
             return False
 
         try:
-            _ = adu.get_attribute('lastLogon')[0]
-            employee.employee.clear_password(True)
+            if adu:
+                _ = adu.get_attribute('lastLogon')[0]
+                employee.employee.clear_password(True)
         except IndexError:
-            #Bug in pyad, no typechecking
-            # pyad\pyadutils.py" line 71, in convert_datetime
-            #  high_part = int(adsi_time_com_obj.highpart) << 32
-            # adsi_time_com_obj is None if the user has never logged on
             pass
 
         return True
