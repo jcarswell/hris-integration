@@ -140,7 +140,7 @@ def get_config(catagory:str ,item:str) -> str:
 class CPEmployeeManager(EmployeeManager):
     @property
     def status(self) -> bool:
-        if self.employee.status != "Active":
+        if self.employee.status != Employee.STAT_ACT:
             return False
 
         return True
