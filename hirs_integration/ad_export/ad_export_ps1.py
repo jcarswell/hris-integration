@@ -161,7 +161,7 @@ class Export:
         line.append(f'-Country "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)}"')
         line.append(f'-Title "{employee.title}"')
         line.append(f'-Department "{employee.bu}"')
-        line.append(f'-AccountPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)\n')
+        line.append(f'-AccountPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)')
         line.append('-ChangePasswordAtLogon $True')
         output.append(f"{' '.join(line)}\n")
         output.append(f'Add-ADGroupMember -Identity AllStaff -Member {employee.username}\n')
