@@ -71,35 +71,28 @@ class Export:
             except ADResultsError:
                 logger.debug("No user exists")
                 user = None
-
-            ou = ADContainer.from_dn(employee.ou)
             
             if user:
                 try:
                     _ = int(user.get_attribute('employeeNumber')[0])
                 except IndexError:
                     logger.debug("Matched user with no EmployeeNumber")
-                    if user.parent_container == ou:
-                        output.append(f"$aduser | Set-AdUser -EmployeeNumber {employee.id}")
+                    output.append(f"$aduser | Set-AdUser -EmployeeNumber {employee.id}\n")
                 output += self.update_user(employee,user)
 
             elif employee.status: #Don't create a disabled user
                 logger.debug("Employee is active and doesn't have a user object")
-                output += self.create_aduser(ou,employee)
-                config.commit_employee(user.id)
+                output += self.create_aduser(employee)
+                #config.commit_employee(employee.id)
                 self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
-
-        
-            output += lines
 
         path = str(settings.BASE_DIR) +'\\user_scripts'
         logger.debug(f'Making sure {path} exists')
         if not os.path.exists(path):
             os.mkdir(path)
 
-
         path = path + '\\enable-users_' + str(time()).split('.')[0] + '.ps1'
-        logger.debug(f'Mailbox script saving to {path}')
+        logger.debug(f'Enable users script saving to {path}')
 
         with open(path,'w') as f:
             f.writelines(output)
@@ -108,6 +101,9 @@ class Export:
             subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path])
         except Exception:
             logger.exception()
+        
+        if self.mailboxes:
+            self.setup_mailboxes(self.mailboxes)
 
         for employee in self.employees:
             try:
@@ -121,11 +117,11 @@ class Export:
                 logger.debug("Updating Group Memberships")
                 self.update_groups(user,employee.add_groups,employee.remove_groups)
 
-        for user in new_user:
-            logger.debug("Clearing pending flags")
-            config.commit_employee(user.id)
-            self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
-        
+        #for user in new_user:
+        #    logger.debug("Clearing pending flags")
+        #    config.commit_employee(user.id)
+        #    self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+
         if self.mailboxes:
             self.setup_mailboxes(self.mailboxes)
 
@@ -142,40 +138,42 @@ class Export:
         #    for user in pending:
         #        config.commit_employee(user.id)
 
-    def create_aduser(self,ou,employee:config.EmployeeManager) -> list:
+    def create_aduser(self,employee:config.EmployeeManager) -> list:
         output = ["try {\n"]
         logger.debug(f"Creating user")
         line = ["New-ADUser"]
-        line.append(f"-SamAccountName '{employee.username}'")
-        line.append(f"-UserPrincipalName '{employee.upn}'")
-        line.append(f"-Name '{employee.firstname} {employee.lastname}'")
-        line.append(f"-GivenName {employee.firstname}")
-        line.append(f"-Surname {employee.lastname}")
+        line.append(f'-SamAccountName "{employee.username}"')
+        line.append(f'-UserPrincipalName "{employee.upn}"')
+        line.append(f'-Name "{employee.firstname} {employee.lastname}"')
+        line.append(f'-GivenName "{employee.firstname}"')
+        line.append(f'-Surname "{employee.lastname}"')
         if employee.status:
-            line.append(f"-Enabled $True")
+            line.append(f'-Enabled $True')
         else:
-            line.append(f"-Enabled $False")
-        line.append(f"-EmployeeNumber {employee.id}")
-        line.append(f"-DisplayName '{employee.firstname} {employee.lastname}'")
-        line.append(f"-Path '{employee.ou}'")
-        line.append(f"-City '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY)}'")
-        line.append(f"-Company '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG)}'")
-        line.append(f"-State '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE)}'")
-        line.append(f"-StreetAddress '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET)}'")
-        line.append(f"-OfficePhone '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE)}")
-        line.append(f"-Country '{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)}'")
-        line.append(f"-Title '{employee.title}'")
-        line.append(f"-Department '{employee.bu}'")
-        line.append(f"-AccountPassword (convertto-securestring '{employee.password}' -AsPlainText -Force)")
-        line.append("-ChangePasswordAtLogon $True")
+            line.append(f'-Enabled $False')
+        line.append(f'-EmployeeNumber {employee.id}')
+        line.append(f'-DisplayName "{employee.firstname} {employee.lastname}"')
+        line.append(f'-Path "{employee.ou}"')
+        line.append(f'-City "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY)}"')
+        line.append(f'-Company "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG)}"')
+        line.append(f'-State "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE)}"')
+        line.append(f'-StreetAddress "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET)}"')
+        line.append(f'-OfficePhone "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE)}"')
+        line.append(f'-Country "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)}"')
+        line.append(f'-Title "{employee.title}"')
+        line.append(f'-Department "{employee.bu}"')
+        line.append(f'-AccountPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)\n')
+        line.append('-ChangePasswordAtLogon $True')
         output.append(f"{' '.join(line)}\n")
-        output.append(f"Add-ADGroupMember -Identity AllStaff -Member {employee.username}\n")
-        output.append(f"Add-ADGroupMember -Identity'O365 - O365 E1 Email' -Member {employee.username}\n")
-        output.append("Set-ADUser %s -Replace @{mailNickname='%s'}\n" % (employee.username,employee.email_alias))
-        output.append("Set-ADUser %s -Replace @{extensionAttribute1='%s'}\n" % (employee.username,employee.designations))
+        output.append(f'Add-ADGroupMember -Identity AllStaff -Member {employee.username}\n')
+        output.append(f'Add-ADGroupMember -Identity "O365 - O365 E1 Email" -Member {employee.username}\n')
+        output.append(f'Add-ADGroupMember -Identity "AccessControl - Users" -Member {employee.username}\n')
+        
+        output.append('Set-ADUser %s -Replace @{mailNickname="%s"}\n' % (employee.username,employee.email_alias))
+        output.append('Set-ADUser %s -Replace @{extensionAttribute1="%s"}\n' % (employee.username,employee.designations))
 
         if employee.photo:
-            output.append(f"$photo = [byte[]](Get-Content {employee.photo} -Encoding byte)\n")
+            output.append(f'$photo = [byte[]](Get-Content "{employee.photo}"" -Encoding byte)\n')
             output.append("Set-ADUser Crusoe -Replace @{thumbnailPhoto=$photo}\n")
 
         try:
@@ -189,7 +187,7 @@ class Export:
             if employee.employee.status == config.STAT_LEA:
                 output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
                 output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
-                output.append("Set-ADUser -Clear manager\n")
+                output.append(f"Set-ADUser {employee.username} -Clear manager\n")
             else:
                 output.append("Set-ADUser %s -Replace @{acsCard1State=$True}\n" % employee.username)
                 output.append("Set-ADUser %s -Replace @{acsCard2Status=$True}\n" % employee.username)
@@ -197,10 +195,11 @@ class Export:
         else:
             output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
             output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
-            output.append("Set-ADUser -Clear manager\n")
+            output.append(f"Set-ADUser {employee.username} -Clear manager\n")
 
         output.append("} catch {\n")
         output.append(f"Write-Output Caught error creating user {employee.upn}\n")
+        output.append(f'Write-Host $_\n')
         output.append("}\n")
 
         return output
@@ -295,25 +294,26 @@ class Export:
 
     def update_user(self,employee:config.EmployeeManager, user:ADUser):
         output = ["try {\n"]
-        output.append("Set-ADUser %s -Replace @{extensionAttribute1='%s'}\n" % (employee.username,employee.designations))
-        output.append(f"Set-ADUser {employee.username} -GivenName '{employee.firstname}'\n")
-        output.append(f"Set-ADUser {employee.username} -Surname '{employee.lastname}'\n")
-        output.append(f"Set-ADUser {employee.username} -DisplayName '{employee.firstname} {employee.lastname}'\n")
-        output.append(f"Set-ADUser {employee.username} -UserPrincipalName '{employee.upn}'\n")
-        output.append("Set-ADUser %s -Replace @{mailNickname='%s'}\n" % (employee.username,employee.email_alias))
-        output.append(f"Set-ADUser {employee.username} -Department '{employee.bu}'\n")
-        output.append(f"Set-ADUser {employee.username} -Title '{employee.title}'\n")
+        if employee.designations:
+            output.append("Set-ADUser %s -Replace @{extensionAttribute1='%s'}\n" % (employee.username,employee.designations))
+        output.append(f'Set-ADUser {employee.username} -GivenName "{employee.firstname}"\n')
+        output.append(f'Set-ADUser {employee.username} -Surname "{employee.lastname}"\n')
+        output.append(f'Set-ADUser {employee.username} -DisplayName "{employee.firstname} {employee.lastname}"\n')
+        output.append(f'Set-ADUser {employee.username} -UserPrincipalName "{employee.upn}"\n')
+        output.append('Set-ADUser %s -Replace @{mailNickname="%s"}\n' % (employee.username,employee.email_alias))
+        output.append(f'Set-ADUser {employee.username} -Department "{employee.bu}"\n')
+        output.append(f'Set-ADUser {employee.username} -Title "{employee.title}"\n')
 
         try:
             _ = user.get_attribute('lastLogon')[0]
         except IndexError:
-            output.append(f"Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring '{employee.password}' -AsPlainText -Force)")
+            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)')
 
 
 
         if employee.photo:
-            output.append(f"$photo = [byte[]](Get-Content {employee.photo} -Encoding byte)\n")
-            output.append("Set-ADUser Crusoe -Replace @{thumbnailPhoto=$photo}\n")
+            output.append(f'$photo = [byte[]](Get-Content "{employee.photo}"" -Encoding byte)\n')
+            output.append('Set-ADUser Crusoe -Replace @{thumbnailPhoto=$photo}\n')
 
         try:
             manager = employee.manager.username
@@ -326,7 +326,7 @@ class Export:
             if employee.employee.status == config.STAT_LEA:
                 output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
                 output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
-                output.append("Set-ADUser -Clear manager\n")
+                output.append(f"Set-ADUser {employee.username} -Clear manager\n")
             else:
                 output.append("Set-ADUser %s -Replace @{acsCard1State=$True}\n" % employee.username)
                 output.append("Set-ADUser %s -Replace @{acsCard2Status=$True}\n" % employee.username)
@@ -334,11 +334,12 @@ class Export:
         else:
             output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
             output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
-            output.append("Set-ADUser -Clear manager\n")
+            output.append(f"Set-ADUser {employee.username} -Clear manager\n")
             output.append(f"Set-ADUser {employee.username} -Enabled $False\n")
 
         output.append("} catch {\n")
-        output.append(f"Write-Output Caught error updating user {employee.upn}\n")
+        output.append(f'Write-Output "Caught error updating user {employee.upn}"\n')
+        output.append(f'Write-Host $_\n')
         output.append("}\n")
 
         return output                
