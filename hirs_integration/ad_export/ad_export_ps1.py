@@ -83,7 +83,7 @@ class Export:
                 logger.debug("Employee is active and doesn't have a user object")
                 output += self.create_aduser(employee)
                 #config.commit_employee(employee.id)
-                self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+                self.mailboxes.append(self.enable_mailbox(employee.username,employee.email_alias))
 
         path = str(settings.BASE_DIR) +'\\user_scripts'
         logger.debug(f'Making sure {path} exists')
