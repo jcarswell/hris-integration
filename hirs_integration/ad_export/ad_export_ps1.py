@@ -303,7 +303,7 @@ class Export:
         try:
             _ = user.get_attribute('lastLogon')[0]
         except IndexError:
-            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)\n')
+            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force) -ErrorAction SilentlyContinue\n')
 
 
 
