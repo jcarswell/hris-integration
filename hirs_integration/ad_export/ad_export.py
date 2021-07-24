@@ -11,6 +11,8 @@ from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from base64 import b64encode
 from hirs_admin.models import set_username
+from ad_export.excpetions import ADResultsError,UserDoesNotExist
+from smtp_client.smtp import Smtp
 from distutils.util import strtobool
 from time import time
 from jinja2 import Environment,PackageLoader,select_autoescape
@@ -18,7 +20,6 @@ from django.conf import settings
 from pywintypes import com_error
 
 from .helpers import config
-from ad_export.excpetions import ADResultsError,UserDoesNotExist
 
 logger = logging.getLogger('ad_export.ad_export')
 
@@ -99,14 +100,19 @@ class Export:
                 logger.debug("Updating Group Memberships")
                 self.update_groups(user,employee.add_groups,employee.remove_groups)
 
-        for user in new_user:
-            logger.debug("Clearing pending flags")
-            config.commit_employee(user.id)
-            self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
-        
+        if new_user:
+            msg = "The following new users have been add:\n\n"
+            for user in new_user:
+                logger.debug("Clearing pending flags")
+                msg += f"\t- {user.id}: {user.upn}"
+                config.commit_employee(user.id)
+                self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+            s = Smtp()
+            s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")        
+
         if self.mailboxes:
             self.setup_mailboxes(self.mailboxes)
-            
+
 
         config.set_last_run()
         #pending = config.get_pending()
