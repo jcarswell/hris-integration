@@ -133,6 +133,7 @@ def setup_ftp_import():
 def setup_ad_export():
     from ad_export.helpers import config
 
+    print("Please set your upn domain and route address")
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
@@ -160,6 +161,24 @@ def setup_ad_export():
             config.DEFAULT_ZIP: 'S4S 4S4',
             config.DEFAULT_COUNTRY: 'CA'
         }
+    }
+
+    set_configuration(config.GROUP_CONFIG,module_config)
+
+def setup_smtp():
+    from smtp_client.helpers import config
+    
+    print("Please set your defaults for testing")
+    module_config = {
+        config.CAT_CONFIG: {
+            config.SERVER_SERVER: 'localhost',
+            config.SERVER_PORT: '25',
+            config.SERVER_TLS: 'False',
+            config.SERVER_SSL: 'False',
+            config.SERVER_USERNAME: '',
+            config.SERVER_PASSWORD: ['',True],
+            config.SERVER_SENDER: '',
+        },
     }
 
     set_configuration(config.GROUP_CONFIG,module_config)

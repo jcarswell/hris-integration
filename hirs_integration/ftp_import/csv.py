@@ -3,6 +3,8 @@ import string
 import importlib
 import csv
 
+from smtp_client.smtp import Smtp
+
 from .helpers import config
 from .helpers.text_utils import safe,decode
 from .exceptions import ConfigurationError, ObjectCreationError
@@ -25,7 +27,19 @@ class CsvImport():
         self.parse_headers(file_handle)
         self.parse_data(file_handle)
         self.add_data()
-        #TODO: if self.import_errors -> send notification email
+
+        msg = ""
+        if self.parse_error:
+            msg += f"Failed to parse employees: {', '.join(self.parse_error)}\n"
+
+        if self.import_error:
+            msg += f"Failed to parse employees:\n"
+            for l in self.import_error:
+                msg += f"\t{l}\n"
+
+        if self.parse_error or self.import_error:
+            s = Smtp
+            s.send(config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF),msg,"Import Failure")
 
     def parse_headers(self, file_handle) -> None:
         import_fields = config.get_fields()
@@ -71,7 +85,7 @@ class CsvImport():
             logger.debug(f"There are {len(self.fields)} headers in the file")
 
     def parse_data(self, file_handle):
-        self.import_error = []
+        self.parse_error = []
         
         for row in file_handle:
             for vals in csv.reader([decode(row)]):
@@ -79,15 +93,16 @@ class CsvImport():
                 if len(vals) != len(self.fields):
                     logger.debug(f"Headers: {len(self.fields)} This row: {len(vals)}")
                     logger.error(f"Unable to parse employee {vals[0]}")
-                    self.import_error.append(vals[0])
+                    self.parse_error.append(vals[0])
                 else:
                     for x in range(len(self.fields)):
                         if self.fields[x] and self.fields[x]['import']:
                             row_data[self.fields[x]['field']] = vals[x]
-                    logger.debug(f"Parsed keys for row: {row_data.keys()}")
+                    #logger.debug(f"Parsed keys for row: {row_data.keys()}")
                     self.data.append(row_data)
 
     def add_data(self):
+        self.import_error = []
         try:
             form_module = importlib.import_module(self.form)
         except ModuleNotFoundError as e:
@@ -105,7 +120,9 @@ class CsvImport():
                 f = form(self.fields,**row)
                 f.save()
                 f.post_save()
-            except ValueError:
+            except ValueError as e:
                 logger.error("Failed to save Employee refere to previous logs for more details")
-            except ObjectCreationError:
+                self.import_error.append(f"{row[0]} - Error: {e}")
+            except ObjectCreationError as e:
                 logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
+                self.import_error.append(f"{row[0]} - Error: {e}")

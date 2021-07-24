@@ -1,21 +1,19 @@
 import logging
+from ntpath import join
 import subprocess
 import os
 
 from typing import Union
-from pyad import pyadexceptions
 from pyad.adbase import set_defaults
-from pyad.adcontainer import ADContainer
 from pyad.adgroup import ADGroup
 from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
-from base64 import b64encode
 from hirs_admin.models import set_username
 from ad_export.excpetions import ADResultsError,UserDoesNotExist
 from smtp_client.smtp import Smtp
 from distutils.util import strtobool
 from time import time
-from jinja2 import Environment,PackageLoader,select_autoescape
+from jinja2 import Environment,PackageLoader
 from django.conf import settings
 from pywintypes import com_error
 
@@ -48,7 +46,8 @@ class Export:
 
     def run(self):
         logger.debug("Starting Run")
-        new_user=[]
+        output = []
+        new_user = {}
         self.mailboxes=[]
 
         for employee in self.employees:
@@ -65,54 +64,66 @@ class Export:
         for employee in self.employees:
             logger.debug(f"getting user object for {employee}")
             try:
-                user = self.ad_user(employee.username,employee.id)
+                user = self.ad_user(employee.upn,employee.id)
                 logger.debug(f"Got existing AD User {user}")
             except ADResultsError:
                 logger.debug("No user exists")
                 user = None
-
-            ou = ADContainer.from_dn(employee.ou)
             
             if user:
                 try:
-                    if (int(user.get_attribute('employeeNumber')[0]) == employee.id and 
-                            user.parent_container != ou):
-                        logger.debug(f"Employee has changed OU's")
-                        try:
-                            user.move(ou)
-                        except com_error:
-                            #This is expected???
-                            pass
-
+                    _ = int(user.get_attribute('employeeNumber')[0])
                 except IndexError:
                     logger.debug("Matched user with no EmployeeNumber")
-                    if user.parent_container == ou:
-                        user.update_attribute('employeeNumber',employee.id)
+                    output.append(f"$aduser | Set-AdUser -EmployeeNumber {employee.id}\n")
+                output += self.update_user(employee,user)
 
             elif employee.status: #Don't create a disabled user
                 logger.debug("Employee is active and doesn't have a user object")
-                user = self.create_aduser(ou,employee)
-                new_user.append(employee)
+                output += self.create_aduser(employee)
+                new_user[employee.id] = employee.upn
+                self.mailboxes.append(self.enable_mailbox(employee.username,employee.email_alias))
+
+        path = str(settings.BASE_DIR) +'\\user_scripts'
+        logger.debug(f'Making sure {path} exists')
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        path = path + '\\enable-users_' + str(time()).split('.')[0] + '.ps1'
+        logger.debug(f'Enable users script saving to {path}')
+
+        with open(path,'w') as f:
+            f.writelines(output)
+
+        try:
+            subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path])
+        except Exception:
+            logger.exception()
+        
+        if self.mailboxes:
+            self.setup_mailboxes(self.mailboxes)
+
+        for employee in self.employees:
+            try:
+                user = self.ad_user(employee.upn,employee.id)
+            except ADResultsError:
+                logger.debug("No user exists")
+                user = None
 
             if user:
                 logger.debug("Updating Attibs")
-                self.update_user(employee,user)
                 logger.debug("Updating Group Memberships")
                 self.update_groups(user,employee.add_groups,employee.remove_groups)
 
         if new_user:
             msg = "The following new users have been add:\n\n"
-            for user in new_user:
-                logger.debug("Clearing pending flags")
-                msg += f"\t- {user.id}: {user.upn}"
-                config.commit_employee(user.id)
-                self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
+            for id,upn in new_user.items():
+                msg += f"\t- {id}: {upn}"
             s = Smtp()
-            s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")        
-
-        if self.mailboxes:
-            self.setup_mailboxes(self.mailboxes)
-
+            s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")
+        #    logger.debug("Clearing pending flags")
+        #    config.commit_employee(user.id)
+        #    self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
 
         config.set_last_run()
         #pending = config.get_pending()
@@ -127,29 +138,71 @@ class Export:
         #    for user in pending:
         #        config.commit_employee(user.id)
 
-    def create_aduser(self,ou,employee:config.EmployeeManager) -> ADUser:
+    def create_aduser(self,employee:config.EmployeeManager) -> list:
+        output = ["try {\n"]
         logger.debug(f"Creating user")
-        user = ou.create_user(f"{employee.firstname} {employee.lastname}",
-                                    employee.password,
-                                    config.get_config(config.CONFIG_CAT,config.CONFIG_UPN),
-                                    employee.status,
-                                    optional_attributes={
-                                        'employeeNumber': str(employee.id),
-                                        'company': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
-                                        'homePhone': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
-                                        'facsimileTelephoneNumber': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_FAX),
-                                        'streetAddress': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET),
-                                        'postOfficeBox': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PO),
-                                        'l': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY),
-                                        'st': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE),
-                                        'postalCode': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
-                                        'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
-                                        })
+        line = ["New-ADUser"]
+        line.append(f'-SamAccountName "{employee.username}"')
+        line.append(f'-UserPrincipalName "{employee.upn}"')
+        line.append(f'-Name "{employee.firstname} {employee.lastname}"')
+        line.append(f'-GivenName "{employee.firstname}"')
+        line.append(f'-Surname "{employee.lastname}"')
+        if employee.status:
+            line.append(f'-Enabled $True')
+        else:
+            line.append(f'-Enabled $False')
+        line.append(f'-EmployeeNumber {employee.id}')
+        line.append(f'-DisplayName "{employee.firstname} {employee.lastname}"')
+        line.append(f'-Path "{employee.ou}"')
+        line.append(f'-City "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY)}"')
+        line.append(f'-Company "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG)}"')
+        line.append(f'-State "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE)}"')
+        line.append(f'-StreetAddress "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET)}"')
+        line.append(f'-OfficePhone "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE)}"')
+        line.append(f'-Country "{config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)}"')
+        line.append(f'-Title "{employee.title}"')
+        line.append(f'-Department "{employee.bu}"')
+        line.append(f'-AccountPassword (convertto-securestring "{employee.password}" -AsPlainText -Force)')
+        line.append('-ChangePasswordAtLogon $True')
+        output.append(f"{' '.join(line)}\n")
+        output.append(f'Add-ADGroupMember -Identity AllStaff -Member {employee.username}\n')
+        output.append(f'Add-ADGroupMember -Identity "O365 - O365 E1 Email" -Member {employee.username}\n')
+        output.append(f'Add-ADGroupMember -Identity "AccessControl - Users" -Member {employee.username}\n')
+        
+        output.append('Set-ADUser %s -Replace @{mailNickname="%s"}\n' % (employee.username,employee.email_alias))
+        output.append('Set-ADUser %s -Replace @{extensionAttribute1="%s"}\n' % (employee.username,employee.designations))
 
-        user.force_pwd_change_on_login()
-        logger.debug(f"Created AD Users {user}")
+        if employee.photo:
+            output.append(f'$photo = [byte[]](Get-Content "{employee.photo}"" -Encoding byte)\n')
+            output.append("Set-ADUser Crusoe -Replace @{thumbnailPhoto=$photo}\n")
 
-        return user
+        try:
+            manager = employee.manager.username
+            output.append(f"Set-ADUser {employee.username} -Manager {manager}\n")
+        except AttributeError:
+            #employee.manager.id is None when no manager exists but employee.manager is not none
+            pass
+
+        if employee.status:
+            if employee.employee.status == config.STAT_LEA:
+                output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
+                output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
+                output.append(f"Set-ADUser {employee.username} -Clear manager\n")
+            else:
+                output.append("Set-ADUser %s -Replace @{acsCard1State=$True}\n" % employee.username)
+                output.append("Set-ADUser %s -Replace @{acsCard2Status=$True}\n" % employee.username)
+
+        else:
+            output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
+            output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
+            output.append(f"Set-ADUser {employee.username} -Clear manager\n")
+
+        output.append("} catch {\n")
+        output.append(f'Write-Output "Caught error creating user {employee.upn}"\n')
+        output.append(f'Write-Host $_\n')
+        output.append("}\n")
+
+        return output
 
     def ad_user(self,username:str,id:int =None) -> Union[ADUser,None]:
         """
@@ -174,12 +227,12 @@ class Export:
 
     def get_aduser_by_username(self,username:str) -> ADUser:
         ad = ADQuery()
-        ad.execute_query(attributes=["sAMAccountName","distinguishedName"], 
-                         where_clause="sAMAccountName='%s'"%username,
+        ad.execute_query(attributes=["userPrincipalName","distinguishedName"], 
+                         where_clause="userPrincipalName='%s'"%username,
                          base_dn=config.base_dn())
         
         if ad.get_row_count() >= 1:
-            logger.critical(f"More that one user object with the same sAMAccountName {username}")
+            logger.critical(f"More that one user object with the same userPrincipalName {username}")
             raise ADResultsError(f"Too Many results for username {username}")
         elif ad.get_row_count() == 0:
             raise ADResultsError(f"No results found for username {username}")
@@ -205,7 +258,7 @@ class Export:
             adu = self.get_aduser_by_id(employee.id)
         except ADResultsError:
             try:
-                adu = self.get_aduser_by_username(employee.username)
+                adu = self.get_aduser_by_username(employee.upn)
             except ADResultsError:
                 raise UserDoesNotExist("Could not find a user object for the employee")
 
@@ -218,7 +271,7 @@ class Export:
             emplname == employee.lastname and empsam == employee.username):
             logger.info(f"Updating {empsam} with employeeNumber {employee.id}")
             adu.update_attribute('employeeNumber',str(employee.id))
-        elif empno and empno == employee.id and empsam != employee.username:
+        elif empno and empno == employee.id and empsam.lower() != employee.username.lower():
             logger.warning(f"found employee {empno} but username doesn't match database attempting to correct")
             if not self.fix_username(employee,empsam):
                 logger.error(f"Employee Username was uncorrectable {employee.id} {empsam} please correct manually")
@@ -228,69 +281,65 @@ class Export:
             return False
 
         try:
-            if adu.get_last_login():
+            if adu:
+                _ = adu.get_attribute('lastLogon')[0]
                 employee.employee.clear_password(True)
-        except AttributeError:
-            #Bug in pyad, no typechecking
-            # pyad\pyadutils.py" line 71, in convert_datetime
-            #  high_part = int(adsi_time_com_obj.highpart) << 32
-            # adsi_time_com_obj is None if the user has never logged on
+        except IndexError:
             pass
 
         return True
 
     def update_user(self,employee:config.EmployeeManager, user:ADUser):
-        upn = f'{employee.email_alias}@{config.get_config(config.CONFIG_CAT,config.CONFIG_UPN)}'
-        attribs = {
-            'givenName': employee.firstname,
-            'sn': employee.lastname,
-            'displayName': f"{employee.firstname} {employee.lastname}",
-            'sAMAccountName': employee.username,
-            'mailNickname': employee.email_alias,
-            'userPrincipalName': upn,
-            'extensionAttribute1': employee.designations,
-            'department': employee.bu,
-            'title': employee.title
-        }
-
-        if employee.photo:
-            with open(employee.photo, 'rb') as photo:
-                attribs['thumbnailPhoto'] = b64encode(photo.read())
+        output = ["try {\n"]
+        if employee.designations:
+            output.append("Set-ADUser %s -Replace @{extensionAttribute1='%s'}\n" % (employee.username,employee.designations))
+        output.append(f'Set-ADUser {employee.username} -GivenName "{employee.firstname}"\n')
+        output.append(f'Set-ADUser {employee.username} -Surname "{employee.lastname}"\n')
+        output.append(f'Set-ADUser {employee.username} -DisplayName "{employee.firstname} {employee.lastname}"\n')
+        output.append(f'Set-ADUser {employee.username} -UserPrincipalName "{employee.upn}"\n')
+        output.append('Set-ADUser %s -Replace @{mailNickname="%s"}\n' % (employee.username,employee.email_alias))
+        output.append(f'Set-ADUser {employee.username} -Department "{employee.bu}"\n')
+        output.append(f'Set-ADUser {employee.username} -Title "{employee.title}"\n')
 
         try:
-            attribs['manager'] = self.get_aduser_by_id(employee.manager.id).dn
+            _ = user.get_attribute('lastLogon')[0]
+        except IndexError:
+            output.append(f'Set-ADAccountPassword {employee.username} -Reset -NewPassword (convertto-securestring "{employee.password}" -AsPlainText -Force) -ErrorAction SilentlyContinue\n')
+
+
+
+        if employee.photo:
+            output.append(f'$photo = [byte[]](Get-Content "{employee.photo}"" -Encoding byte)\n')
+            output.append('Set-ADUser Crusoe -Replace @{thumbnailPhoto=$photo}\n')
+
+        try:
+            manager = employee.manager.username
+            output.append(f"Set-ADUser {employee.username} -Manager {manager}\n")
         except AttributeError:
             #employee.manager.id is None when no manager exists but employee.manager is not none
-            user.clear_attribute('manager')
-        except ADResultsError:
-            #Clear the manager to be safe, this is likely happening as the manager hasn't been created yet
-            user.clear_attribute('manager')
+            pass
 
         if employee.status:
-            user.enable()
             if employee.employee.status == config.STAT_LEA:
-                attribs['acsCard1State'] = False
-                attribs['acsCard2Status'] = False
-                user.clear_attribute('manager')
-                if 'manager' in attribs.keys():
-                    attribs.pop('manager')
+                output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
+                output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
+                output.append(f"Set-ADUser {employee.username} -Clear manager\n")
             else:
-                attribs['acsCard1State'] = True
-                attribs['acsCard2Status'] = True
+                output.append("Set-ADUser %s -Replace @{acsCard1State=$True}\n" % employee.username)
+                output.append("Set-ADUser %s -Replace @{acsCard2Status=$True}\n" % employee.username)
 
         else:
-            user.disable()
-            attribs['acsCard1State'] = False
-            attribs['acsCard2Status'] = False
-            user.clear_attribute('manager')
+            output.append("Set-ADUser %s -Replace @{acsCard1State=$False}\n" % employee.username)
+            output.append("Set-ADUser %s -Replace @{acsCard2Status=$False}\n" % employee.username)
+            output.append(f"Set-ADUser {employee.username} -Clear manager\n")
+            output.append(f"Set-ADUser {employee.username} -Enabled $False\n")
 
-        logger.debug(f"Setting Attributes for {user}: {attribs}")
-        for k,v in attribs.items():
-            try:
-                user.update_attribute(k,v)
-            except com_error:
-                logger.error(f"failed to set attribute {k} to {v}")
-                
+        output.append("} catch {\n")
+        output.append(f'Write-Output "Caught error updating user {employee.upn}"\n')
+        output.append(f'Write-Host $_\n')
+        output.append("}\n")
+
+        return output                
 
     @staticmethod
     def update_groups(user,add,remove):
