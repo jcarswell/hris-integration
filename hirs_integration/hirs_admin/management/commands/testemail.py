@@ -6,7 +6,7 @@ class Command(BaseCommand):
     requires_system_checks = []
     
     def add_arguments(self, parser):
-        parser.add_argument('dest_email', nargs='1', type=str)
+        parser.add_argument('dest_email', type=str)
     
     def handle(self, *args, **kwargs):
         from smtp_client.smtp import Smtp
