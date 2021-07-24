@@ -4,13 +4,13 @@ import subprocess
 import os
 
 from typing import Union
-from pyad import pyadexceptions
 from pyad.adbase import set_defaults
-from pyad.adcontainer import ADContainer
 from pyad.adgroup import ADGroup
 from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from hirs_admin.models import set_username
+from ad_export.excpetions import ADResultsError,UserDoesNotExist
+from smtp_client.smtp import Smtp
 from distutils.util import strtobool
 from time import time
 from jinja2 import Environment,PackageLoader
@@ -18,7 +18,6 @@ from django.conf import settings
 from pywintypes import com_error
 
 from .helpers import config
-from ad_export.excpetions import ADResultsError,UserDoesNotExist
 
 logger = logging.getLogger('ad_export.ad_export')
 
@@ -48,7 +47,7 @@ class Export:
     def run(self):
         logger.debug("Starting Run")
         output = []
-        new_user=[]
+        new_user = {}
         self.mailboxes=[]
 
         for employee in self.employees:
@@ -82,7 +81,7 @@ class Export:
             elif employee.status: #Don't create a disabled user
                 logger.debug("Employee is active and doesn't have a user object")
                 output += self.create_aduser(employee)
-                #config.commit_employee(employee.id)
+                new_user[employee.id] = employee.upn
                 self.mailboxes.append(self.enable_mailbox(employee.username,employee.email_alias))
 
         path = str(settings.BASE_DIR) +'\\user_scripts'
@@ -116,13 +115,15 @@ class Export:
                 logger.debug("Updating Group Memberships")
                 self.update_groups(user,employee.add_groups,employee.remove_groups)
 
-        #for user in new_user:
+        if new_user:
+            msg = "The following new users have been add:\n\n"
+            for id,upn in new_user.items():
+                msg += f"\t- {id}: {upn}"
+            s = Smtp()
+            s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")
         #    logger.debug("Clearing pending flags")
         #    config.commit_employee(user.id)
         #    self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
-
-        if self.mailboxes:
-            self.setup_mailboxes(self.mailboxes)
 
         config.set_last_run()
         #pending = config.get_pending()
