@@ -133,6 +133,7 @@ def setup_ftp_import():
 def setup_ad_export():
     from ad_export.helpers import config
 
+    print("Please set your upn domain and route address")
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
