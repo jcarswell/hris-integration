@@ -164,6 +164,24 @@ def setup_ad_export():
 
     set_configuration(config.GROUP_CONFIG,module_config)
 
+def setup_smtp():
+    from smtp_client.helpers import config
+    
+    print("Please set your defaults for testing")
+    module_config = {
+        config.CAT_CONFIG: {
+            config.SERVER_SERVER: 'localhost',
+            config.SERVER_PORT: '25',
+            config.SERVER_TLS: 'False',
+            config.SERVER_SSL: 'False',
+            config.SERVER_USERNAME: '',
+            config.SERVER_PASSWORD: ['',True],
+            config.SERVER_SENDER: '',
+        },
+    }
+
+    set_configuration(config.GROUP_CONFIG,module_config)
+
 def import_employees():
     from ftp_import.csv import CsvImport
     path = str(Path(__file__).resolve().parent) + '\\employee_data.csv'
