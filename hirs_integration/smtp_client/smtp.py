@@ -36,18 +36,22 @@ class Smtp:
         self.sender = config_data[config.SERVER_SENDER]
 
     def connect(self):
+        logger.debug(f"connecting to SMTP Server {self.server} on port {self.port}")
         try:
             self.__conn = self.smtp_class(host=self.server,port=self.port)
             self.__conn.ehlo()
+            logger.debug(f"Connect and sent EHLO to server")
             if self.tls and isinstance(self.__conn,smtplib.SMTP):
-                self.__conn.starttls
+                self.__conn.starttls()
                 self.__conn.ehlo()
-            
+                logger.debug("Started a TLS session")
+
             if self.username and self.password:
                 self.__conn.login(user=self.username,password=self.password)
-        except smtplib.SMTPHeloError:
+                logger.debug(f"Logged into the server")
+        except smtplib.SMTPHeloError as e:
             logger.critical("SMTP Server is invalid")
-            return False
+            raise SmtpServerError("Server not valid") from e
         except smtplib.SMTPAuthenticationError:
             logger.critical("Invalid Authentication")
             raise ConfigError("Provide username password combination were rejected by the server")
@@ -58,6 +62,7 @@ class Smtp:
     def close(self):
         self.__conn.quit()
         del self.__conn
+        logger.debug("Server connection closed. Until next time.")
 
     def send(self,to,msg:str,subject:str):
         email = EmailMessage()
@@ -68,6 +73,7 @@ class Smtp:
         
         self.connect()
         try:
+            logger.debug(f"Trying to send email to {to}")
             self.__conn.send_message(email,self.sender,to)
         except smtplib.SMTPSenderRefused as e:
             logger.exception('sender does not have premission to send emails')
