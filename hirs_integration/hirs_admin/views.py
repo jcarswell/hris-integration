@@ -2,7 +2,7 @@ import json
 import logging
 
 from django.http import HttpResponse,HttpResponseBadRequest
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
