@@ -1,14 +1,16 @@
 import json
 import logging
 
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse,HttpResponseBadRequest
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
+from django.forms.models import ModelForm
 from django.contrib.auth.views import redirect_to_login
 from django.utils.safestring import mark_safe
+from django.urls import resolve
 
 from .helpers import settings_view
 from . import models
@@ -55,9 +57,66 @@ class Index(TemplateResponseMixin, LoggedInView):
         return self.render_to_response(context)
 
 
+class ListView(TemplateResponseMixin, LoggedInView):
+    form = None
+    template_name = 'hirs_admin/base_list.html'
+    http_method_names = ['get', 'head', 'options', 'trace']
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+
+        if self.form == None:
+            raise ValueError("FormView has no ModelForm class specified")
+        if hasattr(request.GET,'form'):
+            request.GET.pop('form')
+
+        self._model = self.form._meta.model
+        self.fields = self.form.base_fields.keys()
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        self.page_title = getattr(self.form,'name',None)
+        self.page_description = getattr(self.form,'description',None)
+        context = self.get_context(**kwargs)
+
+        #theres no pk in the request so return the list view
+        self.template_name = 'hirs_admin/base_list.html'
+
+        labels = []
+        for field in self.fields:
+            labels.append(self.form.base_fields[field].label)
+
+        context["form_fields"] = labels
+        context['form_row'] = self.list_rows()
+
+        logger.debug(f"context: {context}")
+        return self.render_to_response(context)
+        
+    def list_rows(self):
+        logger.debug("requested list_rows")
+        output = []
+        for row in self._model.objects.all():
+            output.append(f'<tr id="{row.pk}">')
+            for field in self.fields:
+                val = getattr(row, field)
+                url = f"{self.request.path}{row.pk}/"
+
+                if field[-2:] == "id":
+                    val = f"<strong>{val}</strong>"
+
+                output.append(f'<td><a href="{url}">{val}</a></td>')
+        logger.debug(f"Output contains: {output}")
+        return mark_safe('\n'.join(output))
+
+
 class FormView(TemplateResponseMixin, LoggedInView):
     form = None
     template_name = 'hirs_admin/base_edit.html'
+    enable_delete = True
+    edit_postfix = '_edit'
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
@@ -76,18 +135,19 @@ class FormView(TemplateResponseMixin, LoggedInView):
 
         self._model = self.form._meta.model
         self.fields = self.form.base_fields.keys()
-        
-        data = None
 
-        if request.method == 'POST' or request.method == 'PUT':
-            data = request.POST
-
-        if pk == None:
-            self._form = None
-        elif pk > 0:
-            self._form = self.form(data,instance=self._model.objects.get(pk))
+        if pk > 0:
+            model = self._model.objects.get(pk=pk)
         elif pk == 0:
-            self._form = self.form(data)
+            model = self._model()
+            self.enable_delete = False
+
+        if request.method in ('POST','PUT'):
+            self._form = self.form(request.POST,request.FILES,instance=model)
+        elif isinstance(pk,int):
+            self._form = self.form(instance=model)
+        else:
+            self._form = None
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -96,8 +156,8 @@ class FormView(TemplateResponseMixin, LoggedInView):
     def get(self, request, *args, **kwargs):
         self.page_title = getattr(self.form,'name',None)
         self.page_description = getattr(self.form,'description',None)
-        context = self.get_context(**kwargs)
-        
+        context = self.get_context(form_delete=self.enable_delete,**kwargs)
+
         if self._form == None:
             #theres no pk in the request so return the list view
             self.template_name = 'hirs_admin/base_list.html'
@@ -106,46 +166,68 @@ class FormView(TemplateResponseMixin, LoggedInView):
             for field in self.fields:
                 labels.append(self.form.base_fields[field].label)
 
-            context["form"] = {
-                'fields': labels, 
-                'row': self
-            }
+            context["form_fields"] = labels
+            context['form_row'] = self.list_rows()
 
         else:
             context["form"] = self._form
 
-        logger.warning(f"context: {context}")
+        logger.debug(f"context: {context}")
         return self.render_to_response(context)
     
     def post(self, request, *args, **kwargs):
-        try:
+        logger.debug("Got post")
+        logger.debug(f"post data is: {request.POST}")
+        if self._form.is_valid():
+            logger.debug("Form is valid, saving()")
             self._form.save()
-        except ValueError as e:
-            logging.error(f"encountered Exception while saving form {self.form.name}")
+        else:
+            logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
             errors = self._form._errors.keys()
             return HttpResponse({'status':'error',
                                  'fields':errors,
-                                 'msg':e.msg})
+                                 'msg':"Please correct the highlighted fields"})
 
         return HttpResponse({'status':'success'})
-    
+
     def put(self, request, *args, **kwargs):
         self.post(request,*args, **kwargs)
         
     def list_rows(self):
+        logger.debug("requested list_rows")
         output = []
         for row in self._model.objects.all():
             output.append(f'<tr id="{row.pk}">')
             for field in self.fields:
                 val = getattr(row, field)
-                url = f"{self.request.PATH}{row.pk}/"
+                url = f"{self.request.path}{row.pk}/"
 
                 if field[-2:] == "id":
                     val = f"<strong>{val}</strong>"
 
                 output.append(f'<td><a href="{url}">{val}</a></td>')
-        
+        logger.debug(f"Output contains: {output}")
         return mark_safe('\n'.join(output))
+
+    def delete(self, request, *args, **kwargs):
+        rev = resolve(request.path)
+        if rev[len(self.edit_postfix)*-1:] == self.edit_postfix:
+            rev = rev[:len(self.edit_postfix)*-1]
+
+        try:
+            pk = kwargs['id']
+        except KeyError:
+            return HttpResponseBadRequest()
+        
+        o = self._model.objects.get(pk=pk)
+        try:
+            o.delete()
+            return HttpResponse({'location':rev})
+
+        except Exception as e:
+            logger.exception(f'lazy catch of {e}')
+            return HttpResponseBadRequest()
+            
 
 
 class Employee(TemplateResponseMixin, LoggedInView):
@@ -157,7 +239,6 @@ class Employee(TemplateResponseMixin, LoggedInView):
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
-
 
     def get(self, request, *args, **kwargs):
         try:
@@ -173,23 +254,28 @@ class Employee(TemplateResponseMixin, LoggedInView):
             context['employees'] = models.Employee.objects.all() or None
             return self.render_to_response(context)
 
+        if emp_id > 0:
+            employee = models.Employee.objects.get(pk=emp_id)
+        else:
+            employee = None
+
         context = self.get_context(**kwargs)
 
         try:
-            designation = models.EmployeeDesignation.objects.get(employee=emp_id).label
+            designation = models.EmployeeDesignation.objects.get(employee=employee).label
         except models.EmployeeDesignation.DoesNotExist:
             designation = ""
         try:
-            overrides = models.EmployeeOverrides.objects.get(employee=emp_id)
+            overrides = models.EmployeeOverrides.objects.get(employee=employee)
         except models.EmployeeOverrides.DoesNotExist:
             overrides = None
 
-        context["employee"] = models.Employee.objects.get(pk=emp_id)
+        context["employee"] = employee
         context["designation"] = designation
         context["overrides"]=  overrides
-        context["location"] = models.Locations.objects.all()
-        context["phone"] = models.EmployeePhone.object.get(employee=emp_id)
-        context["address"] = models.EmployeeAddress.objects.get(employee=emp_id)
+        context["location"] = models.Location.objects.all()
+        context["phone"] = models.EmployeePhone.objects.filter(employee=employee)
+        context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
 
         return self.render_to_response(context)
 
@@ -230,7 +316,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
 class Settings(LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Settings'
-    
+
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -244,12 +330,13 @@ class Settings(LoggedInView):
         return HttpResponse(render(request, 'hirs_admin/settings.html', context=context))
 
     def post(self, request, *args, **kwargs):
+        logger.debug(f"got post with data: {request.POST}")
         errors = []
-        request.POST.pop('csrfmiddlewaretoken')
         for pk,val in request.POST.items():
             try:
                 pk = int(pk)
             except ValueError:
+                logger.debug(f"Item {pk} is not a valid setting ID")
                 errors.append(pk)
             else:
                 setting = models.Setting.o2.get(pk=pk)
@@ -261,4 +348,5 @@ class Settings(LoggedInView):
         else:
             return HttpResponse(json.dumps({"status":"error","feilds":errors}))
 
-
+    def put(self, request, *args, **kwargs):
+        self.post(self, request, *args, **kwargs)
