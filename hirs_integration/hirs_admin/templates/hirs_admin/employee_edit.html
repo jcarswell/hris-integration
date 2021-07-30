@@ -1,4 +1,5 @@
 {% extends "hirs_admin/base.html" %}
+{% load static i18n%}
 
 {% block extra_style %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
@@ -97,6 +98,7 @@
         {% for phone in phones %}
         <li>{{ phone.label }} - {{ phone.number }}
         {% endfor %}
+        {% endif %}
     <h4>Address</h4>
     <p><strong>{{ address.label }}</strong></p>
     <div class="row">
@@ -116,36 +118,16 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/serializer.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
 <!--
 var itemsOverride
-function hashDiff(h1,h2){var d={};for(var k in h2){if(h1[k]!==h2[k])d[k]=h2[k];}return d;}
-function convertSerializedArrayToHash(a){var r={};for(var i=0;i<a.length;i++){r[a[i].name]=a[i].value;}return r;}
-function doneProcess(data) {
-  if (data["status"] != "success") {
-    $('.alert').text(data["message"]);
-    $('.alert').alert();
-    $('.alert').addClass("alert-danger");
-    for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
-  } else {
-    $('.alert').text("Success");
-    $('.alert').alert();
-    $('.alert').addClass("alert-sucess");
-    if ($(this).id == "override-form") {
-      itemsOverride = convertSerializedArrayToHash($(this).serializeArray());
-    }
-    $('.is-invalid').removeClass("is-invalid");
-  }
-}
-function errorProcess(jqXHR,status,error) {
-  $('.alert').text("A Server error occured: " + status);
-  $('.alert').alert();
-  $('.alert').addClass("alert-danger");
-}
 $(function() {
   $('#'+employee.location).attr("default", true);
   const csrftoken = Cookies.get('csrftoken');
-  var itemsOverride = convertSerializedArrayToHash($("#override-form").serializeArray());
+  itemsOverride = convertSerializedArrayToHash($("#override-form").serializeArray());
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
@@ -154,12 +136,12 @@ $("#override-form").submit(function(e) {
   data["form"] = "override"
   
   $.ajax({
-    type: "POST",
+    method: "POST",
     url: location.href,
     data: form_data
   })
-  .done(doneProcess(data);)
-  .error(errorProcess(jqXHR,status,error);)
+  .done(function(data) {doneProcess(data);}),
+  .error(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 $("#employee-form").submit(function(e) {
   e.preventDefault();
@@ -175,24 +157,23 @@ $("#employee-form").submit(function(e) {
   fd.append('photo',file)    
 
   $.ajax({
-    type: "POST",
+    method: "POST",
     url: location.href,
     data: fd.serialize()
   })
-  .done(doneProcess(data);)
-  .error(errorProcess(jqXHR,status,error);)
+  .done(function(data) {doneProcess(data);})
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 $("#designation-form").submit(function(e) {
   e.preventDefault();
 
   $.ajax({
-    type: "POST",
+    method: "POST",
     url: location.href,
     data: form.serialize(),
-    datatype: "json",
   })
-  .done(doneProcess(data);)
-  .error(errorProcess(jqXHR,status,error);)
+  .done(function(data) {doneProcess(data);}),
+  .error(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 -->
 </script>
