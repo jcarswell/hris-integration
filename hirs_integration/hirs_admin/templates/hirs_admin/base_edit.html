@@ -2,9 +2,9 @@
 {% load i18n static %}
 
 {% block page_actions %}
-{% if form_new %}
+{% if form_delete %}
 <div class="btn-toolbar mb-2 mb-md-0">
-  <a class="btn btn-sm btn-outline-secondary" href="{{ form_new }}">Add New</a>
+  <a class="btn btn-md btn-danger" id="btn_delete" onclick="do_delete()">Delete</a>
 <div>
 {% endif %}
 {% endblock %}
@@ -21,43 +21,78 @@
 <div>
 {% endblock content %}
 
-{% block base_js %}
-{% include 'hirs_admin/components/_scripts.html' %}
+{% block extra_js %}
+<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
-var itemsOverride
-function hashDiff(h1,h2){var d={};for(var k in h2){if(h1[k]!==h2[k])d[k]=h2[k];}return d;}
-function convertSerializedArrayToHash(a){var r={};for(var i=0;i<a.length;i++){r[a[i].name]=a[i].value;}return r;}
-function doneProcess(data) {
-  if (data["status"] != "success") {
-    $('.alert').text(data["message"]);
-    $('.alert').alert();
-    $('.alert').addClass("alert-danger");
-    for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
-  } else {
-    $('.alert').text("Success");
-    $('.alert').alert();
-    $('.alert').addClass("alert-sucess");
-    itemsOverride = convertSerializedArrayToHash($(this).serializeArray());
-    $('.is-invalid').removeClass("is-invalid");
-  }
-}
-function errorProcess(jqXHR,status,error) {
-  $('.alert').text("A Server error occured: " + status);
-  $('.alert').alert();
-  $('.alert').addClass("alert-danger");
-}
 $("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
   e.preventDefault();
-  var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
-  data["csrfmiddlewaretoken"] = csrftoken
 
   $.ajax({
-    type: "POST",
+    method: "POST",
     url: location.href,
-    data: form_data
+    data: $(this).serializeArray()
   })
-  .done(doneProcess(data);)
-  .error(errorProcess(jqXHR,status,error);)
+  .done(function(data) {doneProcess(data);})
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+});
+function isInt(value) {
+  var x;
+  if (isNaN(value)) {
+    return false;
+  }
+  x = parseFloat(value);
+  return (x | 0) === x;
+}
+function do_delete() {
+  const csrftoken = $('[name=csrfmiddlewaretoken]')[0].value;
+  $.ajax({
+    method: "Delete",
+    url: location.href,
+    })
+  .done(function(data){
+    if (!isNaN(data['location'])) {
+      location.reload(data['location']);
+    }
+  })
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+}
+$(function() {
+  var is_new = false;
+  var loc = location.pathname.split('/');
+  loc.pop()
+  if (isInt(loc[loc.length-1])) {
+    if (loc[loc.length-1] === '0') {
+      is_new = true;
+    }
+    loc.pop();
+  }
+  loc = loc.join('/') + '/';
+  $('nav .mt-2 li a').each(function() {
+    $this = $(this);
+    if ($this.attr('href').indexOf(loc) !== -1) {
+      $this.addClass('active');
+    }
+  });
+  if (is_new) {
+    $('#form_list input').each(function() {
+      $this = $(this);
+      if (!isNaN($this.id)) {
+        id = $this.id.split('_');
+      }
+      else {
+        id = []
+      }
+      if (id[id.length-1] === 'id') {
+        $this.disable = false;
+        $this.readOnly = false;
+      }
+    });
+  }
+  const csrftoken = getCookie('csrftoken')
+  $.ajaxSetup({
+    headers: { "X-CSRFToken": csrftoken }
+  });
 });
 </script>
 {% endblock %}
