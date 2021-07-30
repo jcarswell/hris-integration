@@ -18,7 +18,7 @@ class Form(forms.ModelForm):
         attrs = {"class":"form-control"}
         attrs_disabled = {"class":"form-control","disabled":True}
 
-        logger.warning(f"Building {self.__class__.__name__} as html form")
+        logger.debug(f"Building {self.__class__.__name__} as html form")
 
         for name,_ in self.fields.items():
             bf = self[name]
@@ -59,7 +59,6 @@ class GroupMapping(Form):
             'loc': _t("Locations")
         }
         disabled = ()
-        
 
 
 class JobRole(Form):
