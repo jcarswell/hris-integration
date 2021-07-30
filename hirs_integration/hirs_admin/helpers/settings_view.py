@@ -43,7 +43,7 @@ class Settings():
 
 
     def update_item(self,data, object):
-        item = object.item
+        item = object.pk
 
         if object.hidden:
             widget = w.Hidden
