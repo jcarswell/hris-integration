@@ -12,7 +12,7 @@
 {% block content %}
 <div class="container">
   {% block feild_set %}
-  <form id="{{ form.id|default:'form_list' }}"{% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
+  <form id="form_list" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
     {% csrf_token %}
     {{ form.as_form }}
     <button type="submit" class="btn btn-primary">submit</button>
@@ -25,68 +25,42 @@
 <script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
 <script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
-$("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
+var is_new = false;
+$("#form_list").submit(function(e) {
   e.preventDefault();
+  data = $(this).serializeArray()
+  var id = $('#form_list input[type=number]')[0]
+  data.push({name:id.name,value:id.value})
 
   $.ajax({
     method: "POST",
     url: location.href,
-    data: $(this).serializeArray()
+    data: data
   })
-  .done(function(data) {doneProcess(data);})
+  .done(function(data) {
+    doneProcess(data);
+    if (is_new) {
+      location.reload(function(){return get_basepath() + id.value + '/';})
+    }
+  })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 });
-function isInt(value) {
-  var x;
-  if (isNaN(value)) {
-    return false;
-  }
-  x = parseFloat(value);
-  return (x | 0) === x;
-}
 function do_delete() {
   $.ajax({
     method: "delete",
     url: location.href,
     })
   .done(function(data){
-    if (!isNaN(data['location'])) {
-      location.reload(data['location']);
-    }
+    location.reload(get_basepath());
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 }
 $(function() {
-  var is_new = false;
-  var loc = location.pathname.split('/');
-  loc.pop()
-  if (isInt(loc[loc.length-1])) {
-    if (loc[loc.length-1] === '0') {
-      is_new = true;
-    }
-    loc.pop();
-  }
-  loc = loc.join('/') + '/';
-  $('nav .mt-2 li a').each(function() {
-    $this = $(this);
-    if ($this.attr('href').indexOf(loc) !== -1) {
-      $this.addClass('active');
-    }
-  });
-  if (is_new) {
-    $('#form_list input').each(function() {
-      $this = $(this);
-      if (!isNaN($this.id)) {
-        id = $this.id.split('_');
-      }
-      else {
-        id = []
-      }
-      if (id[id.length-1] === 'id') {
-        $this.disable = false;
-        $this.readOnly = false;
-      }
-    });
+  var id = $('#form_list input[type=number]')[0]
+  if (id.value === "") {
+    is_new = true;
+    id.disabled = false;
+    id.readOnly = false;
   }
   const csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
