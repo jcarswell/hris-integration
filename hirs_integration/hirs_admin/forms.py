@@ -27,7 +27,7 @@ class Form(forms.ModelForm):
             else:
                 if bf.label:
                     label = bf.label_tag() or ''
-                output.append('<div calss="form-row">')
+                output.append('<div class="form-row">')
                 output.append(label)
                 if bf.name in self.Meta.disabled:
                     output.append(bf.as_widget(attrs=attrs_disabled))
