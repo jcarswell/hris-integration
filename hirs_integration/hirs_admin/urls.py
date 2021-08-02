@@ -17,7 +17,7 @@ urlpatterns = [
     path('employee/<int:id>/',
          views.Employee.as_view(),
          name='employee_edit'),
-    path('settings/config',
+    path('settings/config/',
          views.Settings.as_view(),
          name='settings'),
     path('settings/admapping/',
