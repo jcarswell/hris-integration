@@ -34,7 +34,7 @@ $("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
     data: $(this).serializeArray()
   })
   .done(function(data) {doneProcess(data);})
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 });
 function isInt(value) {
   var x;
@@ -45,9 +45,8 @@ function isInt(value) {
   return (x | 0) === x;
 }
 function do_delete() {
-  const csrftoken = $('[name=csrfmiddlewaretoken]')[0].value;
   $.ajax({
-    method: "Delete",
+    method: "delete",
     url: location.href,
     })
   .done(function(data){
