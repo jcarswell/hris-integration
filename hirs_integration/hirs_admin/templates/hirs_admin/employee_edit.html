@@ -5,53 +5,41 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
 {% endblock %}
 {% block content %}
-<div id="page-nav" class="list-group">
-  <a class="list-group-item list-group-item-action" href="#employee">Employee</a>
-  <a class="list-group-item list-group-item-action" href="#override">Employee Overrides</a>
-  <a class="list-group-item list-group-item-action" href="#info">Employee Information</a>
-</div>
-<div data-spy="scroll" data-target="#page-nav" data-offset="0" class="scrollspy-example container">
-  <div class="alert" role="alert" disabled>
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {{ employee.surname}}</h2>
-  <form class="form-inline" id="employee-form" enctype="multipart/form-data">
+<div class="container">
+  <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {{ employee.surname }}</h2>
+  <form id="employee-form" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="form-group mb-2">
-      <lable for="photo" class="sr-only">Employee Photo</lable>
-      <div class="form-group">
-        {% if employee.photo %}
-        <img class="m-3" src="{{ employee.photo }}">
-        {% else %}
-        <img clas="m-3" src="{% static 'hirs_admin/default-user.jpg' %}"
-        {% endif %}
-        <input type="file" class="form-control-file" name="photo" accept="image/*" required>
-        <div class="invalid-feedback">
-          A valid photo is required.
-        </div>
-      </div>
+    <h4>Photo</h4>
+    {% if employee.photo %}
+    <img class="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{{ employee.photo }}">
+    {% else %}
+    <img clas="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{% static 'hirs_admin/default-user.jpg' %}">
+    {% endif %}
+    <div class="input-group" style="padding: 2pt 0;" >
+        <input type="file" class="custom-file-input" name="photo" id="photo" accept="image/*" required>
+        <label class="custom-file-label" for="photo">Choose file</label>
+        <div class="invalid-feedback"> A valid photo is required.</div>
     </div>
-    <input type="text" class="hidden" name="form" value="employee">
+    <input type="hidden" name="form" value="employee">
     <button type="submit" class="btn btn-primary mb-2">Update</button>
   </form>
-  <form class="form-inline" id="designation-form">
+  <hr style="border-top:2px solid #bbb">
+  <form id="designation-form">
     {% csrf_token %}
-    <div class="form-row">
-      <div class="col-auto">
-        <lable for='designation-1' class="sr-only">Designations</lable>
-        <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designation-1" value="{{ designation }}">
-        <div class="input-group-append">
-          <button class="btn btn-primary" type="button" id="designation-submit">Update</button>
-        </div>
+    <h4>Designations</h4>
+    <div class="input-group">
+      <lable for='designation-1' class="sr-only">Designations</lable>
+      <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designation-1" value="{{ designation }}">
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="button" id="designation-submit">Update</button>
       </div>
     </div>
-    <input type="text" class="hidden" name="form" value="override">
+    <input type="hidden" name="form" value="designation">
   </form>
-  <h3 id="override">Overrides</h3>
+  <hr style="border-top:2px solid #bbb">
   <form id="override-form">
     {% csrf_token %}
+    <h4>Overrides</h4>
     <div class="form-row">
       <div class="form-group col-md-4">
         <lable for="firstname">First Name</lable>
@@ -81,40 +69,43 @@
         <label for="location">Home Building</label>
         <select name="location" class="form-control">
         {% for location in locations %}
-          <option value="{{location.pk}}">{{location}}</option>
+          <option value="{{location.pk}}"{% if location == employee.location %} selected{% endif %}>{{location}}</option>
         {% endfor %}
         </select>
       </div>
     </div>
+    <input type="hidden" name="form" value="overrides">
+    <button type="submit" class="btn btn-primary mb-2">Update</button>
   </form>
-  <h3 id="info">Employee Information</h3>
+  <hr style="border-top:2px solid #bbb">
+  <h4>Information</h4>
   <div class="container-fluid">
-    <h4>Position</h4>
-    <p>{{ position }}<p>
-    <h4>Phone</h4>
+    <p><strong>Position</strong></p>
+    <p>{{ employee.primary_job.name }}<p>
+    {% if phones %}
+    <p><strong>Phone</strong></p>
     <ul>
-        <li>Primary ({{ primaryphone.label }}) - {{ primaryphone.number }}</li>
-        {% if phones %}
-        {% for phone in phones %}
-        <li>{{ phone.label }} - {{ phone.number }}
-        {% endfor %}
-        {% endif %}
-    <h4>Address</h4>
-    <p><strong>{{ address.label }}</strong></p>
-    <div class="row">
-      <div class="col">{{ address.street1 }}</div>
-      <div class="col">{{ address.street1 }}</div>
-    </div>
-    <div class="row">
-      <div class="col">{{ address.city }}</div>
-      <div class="col">{{ address.province}}</div>
-      <div class="col">{{ address.postal_code}}</div>
-    </div>
+      {% for phone in phones %}
+      <li>{{ phone.label }} - {{ phone.number }}
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <p><strong>Address</strong></p>
+    <ul>
+    <li><p>{{ address.label }}</p>
+      <p>{{ address.street1 }}{% if address.street2 %}<br/>
+      {{ address.street2 }}{% endif %}<br />
+      {{ address.city }}, {{ address.province}} {{ address.postal_code}}
+      </li>
+    </ul>
   </div>
+  {% if employee.password %}
+  <hr style="border-top:2px solid #bbb">
   <h3 id="password">Default Password</h3>
   <div class="form-group">
     <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
   </div>
+  {% endif %}
 </div>
 {% endblock %}
 {% block extra_js %}
