@@ -272,9 +272,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
         context["employee"] = employee
         context["designation"] = designation
-        context["overrides"]=  overrides
-        context["location"] = models.Location.objects.all()
-        context["phone"] = models.EmployeePhone.objects.filter(employee=employee)
+        context["overrides"] =  overrides
+        context["locations"] = models.Location.objects.all()
+        context["phones"] = models.EmployeePhone.objects.filter(employee=employee)
         context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
 
         return self.render_to_response(context)
