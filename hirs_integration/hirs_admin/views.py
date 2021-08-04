@@ -272,7 +272,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
         context["employee"] = employee
         context["designation"] = designation
-        context["overrides"] =  overrides
+        context["overrides"] = overrides
         context["locations"] = models.Location.objects.all()
         context["phones"] = models.EmployeePhone.objects.filter(employee=employee)
         context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
@@ -281,22 +281,25 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
     def post(self, request, *args, **kwargs):
         try:
-            emp_id = getattr('emp_id',kwargs,
-                                getattr('emp_id',request.POST))
-        except AttributeError:
+            emp_id = kwargs['id']
+        except KeyError:
             return HttpResponse(json.dumps({"status":"error","feilds":["emp_id"]}), status=400)
         
         errors = []
         if request.POST['form'] == 'override':
             emp, _ = models.EmployeeOverrides.objects.get_or_create(employee=emp_id)
-            request.POST.pop('form')
-            request.POST.pop('csrfmiddlewaretoken')
             
             for key, val in request.POST.items():
-                try:
-                    setattr(emp, key, val)
-                except NameError:
-                    errors.append(f'{key} not valid')
+                if hasattr(models.EmployeeOverrides,key):
+                    if key == '_location':
+                        try:
+                            setattr(emp,key,models.Location.objects.get(pk=int(val)))
+                        except models.Location.DoesNotExist:
+                            errors.append(key)
+                    else:
+                        setattr(emp, key, val)
+                else:
+                    errors.append(key)
 
             emp.save()
         elif request.POST['form'] == 'employee':
@@ -304,8 +307,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp.photo = request.POST['photo']
             emp.save()
         elif request.POST['form'] == "designation":
-            emp, _ = models.EmployeeDesignation.objects.get_or_create(employee=emp_id)
+            emp, _ = models.EmployeeDesignation.objects.get_or_create(employee=models.Employee.objects.get(pk=emp_id))
             emp.label = request.POST['designation-1']
+            emp.save()
         
         if errors == []:
             return HttpResponse(json.dumps({"status":"sucess","feilds":errors}))
