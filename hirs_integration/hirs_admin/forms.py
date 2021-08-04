@@ -18,7 +18,7 @@ class Form(forms.ModelForm):
         attrs = {"class":"form-control"}
         attrs_disabled = {"class":"form-control","disabled":True}
 
-        logger.warning(f"Building {self.__class__.__name__} as html form")
+        logger.debug(f"Building {self.__class__.__name__} as html form")
 
         for name,_ in self.fields.items():
             bf = self[name]
@@ -27,7 +27,7 @@ class Form(forms.ModelForm):
             else:
                 if bf.label:
                     label = bf.label_tag() or ''
-                output.append('<div calss="form-row">')
+                output.append('<div class="form-row">')
                 output.append(label)
                 if bf.name in self.Meta.disabled:
                     output.append(bf.as_widget(attrs=attrs_disabled))
@@ -59,7 +59,6 @@ class GroupMapping(Form):
             'loc': _t("Locations")
         }
         disabled = ()
-        
 
 
 class JobRole(Form):
