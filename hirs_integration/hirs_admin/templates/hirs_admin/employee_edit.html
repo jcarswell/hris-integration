@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container">
   <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {{ employee.surname }}</h2>
-  <form id="employee-form" enctype="multipart/form-data">
+  <form style="display:None;" id="employee-form" enctype="multipart/form-data">
     {% csrf_token %}
     <h4>Photo</h4>
     {% if employee.photo %}
@@ -23,7 +23,7 @@
     <input type="hidden" name="form" value="employee">
     <button type="submit" class="btn btn-primary mb-2">Update</button>
   </form>
-  <hr style="border-top:2px solid #bbb">
+  <hr style="border-top:2px solid #bbb;display:None;">
   <form id="designation-form">
     {% csrf_token %}
     <h4>Designations</h4>
@@ -31,12 +31,12 @@
       <lable for='designation-1' class="sr-only">Designations</lable>
       <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designation-1" value="{{ designation }}">
       <div class="input-group-append">
-        <button class="btn btn-primary" type="button" id="designation-submit">Update</button>
+        <button class="btn btn-primary" type="submit" id="designation-submit">Update</button>
       </div>
     </div>
     <input type="hidden" name="form" value="designation">
   </form>
-  <hr style="border-top:2px solid #bbb">
+  <hr style="border-top:2px solid #bbb;">
   <form id="override-form">
     {% csrf_token %}
     <h4>Overrides</h4>
@@ -66,10 +66,10 @@
     </div>
     <div class="form-row">
       <div class="form-group col-md-4">
-        <label for="location">Home Building</label>
-        <select name="location" class="form-control">
+        <label for="_location">Home Building</label>
+        <select name="_location" class="form-control">
         {% for location in locations %}
-          <option value="{{location.pk}}"{% if location == employee.location %} selected{% endif %}>{{location}}</option>
+          <option value="{{location.pk}}"{% if location == overrides.location %} selected{% endif %}>{{location}}</option>
         {% endfor %}
         </select>
       </div>
@@ -77,7 +77,7 @@
     <input type="hidden" name="form" value="overrides">
     <button type="submit" class="btn btn-primary mb-2">Update</button>
   </form>
-  <hr style="border-top:2px solid #bbb">
+  <hr style="border-top:2px solid #bbb;">
   <h4>Information</h4>
   <div class="container-fluid">
     <p><strong>Position</strong></p>
@@ -100,9 +100,9 @@
     </ul>
   </div>
   {% if employee.password %}
-  <hr style="border-top:2px solid #bbb">
+  <hr style="border-top:2px solid #bbb;">
   <h3 id="password">Default Password</h3>
-  <div class="form-group">
+  <div class="input-group">
     <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
   </div>
   {% endif %}
@@ -114,36 +114,45 @@
 <script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
 <!--
-var itemsOverride
+var itemsOverride;
+function validCheck() {
+  var photo = $("#employee-form input[type=file]")[0]
+  if (photo.files > 0) {
+    return photo.checkValidity();
+  }
+  return false
+}
 $(function() {
   $('#'+employee.location).attr("default", true);
-  const csrftoken = Cookies.get('csrftoken');
   itemsOverride = convertSerializedArrayToHash($("#override-form").serializeArray());
+  $("#employee-form input[type=file]")[0].onchange = validCheck;
+  const csrftoken = getCookie('csrftoken')
+  $.ajaxSetup({
+    headers: { "X-CSRFToken": csrftoken }
+  });
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
   var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
-  data["csrfmiddlewaretoken"] = csrftoken
-  data["form"] = "override"
+  data['form'] = 'override'
   
   $.ajax({
     method: "POST",
     url: location.href,
-    data: form_data
+    data: data
   })
-  .done(function(data) {doneProcess(data);}),
-  .error(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+  .done(function(data) {doneProcess(data);})
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 $("#employee-form").submit(function(e) {
   e.preventDefault();
-  if (e.checkValidity() === false){
+  if (validCheck() === false){
       e.stopPropagation()
       return false
   }
   
   const fd = new FromData();
   file = $(this).querySelector('input[type=file]').files[0]
-  fd.append('csrfmiddlewaretoken',csrf_token)
   fd.append('form','employee')
   fd.append('photo',file)    
 
@@ -161,10 +170,10 @@ $("#designation-form").submit(function(e) {
   $.ajax({
     method: "POST",
     url: location.href,
-    data: form.serialize(),
+    data: $(this).serializeArray(),
   })
-  .done(function(data) {doneProcess(data);}),
-  .error(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+  .done(function(data) {doneProcess(data);})
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 -->
 </script>
