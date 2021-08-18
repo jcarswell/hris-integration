@@ -5,13 +5,11 @@ from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
 from django import conf
-from django.db.models import signals
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
 from random import choice
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords, ascii_uppercase,ascii_lowercase
-from django.db.utils import IntegrityError
 
 logger = logging.getLogger('hirs_admin.Model')
 
@@ -30,7 +28,9 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     Returns:
         str: valid username or alias
     """
-    invalid_char = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',',','<','>','.',' ','`','~']
+    invalid_char = ['!','@','#','$','%','^','&','*','(',')',
+                    '_','+','=',';',':','\'','"',',','<','>',
+                    ',',' ','`','~','{','}','|']
     substitue = ''
     suffix = suffix or ""
     if suffix == "0":
@@ -140,24 +140,23 @@ def set_upn(instance) -> None:
         ValueError: if the model is not EmployeeOverrides
     """
     logger.debug(f"Setting upn for {instance}")
-    if not isinstance(instance,EmployeeOverrides):
-        raise ValueError("Only supported for EmployeeOverrides")
+    if not isinstance(instance,(Employee,EmployeePending)):
+        raise ValueError("Only supported for Employee objects")
 
-    loop = ''
+    loop = 0
     upn = upn_validator(instance.firstname, instance.lastname, str(loop))
     while instance._email_alias != upn:
-        if isinstance(loop,int) and loop >= 10:
+        if loop >= 10:
             logger.error("Something is wrong, unable to set user after 10 iters")
-        logger.debug(f"upn is {upn}")
-        if not Employee.objects.filter(_username=upn_validator(instance.firstname, instance.lastname, str(loop))).exists():
-            instance._email_alias = upn_validator(instance.firstname, instance.lastname, suffix=str(loop))
+        logger.debug(f"Checking upn {upn}")
+        if (not Employee.objects.filter(_username=upn).exists() and
+            not Employee.objects.filter(_email_alias=upn).exists() and
+            not EmployeePending.objects.filter(_username=upn).exists() and
+            not EmployeePending.objects.filter(_email_alias=upn).exists()):
+            instance._email_alias = upn
             break
 
-        if loop == '':
-            loop = 1
-        else:
-            loop += 1
-        
+        loop += 1
         upn = upn_validator(instance.firstname, instance.lastname, str(loop))
 
 class FieldEncryption:
@@ -176,7 +175,7 @@ class FieldEncryption:
         except Exception as e:
             logger.critical("An Error occured encrypting the data provided")
             raise ValueError from e
-    
+
     def decrypt(self,data:bytes) -> str:
         if not isinstance(data,bytes):
             data = data.encode('utf-8')
@@ -216,6 +215,7 @@ class Setting(models.Model):
     hidden = models.BooleanField(default=False)
     
     o2 = SettingsManager()
+    objects = o2
 
     @property
     def value(self) -> str:
@@ -343,6 +343,37 @@ class Employee(models.Model):
     photo = models.FileField(upload_to='uploads/', null=True, blank=True)
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
+    _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
+
+    def __eq__(self,other) -> bool:
+        if not isinstance(other,Employee) or self.emp_id != other.pk:
+            return False
+
+        for field in ['givenname','middlename','surname','suffix','start_date','state','leave',
+                      'type','username','photo','email_alias']:
+            if getattr(self,field) != getattr(other,field):
+                return False
+        
+        if (self.manager is None and other.manager is not None or
+            self.manager is not None and other.manager is None):
+            return False
+        elif self.manager and other.manager and self.manager.pk != other.manager.pk:
+            return False
+        if (self.location is None and other.location is not None or
+            self.location is not None and other.location is None):
+            return False
+        elif self.location and other.location and self.location.pk != other.location.pk:
+            return False
+        if (self.primary_job is None and other.primary_job is not None or
+            self.primary_job is not None and other.primary_job is None):
+            return False
+        elif self.primary_job and other.primary_job and self.primary_job.pk != other.primary_job.pk:
+            return False
+
+        return True
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
 
     def clear_password(self,confirm=False):
         if confirm:
@@ -354,7 +385,7 @@ class Employee(models.Model):
         if self._password:
             return FieldEncryption().decrypt(self._password)
         return None
-    
+
     @password.setter
     def password(self, passwd: str) -> None:
         self._password = FieldEncryption().encrypt(passwd)
@@ -366,7 +397,17 @@ class Employee(models.Model):
     @username.setter
     def username(self,username:str) -> None:
         set_username(self, username)
-    
+
+    @property
+    def email_alias(self):
+        if not self._email_alias:
+            return self.username
+        return self._email_alias
+
+    @email_alias.setter
+    def email_alias(self,val):
+        set_upn(val)
+
     @property
     def status(self):
         if self.state and self.leave:
@@ -420,10 +461,10 @@ class Employee(models.Model):
             jobs = jobs.split()
             if len(jobs) == 1:
                 jobs = jobs[0].split(',')
-        
+
         elif isinstance(jobs,dict):
             jobs = jobs.values()
-        
+
         elif isinstance(jobs,int):
             jobs = [str(jobs)]
 
@@ -439,14 +480,14 @@ class Employee(models.Model):
                 jl.append(JobRole.objects.get(pk=int(job)))
             except JobRole.DoesNotExist:
                 logger.warning(f"Job ID {job} doesn't exists yet")
-        
+
         try:
             self.jobs.add(*jl)
         except ValueError:
             logger.info("Can't set the jobs until the model has been saved")
 
     def __str__(self):
-        return f"{self.givenname} {self.surname}"
+        return f"{self.emp_id}: {self.givenname} {self.surname}"
 
     @classmethod
     def post_save(cls, sender, instance, created, **kwargs):
@@ -456,6 +497,11 @@ class Employee(models.Model):
 
             instance.password = passwd
             instance.save()
+
+            #instanciate the EmployeeOverride Table
+            override = EmployeeOverrides()
+            override.employee = instance
+            override.save()
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
@@ -468,17 +514,26 @@ class Employee(models.Model):
             prev_instance = None
 
         if (prev_instance and 
-            prev_instance.status == "Terminated" and
-            instance.status == "Active"):
+            prev_instance.status == instance.STAT_TERM and
+            instance.status != instance.STAT_TERM):
             logger.info(f"{instance} transitioned from terminated to active")
             set_username(instance)
+            set_upn(instance)
 
-        elif instance.status == "Terminated" and instance._username:
-            set_username(instance, f"{instance._username}{round(time.time())}")
-        elif instance._username is None and instance.status != "Terminated":
-            set_username(instance)
-        elif instance._username is None:
-            set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
+        else:
+            if instance.status == instance.STAT_TERM and instance._username:
+                set_username(instance, f"{instance._username}{round(time.time())}")
+            elif instance._username is None and instance.status != instance.STAT_TERM:
+                set_username(instance)
+            elif instance._username is None:
+                set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
+
+            if instance.status == instance.STAT_TERM and instance._email_alias:
+                set_upn(instance, f"{instance._username}{round(time.time())}")
+            elif instance._email_alias is None and instance.status != instance.STAT_TERM:
+                set_upn(instance)
+            elif instance._email_alias is None:
+                set_upn(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
 
         instance.updated_on = datetime.utcnow()
 pre_save.connect(Employee.pre_save, sender=Employee)
@@ -491,19 +546,34 @@ class EmployeeOverrides(models.Model):
     _lastname = models.CharField(max_length=96, null=True, blank=True)
     nickname = models.CharField(max_length=96, null=True, blank=True)
     _location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
-    _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
-    
+
+    def __str__(self) -> str:
+        return f"{self.employee.emp_id}: {self.firstname} {self.lastname}"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other,EmployeeOverrides):
+            return False
+
+        for field in ['employee','_firstname','_lastname','nickname','_location']:
+            if getattr(self,field) != getattr(other,field):
+                return False
+
+        return True
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+
     @property
     def username(self):
         """
         Returns the Employees Username Exists for conitinuity
         """
         return self.employee.username
-    
+
     @username.setter
     def username(self,username:str) -> None:        
         set_username(self.employee, username)
-        
+
     @property
     def firstname(self):
         if not self._firstname:
@@ -536,39 +606,32 @@ class EmployeeOverrides(models.Model):
 
     @property
     def email_alias(self):
-        if not self._email_alias:
-            return self.username
-        return self._email_alias
+        return self.employee.email_alias
 
     @email_alias.setter
     def email_alias(self,val):
-        self._email_alias = val
+        set_upn(val)
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         emp = instance.employee
-
-        if instance._email_alias and instance._email_alias != instance.username:
-            try:
-                Employee.objects.get(_username=instance._email_alias)
-            except Employee.DoesNotExist:
-                pass
-            else:
-                raise IntegrityError("email alias cannot overlap with usernames")
+        prev_instance = EmployeeOverrides.objects.get(Employee=instance.employee)
 
         if instance.firstname is not None or instance.lastname is not None:
             set_username(instance)
 
-        emp.updated_on = datetime.utcnow()
-        emp.save()
-
+        if prev_instance and prev_instance != instance:
+            instance.emp.updated_on = datetime.utcnow()
+            emp.save()
 pre_save.connect(EmployeeOverrides.pre_save, sender=EmployeeOverrides)
 
 
 class EmployeeDesignation(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    label = models.CharField(max_length=50)
+    label = models.CharField(max_length=128)
 
+    def __str__(self) -> str:
+        return f"{str(self.employee)} - {self.label}"
 
 class EmployeePhone(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
@@ -577,7 +640,7 @@ class EmployeePhone(models.Model):
     primary = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.label} {self.number}"
+        return f"{str(self.employee)} - {self.label} {self.number}"
 
 
 class EmployeeAddress(models.Model):
@@ -590,13 +653,155 @@ class EmployeeAddress(models.Model):
     city = models.CharField(max_length=128)
     postal_code = models.CharField(max_length=128)
     country = models.CharField(max_length=128)
-    primary = models.BooleanField()
+    primary = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{str(self.employee)} - {self.label}"
 
 
 class EmployeePending(models.Model):
     class Meta:
         db_table = 'employeepending'
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+
+    STAT_TERM = 'terminated'
+    STAT_ACT = 'active'
+    STAT_LEA = 'leave'
+
+    created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
+    updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
+    manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL)
+    firstname = models.CharField(max_length=96, null=False, blank=False)
+    lastname = models.CharField(max_length=96, null=False, blank=False)
+    suffix = models.CharField(max_length=20, null=True, blank=True)
+    designation = models.CharField(max_length=128, null=True, blank=True)
+    start_date = models.DateField(default=datetime.utcnow)
+    state = models.BooleanField(default=True)
+    leave = models.BooleanField(default=False)
+    type = models.CharField(max_length=64,null=True,blank=True)
+    _username = models.CharField(max_length=64)
+    primary_job = models.ForeignKey(JobRole, related_name='pending_primary_job', null=True,
+                                    blank=True, on_delete=models.SET_NULL)
+    jobs = models.ManyToManyField(JobRole, blank=True)
+    photo = models.FileField(upload_to='uploads/', null=True, blank=True)
+    location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
+    _password = models.CharField(max_length=128,null=True,blank=True)
+    _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
+    employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True, on_delete=models.CASCADE)
+    guid = models.CharField(max_length=40,null=True,blank=True)
+    
+
+    def __str__(self) -> str:
+        return f"{self.firstname} {self.lastname}"
+
+    def clear_password(self,confirm=False):
+        if confirm:
+            self._password = None
+            self.save()
+
+    @property
+    def password(self) -> str:
+        if self._password:
+            return FieldEncryption().decrypt(self._password)
+        return None
+
+    @password.setter
+    def password(self, passwd: str) -> None:
+        self._password = FieldEncryption().encrypt(passwd)
+
+    @property
+    def username(self):
+        return self._username
+
+    @username.setter
+    def username(self,username:str) -> None:
+        set_username(self, username)
+
+    @property
+    def email_alias(self):
+        if not self._email_alias:
+            return self.username
+        return self._email_alias
+
+    @email_alias.setter
+    def email_alias(self,val):
+        set_upn(val)
+
+    @property
+    def emp_id(self) -> int:
+        #When called return 0 as this employee has not been commited/assigned an employee id yet.
+        return 0
+
+    @property
+    def status(self):
+        if self.state and self.leave:
+            return self.STAT_LEA
+        elif self.state:
+            return self.STAT_ACT
+        else:
+            return self.STAT_TERM
+
+    @status.setter
+    def status(self,new_status):
+        logger.debug(f"setting new status {new_status}")
+        if isinstance(new_status,(bool,int)):
+            self.leave = not bool(new_status)
+            self.state = bool(new_status)
+        elif isinstance(new_status,str) and new_status.lower() in [self.STAT_ACT,self.STAT_LEA,self.STAT_TERM]:
+            if new_status.lower() == self.STAT_LEA:
+                logger.debug(f"Setting to Leave")
+                self.leave = True
+                self.state = True
+            elif new_status.lower() == self.STAT_TERM:
+                logger.debug(f"Setting to Terminated")
+                self.leave = True
+                self.state = False
+            elif new_status.lower() == self.STAT_ACT:
+                logger.debug(f"Setting to Active")
+                self.leave = False
+                self.state = True
+
+    @classmethod
+    def post_save(cls, sender, instance, created, **kwargs):
+        if created:
+            passwd = "".join(choice(ascii_letters + digits) for char in range(9))
+            passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
+
+            instance.password = passwd
+            instance.save()
+
+    @classmethod
+    def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        try:
+            if instance.pk:
+                prev_instance = EmployeePending.objects.get(pk=instance.pk)
+            else:
+                prev_instance = None
+        except EmployeePending.DoesNotExist:
+            prev_instance = None
+
+        if (prev_instance and 
+            prev_instance.status == instance.STAT_TERM and
+            instance.status != instance.STAT_TERM):
+            logger.info(f"{instance} transitioned from terminated to active")
+            set_username(instance)
+            set_upn(instance)
+
+        else:
+            if instance.status == instance.STAT_TERM and instance._username:
+                set_username(instance, f"{instance._username}{round(time.time())}")
+            elif instance._username is None and instance.status != instance.STAT_TERM:
+                set_username(instance)
+            elif instance._username is None:
+                set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
+
+            if instance.status == instance.STAT_TERM and instance._email_alias:
+                set_upn(instance, f"{instance._username}{round(time.time())}")
+            elif instance._email_alias is None and instance.status != instance.STAT_TERM:
+                set_upn(instance)
+            elif instance._email_alias is None:
+                set_upn(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
+pre_save.connect(EmployeePending.pre_save, sender=EmployeePending)
+post_save.connect(EmployeePending.post_save, sender=EmployeePending)
 
 
 class GroupMapping(models.Model):
@@ -609,10 +814,6 @@ class GroupMapping(models.Model):
 class WordList(models.Model):
     src = models.CharField(max_length=256)
     replace = models.CharField(max_length=256)
-    
+
     def __str__(self):
         return f"{self.src} -> {self.replace}"
-
-class BusinessUnitManager(models.Model):
-    bu = models.OneToOneField(BusinessUnit, on_delete=models.CASCADE, unique=True)
-    manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL)
