@@ -486,6 +486,14 @@ class Employee(models.Model):
         except ValueError:
             logger.info("Can't set the jobs until the model has been saved")
 
+    @property
+    def firstname(self) -> str:
+        return self.givenname
+
+    @property
+    def lastname(self) -> str:
+        return self.surname
+
     def __str__(self):
         return f"{self.emp_id}: {self.givenname} {self.surname}"
 
@@ -730,6 +738,14 @@ class EmployeePending(models.Model):
     def emp_id(self) -> int:
         #When called return 0 as this employee has not been commited/assigned an employee id yet.
         return 0
+
+    @property
+    def givenname(self) -> str:
+        return self.firstname
+
+    @property
+    def surname(self) -> str:
+        return self.lastname
 
     @property
     def status(self):
