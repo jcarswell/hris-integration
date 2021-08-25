@@ -623,7 +623,10 @@ class EmployeeOverrides(models.Model):
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         emp = instance.employee
-        prev_instance = EmployeeOverrides.objects.get(Employee=instance.employee)
+        try:
+            prev_instance = EmployeeOverrides.objects.get(employee=instance.employee)
+        except EmployeeOverrides.DoesNotExist:
+            prev_instance = None
 
         if instance.firstname is not None or instance.lastname is not None:
             set_username(instance)
