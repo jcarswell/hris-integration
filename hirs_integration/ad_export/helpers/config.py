@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from django.db.models.query import QuerySet
 from django.db.models import Q
@@ -7,7 +8,7 @@ from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,EmployeeDesignation,
                                EmployeePending,Location,GroupMapping)
 from datetime import datetime
-from pyad.adgroup import ADGroup
+from pyad import ADGroup
 
 #CONST REFERANCES
 STAT_LEA = Employee.STAT_LEA
@@ -39,6 +40,7 @@ CONFIG_UPN = 'ad_upn_suffix'
 CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
 CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
 CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
+CONFIG_IMPORT_FORM = 'export_model_form'
 
 CONFIG_DEFAULTS = {
     CONFIG_CAT: {
@@ -47,6 +49,7 @@ CONFIG_DEFAULTS = {
         CONFIF_AD_PASSWORD: ['',True],
         CONFIG_UPN: '',
         CONFIG_ROUTE_ADDRESS: 'you.mail.onmicrosoft.com',
+        CONFIG_IMPORT_FORM: 'ad_export.form',
         CONFIG_ENABLE_MAILBOXES: 'False',
         CONFIG_MAILBOX_TYPE: 'local',
         CONFIG_LAST_SYNC:'1999-01-01 00:00'
@@ -117,32 +120,66 @@ def get_config(catagory:str ,item:str) -> str:
 
 
 class EmployeeManager:
-    def __init__(self,_id:int,emp_object:Employee =None) -> None:
-        if emp_object and emp_object.emp_id == _id:
-            self.__qs_emp = emp_object
+    def __init__(self,emp_object:Union[Employee,EmployeePending]) -> None:
+        if not isinstance(emp_object,(Employee,EmployeePending)):
+            raise ValueError(f"expexted Employee or EmployeePending Object got {type(emp_object)}")
+
+        self.__qs_emp = emp_object
+        self.merge = False
+        if isinstance(self.__qs_emp,EmployeePending) and self.__qs_emp.employee and self.__qs_emp.guid:
+            self.merge = True
+            self.__emp_pend = emp_object
+            self.__qs_emp = Employee.objects.get(emp_id=emp_object.employee.pk)
+            self.pre_merge()
+        self.get()
+
+    def get(self):
+        if isinstance(self.__qs_emp,Employee):
+            self.__qs_over = EmployeeOverrides.objects.get(employee=self.__qs_emp)
+            self.__qs_desig = EmployeeDesignation.objects.filter(employee=self.__qs_emp)
+            self.__qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
+            self.__qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
         else:
-            self.__qs_emp = None
-
-        self.get(_id)
-
-    def get(self,_id=None):
-        if _id == None and not self.__qs_emp:
-            raise ValueError("ID is required when employee object is not set")
-        elif _id == None:
-            _id = self.id
-        if not self.__qs_emp:
-            self.__qs_emp = Employee.objects.get(pk=_id)
-
-        self.__qs_over,_ = EmployeeOverrides.objects.get_or_create(employee=self.__qs_emp)
-        self.__qs_desig = EmployeeDesignation.objects.filter(employee=self.__qs_emp)
-        self.__qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
-        self.__qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
+            self.__qs_over = self.__qs_emp
+            self.__qs_desig = self.__qs_emp
+            self.__qs_phone = None
+            self.__qs_addr = None
 
     def __str__(self) -> str:
-        return self.username
+        return str(self.__qs_emp)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}({self.id},{repr(self.employee)})>"
+
+    def pre_merge(self) -> None:
+        if EmployeeOverrides.objects.filter(employee=self.__qs_emp).exists:
+            self.__qs_over = EmployeeOverrides.objects.get(employee=self.__qs_emp)
+        else:
+            self.__qs_over = EmployeeOverrides()
+            self.__qs_over.employee = self.__qs_emp
+
+        if self.__qs_emp.givenname != self.__emp_pend.firstname:
+            self.__qs_over.firstname = self.__emp_pend.firstname
+
+        if self.__qs_emp.surname != self.__emp_pend.lastname:
+            self.__qs_over.lastname = self.__emp_pend.lastname
+
+        if self.__emp_pend.designation:
+            designation = EmployeeDesignation()
+            designation.employee = self.__qs_emp
+            designation.lable = self.__emp_pend.designation
+            designation.save()
+
+        if self.__emp_pend.photo:
+            self.__qs_emp.photo = self.__emp_pend.photo
+
+        if self.__qs_emp.location.pk != self.__emp_pend.location.pk:
+            self.__qs_over.location = self.__emp_pend.location
+
+        if self.__emp_pend.password:
+            self.__qs_emp.password = self.__emp_pend.password
+
+        self.__qs_over.save()
 
     @property
     def employee(self) -> Employee:
@@ -162,6 +199,28 @@ class EmployeeManager:
             return ", ".join(output)
         else:
             return ""
+
+    @property
+    def phone(self):
+        if self.__qs_phone is None:
+            return None
+
+        for phone in self.__qs_phone:
+            if phone.primary:
+                return phone.number
+
+        return None
+
+    @property
+    def address(self):
+        if self.__qs_addr is None:
+            return {}
+
+        for addr in self.__qs_addr:
+            if addr.primary or addr.lable.lower == "office":
+                return addr
+
+        return None
 
     @property
     def firstname(self) -> str:
@@ -187,12 +246,12 @@ class EmployeeManager:
     
     @property
     def email_alias(self) -> str:
-        return self.__qs_over.email_alias
+        return self.__qs_emp.email_alias
 
     @property
     def ou(self) -> str:
         return self.__qs_emp.primary_job.bu.ad_ou
-    
+
     @property
     def title(self) -> str:
         return self.__qs_emp.primary_job.name
@@ -204,9 +263,9 @@ class EmployeeManager:
                 return False
         elif self.__qs_emp.status == STAT_TERM:
             return False
-        
+
         return True
-    
+
     @property
     def photo(self) -> str:
         return self.__qs_emp.photo
@@ -232,10 +291,13 @@ class EmployeeManager:
     @property
     def bu(self):
         return self.__qs_emp.primary_job.bu.name
-    
+
     @property
     def manager(self):
-        return EmployeeManager(self.__qs_emp.manager.pk or self.__qs_emp.primary_job.bu.manager.pk)
+        try:
+            return EmployeeManager(self.__qs_emp.manager or self.__qs_emp.primary_job.bu.manager)
+        except Exception:
+            return None
 
     @property
     def remove_groups(self) -> list[str]:
@@ -289,6 +351,37 @@ class EmployeeManager:
 
         return output
 
+    def clear_password(self) -> bool:
+        if self.__qs_emp._password:
+            self.__qs_emp.clear_password(True)
+            return True
+        else:
+            return False
+
+    @property
+    def guid(self) -> str:
+        if hasattr(self.__qs_emp,'guid'):
+           return self.__qs_emp.guid
+        else:
+            return None
+
+    @guid.setter
+    def guid(self,id) -> None:
+        if hasattr(self.__qs_emp,'guid'):
+            self.__qs_emp.guid = id
+
+    @property
+    def pending(self):
+        if isinstance(self.__qs_emp,EmployeePending):
+            return True
+        return False
+
+    def perge_pending(self):
+        if hasattr(self,'__emp_pend') and self.merge:
+            logger.info(f"Removing Pending employee object for {str(self.__qs_emp)}")
+            self.__emp_pend.delete()
+
+
 def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManager]:
     """
     Gets all employees and returns a list of EmployeeManager instances.
@@ -302,41 +395,44 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     Returns:
         list[EmployeeManager]: list of employees
     """
-    
+
     output = []
-    
+
+    def add_emp(o: object):
+        # if terminated(Exclude Terminated) is False and status = Terminated == True 
+        #   or
+        # if user status is not Terminated
+        if (employee.status == Employee.STAT_TERM and not terminated) or employee.status != Employee.STAT_TERM:
+            try:
+                output.append(EmployeeManager(employee))
+            except Exception as e:
+                logger.debug(f"caught '{e}' while appending Employee")
+                logger.error(f"Failed to get Employee {str(employee)}")
+
     if delta:
         lastsync = get_config(CONFIG_CAT,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
         ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
         emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
+        emp_pend = EmployeePending.objects.filter(updated_on__gt=datetime(*ls_datetime))
     else:
         emps = Employee.objects.all()
-        
+        emp_pend = EmployeePending.objects.all()
+
+    logger.debug(f"Got {len(emps)} Employees and {len(emp_pend)} Pending Employees")
+
     for employee in emps:
-        # if terminated(Exclude Terminated) is False and status = Terminated == True 
-        #   or
-        # if user status is not Terminated
-        if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
-            try:
-                output.append(EmployeeManager(employee.emp_id,employee))
-            except Exception:
-                logger.error(f"Failed to get Employee {employee.emp_id}")
+        add_emp(employee)
 
-    return output
+    for employee in emp_pend:
+        add_emp(employee)
+        if output[-1].merge and output[-1].guid:
+            for x in range(len(output)-1):
+                if output[x].id == output[-1].id:
+                    output.pop(x)
+                    break
 
-def commit_employee(id:int) -> bool:
-    try:
-        EmployeePending.objects.get(employee=id).delete()
-        return True
-    except EmployeePending.DoesNotExist:
-        return False
-
-def get_pending() -> list[EmployeeManager]:
-    output = []
-    for employee in EmployeePending.objects.all():
-        output.append(EmployeeManager(employee.employee.pk,employee.employee))
-
+    logger.debug(f"Returning {len(output)} Employees")
     return output
 
 def base_dn() -> str:
@@ -345,10 +441,13 @@ def base_dn() -> str:
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
     users = Employee.objects.filter(_username__startswith=username)
+    users_pend = EmployeePending.objects.filter(_username__startswith=username)
     output = []
     for employee in users:
-        output.append(EmployeeManager(employee.emp_id,employee))
-    
+        output.append(EmployeeManager(employee))
+    for employee in users_pend:
+        output.append(EmployeeManager(employee))
+
     return output
 
 def set_last_run():
