@@ -700,6 +700,32 @@ class EmployeePending(models.Model):
     employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True, on_delete=models.CASCADE)
     guid = models.CharField(max_length=40,null=True,blank=True)
     
+    def __eq__(self,other) -> bool:
+        if not isinstance(other,EmployeePending) or self.pk != other.pk:
+            return False
+
+        for field in ['firstname','lastname','suffix','start_date','state','leave',
+                      'type','username','photo','email_alias','guid']:
+            if getattr(self,field) != getattr(other,field):
+                return False
+        
+        if (self.manager is None and other.manager is not None or
+            self.manager is not None and other.manager is None):
+            return False
+        elif self.manager and other.manager and self.manager.pk != other.manager.pk:
+            return False
+        if (self.location is None and other.location is not None or
+            self.location is not None and other.location is None):
+            return False
+        elif self.location and other.location and self.location.pk != other.location.pk:
+            return False
+        if (self.primary_job is None and other.primary_job is not None or
+            self.primary_job is not None and other.primary_job is None):
+            return False
+        elif self.primary_job and other.primary_job and self.primary_job.pk != other.primary_job.pk:
+            return False
+
+        return True
 
     def __str__(self) -> str:
         return f"{self.firstname} {self.lastname}"
