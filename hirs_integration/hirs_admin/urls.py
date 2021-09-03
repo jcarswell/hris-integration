@@ -53,5 +53,11 @@ urlpatterns = [
     path('locations/<int:id>/',
          views.FormView.as_view(form=forms.Location),
          name='location_edit'),
+    path('employee_pending/',
+         views.ListView.as_view(form=forms.EmployeePending),
+         name='pending'),
+    path('employee_pending/<int:id>/',
+         views.FormView.as_view(form=forms.EmployeePending),
+         name='pending_edit'),
     path('', views.Index.as_view(), name='index')
 ]
