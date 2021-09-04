@@ -1,7 +1,6 @@
 import logging
 
 from django import forms
-from django.forms import fields
 from django.forms.widgets import Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
@@ -15,12 +14,11 @@ class Form(forms.ModelForm):
     def as_form(self):
         output = []
         hidden_fields = []
-        attrs = {"class":"form-control"}
-        attrs_disabled = {"class":"form-control","disabled":True}
 
         logger.debug(f"Building {self.__class__.__name__} as html form")
 
         for name,_ in self.fields.items():
+            classes = ["form-control"]
             bf = self[name]
             if bf.is_hidden:
                 hidden_fields.append(bf.as_hidden)
@@ -29,10 +27,15 @@ class Form(forms.ModelForm):
                     label = bf.label_tag() or ''
                 output.append('<div class="form-row">')
                 output.append(label)
-                if bf.name in self.Meta.disabled:
-                    output.append(bf.as_widget(attrs=attrs_disabled))
+                if hasattr(self.Meta, 'classes') and bf.name in self.Meta.classes:
+                    if isinstance(self.Meta.classes[bf.name],str):
+                        classes.append(self.Meta.classes[bf.name])
+                    elif isinstance(self.Meta.classes[bf.name],(list,tuple)):
+                        classes = classes + list(self.Meta.classes[bf.name])
+                if hasattr(self.Meta,'disabled') and bf.name in self.Meta.disabled:
+                    output.append(bf.as_widget(attrs={'class':" ".join(classes),'disabled':True}))
                 else:
-                    output.append(bf.as_widget(attrs=attrs))
+                    output.append(bf.as_widget(attrs={'class':" ".join(classes)}))
                 output.append('</div>')
 
         if hidden_fields:
@@ -46,11 +49,12 @@ class Form(forms.ModelForm):
 
 class GroupMapping(Form):
     name = _t("Group Mappings to Jobs")
+    
     class Meta:
         model = models.GroupMapping
         fields = '__all__'
         widgets = {
-            'dn': Select(choices=adtools.get_adgroups()),
+            'dn': Select(choices=adtools.get_adgroups(),attrs={'data-live-search':'true'}),
         }
         labels = {
             'dn': _t("AD Group"),
@@ -58,7 +62,9 @@ class GroupMapping(Form):
             'bu': _t("Business Units"),
             'loc': _t("Locations")
         }
-        disabled = ()
+        classes = {
+            'dn':'selectpicker',
+        }
 
 
 class JobRole(Form):
@@ -143,3 +149,26 @@ class EmployeePhone(forms.ModelForm):
     class Meta:
         model = models.EmployeePhone
         fields = '__all__'
+
+class EmployeePending(Form):
+    class Meta:
+        model = models.EmployeePending
+        fields = '__all__'
+        exclude = ('created_on','updated_on','_username','_password','_email_alias')
+        disabled = ('guid')
+        labels = {
+            'manager': _t('Manager'),
+            'firstname': _t('First Name'),
+            'lastname': _t('Last Name'),
+            'suffix': _t('Suffix'),
+            'designation': _t('Designations'),
+            'state': _t('Active'),
+            'leave': _t('On Leave'),
+            'type': _t('Employee Type'),
+            'start_date': _t('Start Date'),
+            'primary_job': _t('Primary Job'),
+            'photo': _t('Employee Photo'),
+            'location': _t('Home Building'),
+            'employee': _t('HRIS Matched Employee'),
+            'guid': _t('AD GUID'),
+        }
