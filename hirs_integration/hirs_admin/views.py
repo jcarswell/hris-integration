@@ -18,8 +18,8 @@ from . import models
 logger = logging.getLogger('hirs_admin.view')
 
 class LoggedInView(ContextMixin, View):
-    page_title = 'HIRS Sync'
-    site_title = 'HIRS Sync'
+    page_title = 'HRIS Sync'
+    site_title = 'HRIS Sync'
     page_description = None
     redirect_path = None
 
