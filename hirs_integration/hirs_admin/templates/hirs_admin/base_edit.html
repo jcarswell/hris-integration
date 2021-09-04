@@ -25,12 +25,11 @@
 <script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
 <script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
-var is_new = false;
+var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
   data = $(this).serializeArray()
-  var id = $('#form_list input[type=number]')[0]
-  data.push({name:id.name,value:id.value})
+  if (id !== undefined) {data.push({name:id.name,value:id.value});}
 
   $.ajax({
     method: "POST",
@@ -39,8 +38,9 @@ $("#form_list").submit(function(e) {
   })
   .done(function(data) {
     doneProcess(data);
-    if (is_new) {
-      location.reload(function(){return get_basepath() + id.value + '/';})
+    if (is_new()) {
+      if (id !== undefined) {location.reload(function(){return get_basepath() + id.value + '/';})}
+      else {location.reload(function(){return get_basepath();})}
     }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
@@ -55,12 +55,17 @@ function do_delete() {
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 }
+function is_new() {
+  if (isNaN(get_id())) {return undefined;}
+  else if (get_id > 0) {return false;}
+  else {return true;}
+}
 $(function() {
-  var id = $('#form_list input[type=number]')[0]
-  if (id.value === "") {
-    is_new = true;
-    id.disabled = false;
-    id.readOnly = false;
+  if (is_new()) {
+    if (id !== undefined) {
+      id.disabled = false;
+      id.readOnly = false;
+    }
   }
   const csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
