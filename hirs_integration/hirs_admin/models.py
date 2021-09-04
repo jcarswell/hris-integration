@@ -851,9 +851,9 @@ post_save.connect(EmployeePending.post_save, sender=EmployeePending)
 
 class GroupMapping(models.Model):
     dn = models.CharField(max_length=256)
-    jobs = models.ManyToManyField(JobRole)
-    bu = models.ManyToManyField(BusinessUnit)
-    loc = models.ManyToManyField(Location)
+    jobs = models.ManyToManyField(JobRole, blank=True)
+    bu = models.ManyToManyField(BusinessUnit, blank=True)
+    loc = models.ManyToManyField(Location, blank=True)
 
 
 class WordList(models.Model):
