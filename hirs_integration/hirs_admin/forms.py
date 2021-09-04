@@ -1,7 +1,7 @@
 import logging
 
 from django import forms
-from django.forms.widgets import Select
+from django.forms.widgets import CheckboxInput, Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
 
@@ -54,7 +54,7 @@ class GroupMapping(Form):
         model = models.GroupMapping
         fields = '__all__'
         widgets = {
-            'dn': Select(choices=adtools.get_adgroups(),attrs={'data-live-search':'true'}),
+            'dn': Select(choices=adtools.get_adgroups(),attrs={'data-live-search':'true','data-style':'bg-white'}),
         }
         labels = {
             'dn': _t("AD Group"),
@@ -79,7 +79,13 @@ class JobRole(Form):
             'seats': _t("Number of Seats")
         }
         disabled = ('job_id',)
+        classes = {
+            'bu':'selectpicker',
+        }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['bu'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
 
 class Designation(Form):
     name = _t("Employee Designations")
@@ -89,7 +95,6 @@ class Designation(Form):
         labels = {
             'label': _t("Designation")
         }
-        disabled = ()
         
 
 class BusinessUnit(Form):
@@ -97,7 +102,7 @@ class BusinessUnit(Form):
 
     class Meta:
         model = models.BusinessUnit
-        fields = ('bu_id','name','parent','ad_ou')
+        fields = ('bu_id','name','parent','ad_ou','manager')
         widgets = {
             'ad_ou': Select(choices=adtools.get_adous()),
         }
@@ -105,9 +110,22 @@ class BusinessUnit(Form):
             'bu_id': _t("Number"),
             'name': _t("Name"),
             'parent': _t("Parent"),
-            'ad_ou': _t("Active Directory Folder")
+            'ad_ou': _t("Active Directory Folder"),
+            'manager': _t("Manager"),
         }
         disabled = ('bu_id',)
+        classes = {
+            'manager': 'selectpicker',
+            'ad_ou': 'selectpicker',
+            'parent': 'selectpicker',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['ad_ou'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['parent'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        
 
 
 class Location(Form):
@@ -131,7 +149,7 @@ class WordList(Form):
             'src': _t("Source Pattern"),
             'replace': _t("Substitution")
         }
-        disabled = ('id')
+        disabled = ('id',)
 
 class Employee(forms.ModelForm):
     class Meta:
@@ -157,7 +175,6 @@ class EmployeePending(Form):
         exclude = ('created_on','updated_on','_username','_password','_email_alias')
         disabled = ('guid')
         labels = {
-            'manager': _t('Manager'),
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
             'suffix': _t('Suffix'),
@@ -167,8 +184,28 @@ class EmployeePending(Form):
             'type': _t('Employee Type'),
             'start_date': _t('Start Date'),
             'primary_job': _t('Primary Job'),
+            'manager': _t('Manager'),
             'photo': _t('Employee Photo'),
             'location': _t('Home Building'),
             'employee': _t('HRIS Matched Employee'),
             'guid': _t('AD GUID'),
         }
+        classes = {
+            'primary_job': ['selectpicker'],
+            'jobs': ['selectpicker'],
+            'location': ['selectpicker'],
+            'employee': ['selectpicker'],
+            'manager': ['selectpicker'],
+        }
+        widgets = {
+            'state': Select(choices=[(True,'True'),(False,'False')]),
+            'leave': Select(choices=[(True,'True'),(False,'False')]),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['primary_job'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['jobs'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['location'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['employee'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
