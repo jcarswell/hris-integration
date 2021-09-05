@@ -81,7 +81,7 @@ class BaseImport():
             return potentials[0][0],False
 
         elif len(potentials) > 1:
-            hmark = 0.0
+            hmark = 0
             emp = None
 
             for opt in potentials:
