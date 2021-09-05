@@ -862,3 +862,13 @@ class WordList(models.Model):
 
     def __str__(self):
         return f"{self.src} -> {self.replace}"
+
+
+class CsvPending(models.Model):
+    class Meta:
+        db_table = 'csv_pending'
+
+    emp_id = models.IntegerField(primary_key=True)
+    givenname = models.CharField(max_length=96,blank=True)
+    lastname = models.CharField(max_length=96,blank=True)
+    row_data = models.TextField()
