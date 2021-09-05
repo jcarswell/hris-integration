@@ -1,13 +1,15 @@
 import logging
+import json
 
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
                                WordList, Employee, EmployeeAddress, EmployeePhone,
-                               EmployeeOverrides, set_upn)
+                               EmployeeOverrides, set_upn, CsvPending)
 from django.db.utils import IntegrityError
 from django.db.models import Q
 from distutils.util import strtobool
 
 from .helpers import config
+from .helpers.text_utils import fuzz_name
 from .exceptions import ObjectCreationError
 from .helpers.text_utils import int_or_str,clean_phone
 
@@ -31,7 +33,7 @@ class BaseImport():
 
         if employee_id_field == None or employee_id_field not in kwargs:
             logger.fatal("Row data does not contain an employee id field mapping")
-            raise ValueError("emp_id is missing from fields, can not continue")
+            raise ValueError(f"{emp_id_field} is missing from fields, can not continue")
         else:
             self.employee_id = int_or_str(kwargs[employee_id_field])
         
@@ -40,20 +42,63 @@ class BaseImport():
         self._set_status()
 
         if self.new and self.status_field and kwargs[self.status_field] == Employee.STAT_TERM:
-            logger.debug("Employee is doesn't exists and is already terminated not importing")
+            logger.debug(f"Employee {self.employee_id} is doesn't exists and is already terminated not importing")
             self.save_user = False
             self.employee.delete()
             self.employee = None
         else:
             self.save_user = True
+            try:
+                _ = CsvPending.objects.get(pk=self.employee_id)
+                self.save_user = False
+                logger.info(f"Employee {self.employee_id} is already pending, skip this row")
+            except CsvPending.DoesNotExist:
+                pass
+
+            if self.save_user:
+                self.csv_pending = CsvPending()
+                self.csv_pending.emp_id = self.employee_id
+                self.csv_pending.row_data = json.dumps(kwargs)
+
+    def fuzz_pending(self) -> tuple:
+        """
+        Check the employee object against the pending employee table. Returns the closest
+        matching employee pending object.
+        
+        Returns Tuple[(EmployeePending,None),Multiple]
+        """
+
+        fuzz_pcent = int(config.get_config(config.CAT_CSV,config.CSV_FUZZ_PCENT))
+
+        potentials = []
+        for emp in EmployeePending.objects.all():
+            state,pcent = fuzz_name(self.employee.givenname,self.employee.surname,
+                                    emp.givenname,emp.surname,fuzz_pcent)
+            if state:
+                potentials.append([emp,pcent])
+
+        if len(potentials) == 1:
+            return potentials[0][0],False
+
+        elif len(potentials) > 1:
+            hmark = 0.0
+            emp = None
+
+            for opt in potentials:
+                if hmark < opt[1]:
+                    hmark = opt[1]
+                    emp = opt[0]
+
+            return emp,True
+
+        else:
+            return None,False
 
     def _set_status(self):
         self.status_field = config.get_config(config.CAT_FIELD,config.FIELD_STATUS)
         status_term = config.get_config(config.CAT_EXPORT,config.EXPORT_TERM)
         status_act = config.get_config(config.CAT_EXPORT,config.EXPORT_ACTIVE)
         status_leave = config.get_config(config.CAT_EXPORT,config.EXPORT_LEAVE)
-        
-        logger.debug(f"teminated: '{status_term}', active:'{status_act}, leave:'{status_leave}'")
 
         if not self.status_field:
             self.status_field = self.get_field_name('status')
@@ -212,10 +257,8 @@ class BaseImport():
     def save(self):
         """
         This method must be defined in a sub class
-
-        Raises:
-            ValueError: Raised from the ValueError thrown by the form.
         """
+        raise NotImplementedError('Implement in a sub-class')
 
     def post_save(self):
         if self.new and self.save_user:
@@ -298,7 +341,7 @@ class EmployeeForm(BaseImport):
                     if getattr(self.employee,map_val) != value:
                         setattr(self.employee,map_val,value)
                         changed = True
-        
+
         if changed:
             self.employee.save()
 
@@ -322,8 +365,18 @@ class EmployeeForm(BaseImport):
                         self.employee.location = Location.objects.get(pk=int_or_str(value))
                 else:
                     setattr(self.employee,self.get_map_to(key),value)
-        
-        self.employee.save()
+
+        pend_obj,multiple = self.fuzz_pending()
+
+        if not multiple and pend_obj:
+            self.employee.save()
+            pend_obj.employee = self.employee
+        elif not multiple:
+            self.employee.save()
+        else:
+            self.csv_pending.firstname = self.employee.givenname
+            self.csv_pending.lastname = self.employee.surname
+            self.csv_pending.save()
 
     def _get_phone(self) -> EmployeePhone:
         addrs = EmployeePhone.objects.filter(Q(employee=self.employee))
@@ -413,6 +466,12 @@ class EmployeeForm(BaseImport):
                 logger.exception(f"Failed to save employee phone for {self.employee_id}")
         else:
             logger.info(f"Not saving employee {self.employee_id}, as the don't exist are terminated")
+        
+        if self.employee and not self.employee.pk:
+            self.employee.delete()
+
+        if self.csv_pending and not self.csv_pending.pk:
+            self.csv_pending.delete()
 
 
 form = EmployeeForm
