@@ -2,11 +2,14 @@
 {% load i18n static %}
 
 {% block page_actions %}
-{% if form_delete %}
 <div class="btn-toolbar mb-2 mb-md-0">
-  <a class="btn btn-md btn-danger" id="btn_delete" onclick="do_delete()">Delete</a>
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+  {% block toolbar %}{% endblock %}
+  {% if form_delete %}
+  <a class="btn btn-md btn-danger" style="margin:0 2pt;" id="btn_delete" onclick="do_delete()"><i class="fas fa-trash-alt"></i> Delete</a>
+  {% endif %}
+  {% block toolbar_end %}{% endblock %}
 <div>
-{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -15,7 +18,9 @@
   <form id="form_list" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
     {% csrf_token %}
     {{ form.as_form }}
-    <button type="submit" class="btn btn-primary">submit</button>
+    <div class="form-row">
+      <button type="submit" class="btn btn-success" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+    </div>
   </form>
   {% endblock %}
 <div>
@@ -57,7 +62,7 @@ function do_delete() {
 }
 function is_new() {
   if (isNaN(get_id())) {return undefined;}
-  else if (get_id > 0) {return false;}
+  else if (get_id() > 0) {return false;}
   else {return true;}
 }
 $(function() {
@@ -71,6 +76,7 @@ $(function() {
   $.ajaxSetup({
     headers: { "X-CSRFToken": csrftoken }
   });
+  $('#btn_back')[0].href = get_basepath()
 });
 </script>
 {% endblock %}
