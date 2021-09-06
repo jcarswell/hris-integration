@@ -1,9 +1,6 @@
 {% extends "hirs_admin/base.html" %}
 {% load static i18n%}
 
-{% block extra_style %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
-{% endblock %}
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
@@ -73,7 +70,7 @@
     <div class="form-row">
       <div class="form-group col-md-4">
         <label for="_location">Home Building</label>
-        <select name="_location" class="form-control">
+        <select name="_location" class="form-control selectpicker" data-style="bg-white" data-live-search="true">
         {% for location in locations %}
           <option value="{{location.pk}}"{% if location == overrides.location %} selected{% endif %}>{{location}}</option>
         {% endfor %}
