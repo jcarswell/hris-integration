@@ -155,7 +155,7 @@ class Employee(forms.ModelForm):
     class Meta:
         model = models.Employee
         fields = '__all__'
-        exclude = ('created_on','updated_on','start_date','_username','_password')
+        exclude = ('created_on','updated_on','_username','_password')
 
 class EmployeeAddress(forms.ModelForm):
     class Meta:
@@ -196,6 +196,8 @@ class EmployeePending(Form):
             'location': ['selectpicker'],
             'employee': ['selectpicker'],
             'manager': ['selectpicker'],
+            'state': ['selectpicker'],
+            'leave': ['selectpicker'],
         }
         widgets = {
             'state': Select(choices=[(True,'True'),(False,'False')]),
@@ -209,3 +211,5 @@ class EmployeePending(Form):
         self.fields['location'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
         self.fields['employee'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
         self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['state'].widget.attrs.update({'data-style':'bg-white'})
+        self.fields['leave'].widget.attrs.update({'data-style':'bg-white'})
