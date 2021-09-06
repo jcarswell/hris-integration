@@ -4,6 +4,12 @@
 {% block extra_style %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
 {% endblock %}
+{% block page_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+  {% block toolbar %}{% endblock %}
+<div>
+{% endblock %}
 {% block content %}
 <div class="container">
   <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {{ employee.surname }}</h2>
@@ -21,7 +27,7 @@
         <div class="invalid-feedback"> A valid photo is required.</div>
     </div>
     <input type="hidden" name="form" value="employee">
-    <button type="submit" class="btn btn-primary mb-2">Update</button>
+    <button type="submit" class="btn btn-success mb-2">Update</button>
   </form>
   <hr style="border-top:2px solid #bbb;display:None;">
   <form id="designation-form">
@@ -31,7 +37,7 @@
       <lable for='designation-1' class="sr-only">Designations</lable>
       <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designation-1" value="{{ designation }}">
       <div class="input-group-append">
-        <button class="btn btn-primary" type="submit" id="designation-submit">Update</button>
+        <button class="btn btn-success" type="submit" id="designation-submit">Update</button>
       </div>
     </div>
     <input type="hidden" name="form" value="designation">
@@ -75,7 +81,7 @@
       </div>
     </div>
     <input type="hidden" name="form" value="overrides">
-    <button type="submit" class="btn btn-primary mb-2">Update</button>
+    <button type="submit" class="btn btn-success mb-2">Update</button>
   </form>
   <hr style="border-top:2px solid #bbb;">
   <h4>Information</h4>
