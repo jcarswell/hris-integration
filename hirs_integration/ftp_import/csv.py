@@ -6,6 +6,7 @@ import csv
 from smtp_client.smtp import Smtp
 
 from .helpers import config
+from .helpers.stats import Stats
 from .helpers.text_utils import safe,decode
 from .exceptions import ConfigurationError, ObjectCreationError
 
@@ -27,19 +28,6 @@ class CsvImport():
         self.parse_headers(file_handle)
         self.parse_data(file_handle)
         self.add_data()
-
-        msg = ""
-        if self.parse_error:
-            msg += f"Failed to parse employees: {', '.join(self.parse_error)}\n"
-
-        if self.import_error:
-            msg += f"Failed to parse employees:\n"
-            for l in self.import_error:
-                msg += f"\t{l}\n"
-
-        if self.parse_error or self.import_error:
-            s = Smtp
-            s.send(config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF),msg,"Import Failure")
 
     def parse_headers(self, file_handle) -> None:
         import_fields = config.get_fields()
@@ -93,6 +81,7 @@ class CsvImport():
                 if len(vals) != len(self.fields):
                     logger.debug(f"Headers: {len(self.fields)} This row: {len(vals)}")
                     logger.error(f"Unable to parse employee {vals[0]}")
+                    Stats.errors.append(f"Unable to parse employee {vals[0]} - Incorrect number of fields")
                     self.parse_error.append(vals[0])
                 else:
                     for x in range(len(self.fields)):
@@ -107,6 +96,7 @@ class CsvImport():
             form_module = importlib.import_module(self.form)
         except ModuleNotFoundError as e:
             logger.critical(f"failed to import configure form module {self.form}. Please ensure that the configured value is for a module not a class or function.")
+            Stats.errors.append(f"Failed to import importer. Please check the configuration")
             raise ConfigurationError(f"unable to import form lib {self.form}") from e
         
         if hasattr(form_module,'form'):
