@@ -10,12 +10,12 @@ class Stats:
     time_start = None
     time_end = None
     errors = []
-    file_imported = 0
     rows_processed = 0
     rows_imported = 0
     warnings = []
     pending_users = []
     new_users = []
+    files = []
 
     @property
     def runtime(self):
@@ -28,6 +28,7 @@ class Stats:
             f'\tStart Time:            {fmt_date(self.time_start)}',
             f'\tEnd Time:              {fmt_date(self.time_end)}',
             f'\tTotal Processing Time: {self.runtime}s',
+            f'\tFiles Processed:       {len(self.files)}'
             f'\tRows Processed:        {self.rows_processed}',
             f'\tRows Imported:         {self.rows_imported}',
             f'\tPending Users:         {len(self.pending_users)}',
@@ -47,6 +48,7 @@ class Stats:
             f"<tr><td>Start Time</td><td>{fmt_date(self.time_start)}</td></tr>",
             f"<tr><td>End Time</td><td>{fmt_date(self.time_end)}</td></tr>",
             f"<tr><td>Processing Time</td><td>{self.runtime}s</td></tr>",
+            f"<tr><td>Files Processed</td><td>{len(self.rows_processed)}</td></tr>",
             f"<tr><td>Rows Processed</td><td>{self.rows_processed}</td></tr>",
             f"<tr><td>Rows Imported</td><td>{self.rows_imported}</td></tr>",
             "</table>"
@@ -72,6 +74,12 @@ class Stats:
             for r in self.errors:
                 output.append(f"<li>{r}</li>")
             output.append("</ol>")
+
+        output.append("<h3>Files Processed:</h3>")
+        output.append("<ol>")
+        for r in self.files:
+            output.append(f"<li>{r}</li>")
+        output.append("</ol>")
 
         output.append("</body>")
         return format_html("\n".join(output))
