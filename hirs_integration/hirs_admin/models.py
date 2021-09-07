@@ -870,5 +870,24 @@ class CsvPending(models.Model):
 
     emp_id = models.IntegerField(primary_key=True)
     givenname = models.CharField(max_length=96,blank=True)
-    lastname = models.CharField(max_length=96,blank=True)
+    surname = models.CharField(max_length=96,blank=True)
     row_data = models.TextField()
+    
+    @property
+    def firstname(self):
+        return self.givenname
+
+    @firstname.setter
+    def firstname(self,val):
+        self.givenname = val
+
+    @property
+    def lastname(self):
+        return self.surname
+
+    @lastname.setter
+    def lastname(self,val):
+        self.surname = val
+
+    def __str__(self):
+        return f"{self.emp_id} - {self.givenname} {self.surname}"
