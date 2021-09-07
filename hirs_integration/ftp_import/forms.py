@@ -12,6 +12,7 @@ from .helpers import config
 from .helpers.text_utils import fuzz_name
 from .exceptions import ObjectCreationError
 from .helpers.text_utils import int_or_str,clean_phone
+from .helpers.stats import Stats
 
 __all__ = ('form')
 
@@ -28,10 +29,13 @@ class BaseImport():
         self.field_config = field_config
         self.expand = strtobool(config.get_config(config.CAT_CSV,config.CSV_USE_EXP))
 
+        Stats.rows_processed += 1
+
         emp_id_field = get_pk(Employee)
         employee_id_field = self.get_field_name(emp_id_field)
 
         if employee_id_field == None or employee_id_field not in kwargs:
+            Stats.errors.append(f"Row {Stats.rows_processed} does not contain an Employee ID")
             logger.fatal("Row data does not contain an employee id field mapping")
             raise ValueError(f"{emp_id_field} is missing from fields, can not continue")
         else:
@@ -49,9 +53,10 @@ class BaseImport():
         else:
             self.save_user = True
             try:
-                _ = CsvPending.objects.get(pk=self.employee_id)
+                pend_user = CsvPending.objects.get(pk=self.employee_id)
                 self.save_user = False
                 logger.info(f"Employee {self.employee_id} is already pending, skip this row")
+                Stats.pending_users.append(f"{pend_user.emp_id} - {pend_user.givenname} {pend_user.surname}")
             except CsvPending.DoesNotExist:
                 pass
 
@@ -299,15 +304,6 @@ class BaseImport():
 
 
 class EmployeeForm(BaseImport):
-
-    def save_overrides(self):
-        eo,new = EmployeeOverrides.objects.get_or_create(employee=self.employee)
-        if not new and eo._email_alias:
-            return
-
-        set_upn(eo)
-        eo.save()
-
     def save_employee(self):
         changed = False
         for key,value in self.kwargs.items():
@@ -354,12 +350,14 @@ class EmployeeForm(BaseImport):
                         self.employee.manager = Employee.objects.get(pk=int_or_str(value))
                     except Employee.DoesNotExist:
                         logger.warning(f"Manager {value} doesn't exist yet")
+                        Stats.warnings.append(f"Manager {value} doesn't exist yet")
 
                 elif map_val == 'primary_job':
                     if self.jobs_check(int_or_str(value)):
                         self.employee.primary_job = JobRole.objects.get(pk=int_or_str(value))
                     else:
                         logger.warning(f"Job {value} doesn't exist yet")
+                        Stats.warnings.append(f"Job {value} doesn't exist yet")
                 elif map_val == 'location':
                     if self.location_check(int_or_str(value)):
                         self.employee.location = Location.objects.get(pk=int_or_str(value))
@@ -373,10 +371,12 @@ class EmployeeForm(BaseImport):
             pend_obj.employee = self.employee
         elif not multiple:
             self.employee.save()
+            Stats.new_users.append(str(self.employee))
         else:
             self.csv_pending.firstname = self.employee.givenname
             self.csv_pending.lastname = self.employee.surname
             self.csv_pending.save()
+            Stats.pending_users.append(str(self.employee))
 
     def _get_phone(self) -> EmployeePhone:
         addrs = EmployeePhone.objects.filter(Q(employee=self.employee))
@@ -448,14 +448,12 @@ class EmployeeForm(BaseImport):
                     self.save_employee_new()
                 else:
                     self.save_employee()
+                Stats.rows_imported += 1
             except IntegrityError as e:
                 logger.exception(f"Failed to save employee {self.employee_id}")
+                Stats.errors(f"Failed to save employee {self.employee_id}")
                 raise ValueError("Failed to save Employee object") from e
 
-            try:
-                self.save_overrides()
-            except IntegrityError as e:
-                logger.exception(f"Failed to save employee overrides for {self.employee_id}")
             try:
                 self.save_address()
             except IntegrityError as e:
