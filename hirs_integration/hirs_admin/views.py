@@ -431,3 +431,15 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
             JsonResponse({"status":"error","feilds":errors})
         else:
             JsonResponse({"status":"success"})
+
+
+class JobActions(TemplateResponseMixin, LoggedInView):
+    http_method_names = ['get', 'post', 'head', 'options', 'trace']
+    page_title = 'Job Actions'
+    template_name = 'hirs_admin/actions.html'
+
+    def get(self, request, *args, job:str =None, **kwargs):
+        self.render_to_response(self.get_context(**kwargs))
+
+    def post(self, request, *args, job:str =None, **kwargs):
+        pass
