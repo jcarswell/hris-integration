@@ -59,8 +59,16 @@ urlpatterns = [
     path('employee_pending/<int:id>/',
          views.FormView.as_view(form=forms.EmployeePending),
          name='pending_edit'),
-    path('', views.Index.as_view(), name='index'),
+    path('',
+         views.Index.as_view(),
+         name='index'),
     path('pending_import/',
          views.CsvImport.as_view(),
-         name="pending_import")
+         name="pending_import"),
+    path('actions/',
+         views.JobActions.as_view(),
+         name='actions'),
+    path('actions/<str:job>',
+          views.JobActions.as_view(),
+         name='actions_go'),
 ]
