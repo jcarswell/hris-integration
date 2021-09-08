@@ -3,11 +3,11 @@ import logging
 from typing import Tuple
 from django.db.utils import IntegrityError
 
-from hirs_integration.ftp_import.forms import EmployeeForm
-from hirs_integration.ftp_import.helpers.config import get_fields
-from hirs_integration.hirs_admin.models import CsvPending,Employee,JobRole,Location
-from hirs_integration.ftp_import.helpers.text_utils import int_or_str
-from hirs_integration.ftp_import.helpers.stats import Stats
+from ftp_import.forms import EmployeeForm
+from ftp_import.helpers.config import get_fields
+from hirs_admin.models import CsvPending,Employee,JobRole,Location
+from ftp_import.helpers.text_utils import int_or_str
+from ftp_import.helpers.stats import Stats
 
 logger = logging.getLogger('hris_admin.CSVExport')
 
