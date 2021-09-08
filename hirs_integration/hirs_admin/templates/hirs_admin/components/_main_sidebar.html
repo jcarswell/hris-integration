@@ -80,6 +80,29 @@
         </li>
         <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-sync-alt"></i>
+            <p>
+              Import/Export
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'pending_import' %}" class="nav-link">
+                <i class="fas fa-exclamation-circle nav-icon"></i>
+                <p>Pending Import</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'actions' %}" class="nav-link">
+                <i class="fas fa-meteor nav-icon"></i>
+                <p>Actions</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
             <i class="nav-icon fas fa-cog"></i>
             <p>
               Settings
