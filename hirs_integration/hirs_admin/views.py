@@ -1,16 +1,16 @@
 import json
 import logging
 
-from django.http import HttpResponse,HttpResponseBadRequest
+from django.http import HttpResponse,HttpResponseBadRequest,HttpResponseServerError,JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
-from django.forms.models import ModelForm
 from django.contrib.auth.views import redirect_to_login
 from django.utils.safestring import mark_safe
 from django.urls import resolve
+from django.forms.widgets import Select
 
 from .helpers import settings_view
 from . import models
@@ -184,11 +184,11 @@ class FormView(TemplateResponseMixin, LoggedInView):
         else:
             logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
             errors = self._form._errors.keys()
-            return HttpResponse({'status':'error',
+            return JsonResponse({'status':'error',
                                  'fields':errors,
                                  'msg':"Please correct the highlighted fields"})
 
-        return HttpResponse({'status':'success'})
+        return JsonResponse({'status':'success'})
 
     def put(self, request, *args, **kwargs):
         self.post(request,*args, **kwargs)
@@ -222,13 +222,12 @@ class FormView(TemplateResponseMixin, LoggedInView):
         o = self._model.objects.get(pk=pk)
         try:
             o.delete()
-            return HttpResponse({'location':rev})
+            return JsonResponse({'location':rev})
 
         except Exception as e:
             logger.exception(f'lazy catch of {e}')
             return HttpResponseBadRequest()
             
-
 
 class Employee(TemplateResponseMixin, LoggedInView):
     #http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
@@ -283,7 +282,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         try:
             emp_id = kwargs['id']
         except KeyError:
-            return HttpResponse(json.dumps({"status":"error","feilds":["emp_id"]}), status=400)
+            return JsonResponse(json.dumps({"status":"error","feilds":["emp_id"]}), status=400)
         
         errors = []
         if request.POST['form'] == 'override':
@@ -312,9 +311,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp.save()
         
         if errors == []:
-            return HttpResponse(json.dumps({"status":"sucess","feilds":errors}))
+            return JsonResponse(json.dumps({"status":"sucess","feilds":errors}))
         else:            
-            return HttpResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse(json.dumps({"status":"error","feilds":errors}))
 
 
 class Settings(LoggedInView):
@@ -348,9 +347,87 @@ class Settings(LoggedInView):
                 setting.save()
 
         if errors == []:
-           return HttpResponse('{"status":"success"}')
+           return JsonResponse('{"status":"success"}')
         else:
-            return HttpResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse(json.dumps({"status":"error","feilds":errors}))
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
+
+
+class CsvImport(TemplateResponseMixin, LoggedInView):
+    http_method_names = ['get', 'post', 'head', 'options', 'trace']
+    page_title = 'Employee Import'
+    template_name = 'hirs_admin/emp_import.html'
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        data = models.CsvPending.objects.all()
+        context = self.get_context(**kwargs)
+        if len(data) == 0:
+            context['page_content'] = False
+            self.render_to_response(context)
+
+        else:
+            context['page_content'] = self.render_form()
+            self.render_to_response(context)
+
+    def render_form(self):
+        def model_to_choices(**data):
+            output = []
+            for r in data:
+                output.append((r.pk,str(r)))
+            return output
+
+        data = models.CsvPending.objects.all()
+        field_emp = Select(attrs={'class':'selectpicker form-control',
+                                  'data-style':'bg-white',
+                                  'data-live-search':'true'},
+                           choices=model_to_choices(models.EmployeePending.objects.all()))
+        output = []
+        #Header row
+        output.append(f'<div class="form-row">')
+        output.append(f'<div class="form-group col-md-8>')
+        output.append(f'<h4>HRIS Employee Object</h4>')
+        output.append(f'</div>')
+        output.append(f'<div class="form-group col-md-4>')
+        output.append(f'<h4>Target Pending Employee</h4>')
+        output.append(f'</div>')
+        output.append(f'</div>')
+
+        for row in data:
+            output.append(f'<div class="form-row">')
+            output.append(f'<div class="form-group col-md-8>')
+            output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
+            output.append(f'</div>')
+            output.append(f'<div class="form-group col-md-4>')
+            output.append(field_emp.render("row.emp_id",None))
+            output.append(f'</div>')
+            output.append(f'</div>')
+
+    def put(self, request, *args, **kwargs):
+        self.post(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            from .helpers.csv_import import CsvImport
+        except ImportError:
+            return HttpResponseServerError("System Missing ftp_import module. Please contact the system administartor")
+
+        errors = []
+        for id,value in request.POST.items():
+            try:
+                csv = models.CsvPending.objects.get(emp_id=int(id))
+                pending_emp = models.EmployeePending.objects.get(pk=value)
+            except models.CsvPending.DoesNotExist:
+                errors.append(f"failed to find employee {id}")
+            else:
+                CsvImport(json.loads(pending_emp,csv.row_data))
+        
+        if errors:
+            JsonResponse({"status":"error","feilds":errors})
+        else:
+            JsonResponse({"status":"success"})
