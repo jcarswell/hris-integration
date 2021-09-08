@@ -34,7 +34,9 @@ var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
   data = $(this).serializeArray()
-  if (id !== undefined) {data.push({name:id.name,value:id.value});}
+  $("#form_list input:disabled").each(function(i,e) {
+    data.push({name:e.name,value:e.value});
+  })
 
   $.ajax({
     method: "POST",
