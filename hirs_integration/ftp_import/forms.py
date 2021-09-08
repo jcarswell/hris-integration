@@ -369,6 +369,7 @@ class EmployeeForm(BaseImport):
         if not multiple and pend_obj:
             self.employee.save()
             pend_obj.employee = self.employee
+            pend_obj.save()
         elif not multiple:
             self.employee.save()
             Stats.new_users.append(str(self.employee))
