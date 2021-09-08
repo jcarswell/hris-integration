@@ -357,7 +357,7 @@ class Settings(LoggedInView):
 
 class CsvImport(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
-    page_title = 'Employee Import'
+    page_title = 'Pending Employee Imports'
     template_name = 'hirs_admin/emp_import.html'
 
     @method_decorator(csrf_protect)
