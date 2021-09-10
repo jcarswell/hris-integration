@@ -274,8 +274,10 @@ class Employee(TemplateResponseMixin, LoggedInView):
         context["overrides"] = overrides
         context["locations"] = models.Location.objects.all()
         context["phones"] = models.EmployeePhone.objects.filter(employee=employee)
-        context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
-
+        try:
+            context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
+        except IndexError:
+            context["address"] = None
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
