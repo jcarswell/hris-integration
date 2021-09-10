@@ -316,9 +316,11 @@ class Employee(TemplateResponseMixin, LoggedInView):
             return JsonResponse(json.dumps({"status":"error","feilds":errors}))
 
 
-class Settings(LoggedInView):
+class Settings(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Settings'
+    template_name = 'hirs_admin/settings.html'
+
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -330,7 +332,7 @@ class Settings(LoggedInView):
         context = self.get_context(**kwargs)
         context["settings"] = settings_data
 
-        return HttpResponse(render(request, 'hirs_admin/settings.html', context=context))
+        return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"got post with data: {request.POST}")
@@ -369,11 +371,11 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
         context = self.get_context(**kwargs)
         if len(data) == 0:
             context['page_content'] = False
-            self.render_to_response(context)
+            return self.render_to_response(context)
 
         else:
             context['page_content'] = self.render_form()
-            self.render_to_response(context)
+            return self.render_to_response(context)
 
     def render_form(self):
         def model_to_choices(**data):
@@ -439,7 +441,7 @@ class JobActions(TemplateResponseMixin, LoggedInView):
     template_name = 'hirs_admin/actions.html'
 
     def get(self, request, *args, job:str =None, **kwargs):
-        self.render_to_response(self.get_context(**kwargs))
+        return self.render_to_response(self.get_context(**kwargs))
 
     def post(self, request, *args, job:str =None, **kwargs):
         pass
