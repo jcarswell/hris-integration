@@ -117,7 +117,7 @@ def set_username(instance, username:str =None) -> None:
     """
 
     logger.debug(f"Setting username for {instance}")
-    if isinstance(instance,EmployeePending):
+    if isinstance(instance,EmployeeOverrides):
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
         username = username_validator(instance.firstname,instance.lastname)
