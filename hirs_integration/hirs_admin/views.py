@@ -284,7 +284,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         try:
             emp_id = kwargs['id']
         except KeyError:
-            return JsonResponse(json.dumps({"status":"error","feilds":["emp_id"]}), status=400)
+            return JsonResponse({"status":"error","feilds":["emp_id"]})
         
         errors = []
         if request.POST['form'] == 'override':
@@ -313,9 +313,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp.save()
         
         if errors == []:
-            return JsonResponse(json.dumps({"status":"sucess","feilds":errors}))
+            return JsonResponse({"status":"sucess","feilds":errors})
         else:            
-            return JsonResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse({"status":"error","feilds":errors})
 
 
 class Settings(TemplateResponseMixin, LoggedInView):
@@ -351,9 +351,9 @@ class Settings(TemplateResponseMixin, LoggedInView):
                 setting.save()
 
         if errors == []:
-           return JsonResponse('{"status":"success"}')
+           return JsonResponse({"status":"success"})
         else:
-            return JsonResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse({"status":"error","feilds":errors})
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
@@ -432,9 +432,9 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 CsvImport(json.loads(pending_emp,csv.row_data))
         
         if errors:
-            JsonResponse({"status":"error","feilds":errors})
+            return JsonResponse({"status":"error","feilds":errors})
         else:
-            JsonResponse({"status":"success"})
+            return JsonResponse({"status":"success"})
 
 
 class JobActions(TemplateResponseMixin, LoggedInView):
