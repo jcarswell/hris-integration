@@ -9,7 +9,31 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-  <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {{ employee.surname }}</h2>
+  <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {%if employee.middlename %}{{ employee.middlename}}{% endif %}
+   {{ employee.surname }} {% if employee.suffix %}{{ employee.suffix }}{% endif %}</h2>
+  <div class="row">
+    <p class='col-sm'><strong>Status</strong><br>
+    {% if employee.status == employee.STAT_LEA %}
+    On Leave
+    {% elif employee.status == employee.STAT_TERM %}
+    Terminated
+    {% else %}
+    Active
+    {% endif %}</p>
+    <p class='col-sm'><strong>Position</strong><br>
+    {{ employee.primary_job.name }}</p>
+    <p class='col-sm'><strong>Manager</strong><br>
+    {{ employee.manager }}</p>
+  </div>
+  <div class="row">
+    <p class='col-sm'><strong>Start Date</strong><br>
+    {{ employee.start_date }}</p>
+    <p class='col-sm'><strong>Username</strong><br>
+    {{ employee.username }}</p>
+    <p class='col-sm'><strong>Email Alias</strong><br>
+    {{ employee.email_alias }}</p>
+  </div>
+  <hr style="border-top:2px solid #bbb;display:None;">
   <form style="display:None;" id="employee-form" enctype="multipart/form-data">
     {% csrf_token %}
     <h4>Photo</h4>
@@ -80,11 +104,10 @@
     <input type="hidden" name="form" value="overrides">
     <button type="submit" class="btn btn-success mb-2">Update</button>
   </form>
+  {% if phones or address %}
   <hr style="border-top:2px solid #bbb;">
   <h4>Information</h4>
   <div class="container-fluid">
-    <p><strong>Position</strong></p>
-    <p>{{ employee.primary_job.name }}<p>
     {% if phones %}
     <p><strong>Phone</strong></p>
     <ul>
@@ -93,6 +116,7 @@
       {% endfor %}
     </ul>
     {% endif %}
+    {% if address %}
     <p><strong>Address</strong></p>
     <ul>
     <li><p>{{ address.label }}</p>
@@ -101,7 +125,9 @@
       {{ address.city }}, {{ address.province}} {{ address.postal_code}}
       </li>
     </ul>
+    {% endif %}
   </div>
+  {% endif %}
   {% if employee.password %}
   <hr style="border-top:2px solid #bbb;">
   <h3 id="password">Default Password</h3>
