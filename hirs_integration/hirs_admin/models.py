@@ -1,5 +1,6 @@
 import logging
 import time
+from django.core.exceptions import ValidationError
 
 from django.db import models
 from datetime import datetime
@@ -14,6 +15,17 @@ from string import ascii_letters, digits, capwords, ascii_uppercase,ascii_lowerc
 logger = logging.getLogger('hirs_admin.Model')
 
 # Helper Functions
+def name_conflict(instance, name:str) -> bool:
+    if instance._username == name or instance._email_alias:
+        return False
+    if (not Employee.objects.filter(_username=name).exists() and
+            not Employee.objects.filter(_email_alias=name).exists() and
+            not EmployeePending.objects.filter(_username=name).exists() and
+            not EmployeePending.objects.filter(_email_alias=name).exists()):
+        return False
+    else:
+        return True
+
 def username_validator(first:str, last:str =None, suffix:str =None, allowed_char:list =None) -> str:
     """
     Username creation and valudation helper. Ensures that usernames are built using standard
@@ -37,7 +49,7 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
         suffix = ""
     allowed_char = allowed_char or []
 
-    logger.debug(f"validator got {first} {last} {suffix}")
+    logger.debug(f"Validator got {first} {last} {suffix}")
 
     output = ''
     for x in first[0] + (last or first[1:]):
@@ -52,7 +64,7 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     else:
         return output[:20]
 
-def upn_validator(first:str, last:str, suffix:str =None, allowed_char:list =None) -> str:
+def upn_validator(first:str, last:str =None, suffix:str =None, allowed_char:list =None) -> str:
     """
     user principle name creation and valudation helper. Ensures that usernames are built using standard
     username rules and do not contain invalid characters.
@@ -75,10 +87,15 @@ def upn_validator(first:str, last:str, suffix:str =None, allowed_char:list =None
         suffix = ""
     allowed_char = allowed_char or []
 
-    logger.debug(f"validator got {first} {last} {suffix}")
+    logger.debug(f"Validator got {first} {last} {suffix}")
+
+    if last:
+        upn = first + "." + "last"
+    else:
+        upn = first
 
     output = ''
-    for x in f"{first}.{last}":
+    for x in upn:
         if x in invalid_char and not x in allowed_char:
             output += substitue
         else:
@@ -91,45 +108,51 @@ def set_username(instance, username:str =None) -> None:
     """Validate and set the username paramater
 
     Args:
-        username (str, optional): username for the user if blank we'll use the database feilds
+        instance (Employee): Employee Model object
+        username (str, optional): User defined username
+
+    Raises:
+        ValueError: Provided instance is not an Employee Model Object
+        ValidationError: Unable to update the username
     """
+
     logger.debug(f"Setting username for {instance}")
-    if isinstance(instance,EmployeeOverrides):
+    if isinstance(instance,EmployeePending):
         # If we are using the EmployeeOverrides we need to ensure that we are
         # updating the employee table not the override table
-        if username:
-            username = username_validator(username)
-        else:
-            username = username_validator(instance.firstname,instance.lastname)
-
-        if instance.employee._username != username:
-            set_username(instance.employee,username)
-            instance.employee.save()
-
+        username = username_validator(instance.firstname,instance.lastname)
+        set_username(instance.employee,username)
+        instance.employee.save()
         return
+
+    if not isinstance(instance,(Employee,EmployeePending)):
+        raise ValueError("Only supported for Employee objects")
 
     if username:
         username = username_validator(username)
-    else:
-        username = username_validator(instance.givenname, instance.surname)
-    
-    if instance._username == username:
-        logger.debug("Usernam already set correctly")
-        return
+        if not name_conflict(instance,username):
+            instance._username = username
+            return
+        else:
+            raise ValidationError(f"{username} is already taken, failed to change username")
+
+    username = username_validator(instance.givenname, instance.surname)
+
     base = username
 
     loop = 0
     while instance._username != username:
         if loop >= 10:
             logger.error("Something is wrong, unable to set user after 10 iters")
+            raise ValidationError(f"unable to set username after 9 iterations")
         logger.debug(f"checking {username}")
         username = username_validator(base, suffix=str(loop))
         logger.debug(f"Validator returns {username}")
-        if not Employee.objects.filter(_username=username).exists():
+        if not name_conflict(instance,username):
             instance._username = username
         loop += 1
 
-def set_upn(instance) -> None:
+def set_upn(instance, upn:str =None) -> None:
     """
     Set the UPN/Email Alias for the EmployeeOverride model
 
@@ -138,21 +161,36 @@ def set_upn(instance) -> None:
 
     Raises:
         ValueError: if the model is not EmployeeOverrides
+        ValidationError: Unable to updated the upn
     """
+
     logger.debug(f"Setting upn for {instance}")
+    if isinstance(instance, EmployeeOverrides):
+        upn = upn or upn_validator(instance.firstname,instance.lastname)
+        set_upn(instance.employee,upn)
+        instance.employee.save()
+        return
+
     if not isinstance(instance,(Employee,EmployeePending)):
+        logger.debug(f'type recieved {type(instance)}')
         raise ValueError("Only supported for Employee objects")
 
+    if upn:
+        upn = upn_validator(upn)
+        if not name_conflict(instance,upn):
+            instance._email_alias = upn_validator(upn)
+            return
+        else:
+            raise ValidationError(f"{upn} is already taken, failing to change upn")
+
     loop = 0
-    upn = upn_validator(instance.firstname, instance.lastname, str(loop))
+
     while instance._email_alias != upn:
         if loop >= 10:
             logger.error("Something is wrong, unable to set user after 10 iters")
+            raise ValidationError(f"unable to set upn after 9 iterations")
         logger.debug(f"Checking upn {upn}")
-        if (not Employee.objects.filter(_username=upn).exists() and
-            not Employee.objects.filter(_email_alias=upn).exists() and
-            not EmployeePending.objects.filter(_username=upn).exists() and
-            not EmployeePending.objects.filter(_email_alias=upn).exists()):
+        if not name_conflict(instance,upn):
             instance._email_alias = upn
             break
 
@@ -400,13 +438,11 @@ class Employee(models.Model):
 
     @property
     def email_alias(self):
-        if not self._email_alias:
-            return self.username
-        return self._email_alias
+        return self._email_alias or self.username
 
     @email_alias.setter
     def email_alias(self,val):
-        set_upn(val)
+        set_upn(self,val)
 
     @property
     def status(self):
@@ -521,29 +557,29 @@ class Employee(models.Model):
         except Employee.DoesNotExist:
             prev_instance = None
 
-        if (prev_instance and 
-            prev_instance.status == instance.STAT_TERM and
-            instance.status != instance.STAT_TERM):
-            logger.info(f"{instance} transitioned from terminated to active")
+        if prev_instance:
+            if (prev_instance.status == instance.STAT_TERM and
+                    instance.status != instance.STAT_TERM):
+                logger.info(f"{instance} transitioned from terminated to active")
+                set_username(instance)
+                set_upn(instance)
+            elif (prev_instance.status != instance.STAT_TERM and
+                    instance.status == instance.STAT_TERM):
+                logger.info(f"{instance} transitioned from active to terminated")
+                set_username(instance, f"{instance._username}{round(time.time())}")
+                set_upn(instance, f"{instance._username}{round(time.time())}")
+
+            if prev_instance != instance:
+                instance.updated_on = datetime.utcnow()
+
+        if instance._username is None:
             set_username(instance)
+
+        if instance._email_alias is None:
             set_upn(instance)
 
-        else:
-            if instance.status == instance.STAT_TERM and instance._username:
-                set_username(instance, f"{instance._username}{round(time.time())}")
-            elif instance._username is None and instance.status != instance.STAT_TERM:
-                set_username(instance)
-            elif instance._username is None:
-                set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
 
-            if instance.status == instance.STAT_TERM and instance._email_alias:
-                set_upn(instance, f"{instance._username}{round(time.time())}")
-            elif instance._email_alias is None and instance.status != instance.STAT_TERM:
-                set_upn(instance)
-            elif instance._email_alias is None:
-                set_upn(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
-
-        instance.updated_on = datetime.utcnow()
+# Employee Model signal connections
 pre_save.connect(Employee.pre_save, sender=Employee)
 post_save.connect(Employee.post_save, sender=Employee)
 
@@ -584,9 +620,7 @@ class EmployeeOverrides(models.Model):
 
     @property
     def firstname(self):
-        if not self._firstname:
-            return self.employee.givenname
-        return self._firstname
+        return self._firstname or self.employee.givenname
 
     @firstname.setter
     def firstname(self,val):
@@ -594,9 +628,7 @@ class EmployeeOverrides(models.Model):
 
     @property
     def lastname(self):
-        if not self._lastname:
-            return self.employee.surname
-        return self._lastname
+        return self._lastname or self.employee.surname
 
     @lastname.setter
     def lastname(self,val):
@@ -604,9 +636,7 @@ class EmployeeOverrides(models.Model):
 
     @property
     def location(self):
-        if not self._location:
-            return self.employee.location
-        return self._location
+        return self._location or self.employee.location
 
     @location.setter
     def location(self,val):
@@ -618,22 +648,23 @@ class EmployeeOverrides(models.Model):
 
     @email_alias.setter
     def email_alias(self,val):
-        set_upn(val)
+        self.employee.email_alias = val
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        emp = instance.employee
         try:
             prev_instance = EmployeeOverrides.objects.get(employee=instance.employee)
         except EmployeeOverrides.DoesNotExist:
             prev_instance = None
 
-        if instance.firstname is not None or instance.lastname is not None:
-            set_username(instance)
-
         if prev_instance and prev_instance != instance:
-            instance.emp.updated_on = datetime.utcnow()
-            emp.save()
+            if instance._firstname or instance._lastname:
+                set_username(instance)
+                set_upn(instance)
+            instance.employee.updated_on = datetime.utcnow()
+
+
+#Employee Override Model Signal Connects
 pre_save.connect(EmployeeOverrides.pre_save, sender=EmployeeOverrides)
 
 
@@ -674,9 +705,9 @@ class EmployeePending(models.Model):
     class Meta:
         db_table = 'employeepending'
 
-    STAT_TERM = 'terminated'
-    STAT_ACT = 'active'
-    STAT_LEA = 'leave'
+    STAT_TERM = Employee.STAT_TERM
+    STAT_ACT = Employee.STAT_ACT
+    STAT_LEA = Employee.STAT_LEA
 
     created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
     updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
@@ -824,27 +855,29 @@ class EmployeePending(models.Model):
         except EmployeePending.DoesNotExist:
             prev_instance = None
 
-        if (prev_instance and 
-            prev_instance.status == instance.STAT_TERM and
-            instance.status != instance.STAT_TERM):
-            logger.info(f"{instance} transitioned from terminated to active")
+        if prev_instance:
+            if (prev_instance.status == instance.STAT_TERM and
+                    instance.status != instance.STAT_TERM):
+                logger.info(f"{instance} transitioned from terminated to active")
+                set_username(instance)
+                set_upn(instance)
+            elif (prev_instance.status != instance.STAT_TERM and
+                    instance.status == instance.STAT_TERM):
+                logger.info(f"{instance} transitioned from active to terminated")
+                set_username(instance, f"{instance._username}{round(time.time())}")
+                set_upn(instance, f"{instance._username}{round(time.time())}")
+
+            if prev_instance != instance:
+                instance.updated_on = datetime.utcnow()
+
+        if instance._username is None:
             set_username(instance)
+
+        if instance._email_alias is None:
             set_upn(instance)
 
-        else:
-            if instance.status == instance.STAT_TERM and instance._username:
-                set_username(instance, f"{instance._username}{round(time.time())}")
-            elif instance._username is None and instance.status != instance.STAT_TERM:
-                set_username(instance)
-            elif instance._username is None:
-                set_username(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
 
-            if instance.status == instance.STAT_TERM and instance._email_alias:
-                set_upn(instance, f"{instance._username}{round(time.time())}")
-            elif instance._email_alias is None and instance.status != instance.STAT_TERM:
-                set_upn(instance)
-            elif instance._email_alias is None:
-                set_upn(instance,"".join(choice(ascii_letters + digits) for char in range(22)))
+#Employee Pending signal connect
 pre_save.connect(EmployeePending.pre_save, sender=EmployeePending)
 post_save.connect(EmployeePending.post_save, sender=EmployeePending)
 
