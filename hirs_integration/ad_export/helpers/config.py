@@ -378,7 +378,7 @@ class EmployeeManager:
             return True
         return False
 
-    def perge_pending(self):
+    def purge_pending(self):
         if hasattr(self,'__emp_pend') and self.merge:
             logger.info(f"Removing Pending employee object for {str(self.__qs_emp)}")
             self.__emp_pend.delete()
