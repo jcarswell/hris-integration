@@ -90,7 +90,7 @@ def upn_validator(first:str, last:str =None, suffix:str =None, allowed_char:list
     logger.debug(f"Validator got {first} {last} {suffix}")
 
     if last:
-        upn = first + "." + "last"
+        upn = first + "." + last
     else:
         upn = first
 
