@@ -360,7 +360,9 @@ class EmployeeManager:
 
     @property
     def guid(self) -> str:
-        if hasattr(self.__qs_emp,'guid'):
+        if hasattr(self,'__qs_emp_pend'):
+            return self.__emp_pend.guid
+        elif hasattr(self.__qs_emp,'guid'):
            return self.__qs_emp.guid
         else:
             return None
