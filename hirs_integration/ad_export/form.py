@@ -60,6 +60,8 @@ class BaseExport:
                     self.update_user_extra(employee,user)
                     user._flush() #ensure that updates are committed
                     self.update_groups(employee,user)
+                    if user.merge:
+                        employee.purge_pending()
                 except com_error as e:
                     logger.warn(f'Caught Error updating user {str(e)}. Trying to backoff for 60s')
                     sleep(60)
