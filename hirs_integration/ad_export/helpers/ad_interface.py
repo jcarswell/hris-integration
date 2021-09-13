@@ -65,7 +65,7 @@ class AD:
         logger.debug(f"Checking if {employee} already has an AD account")
         ad.execute_query(where_clause="sAMAccountName='%s'"% employee.username)
         if ad.get_row_count() > 0:
-            logger.debug("Found user bu sAMAccountName")
+            logger.debug("Found user by sAMAccountName")
             return True
         ad.reset()
         ad.execute_query(where_clause="userPrincipalName='%s'" % employee.upn)
