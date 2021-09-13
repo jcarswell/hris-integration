@@ -428,7 +428,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
 
     for employee in emp_pend:
         add_emp(employee)
-        if output[-1].merge and output[-1].guid:
+        if output[-1].merge:
             for x in range(len(output)-1):
                 if output[x].id == output[-1].id:
                     output.pop(x)
