@@ -261,16 +261,11 @@ class Employee(TemplateResponseMixin, LoggedInView):
         context = self.get_context(**kwargs)
 
         try:
-            designation = models.EmployeeDesignation.objects.get(employee=employee).label
-        except models.EmployeeDesignation.DoesNotExist:
-            designation = ""
-        try:
             overrides = models.EmployeeOverrides.objects.get(employee=employee)
         except models.EmployeeOverrides.DoesNotExist:
             overrides = None
 
         context["employee"] = employee
-        context["designation"] = designation
         context["overrides"] = overrides
         context["locations"] = models.Location.objects.all()
         context["phones"] = models.EmployeePhone.objects.filter(employee=employee)
@@ -306,10 +301,6 @@ class Employee(TemplateResponseMixin, LoggedInView):
         elif request.POST['form'] == 'employee':
             emp = models.Employee.objects.get(emp_id)
             emp.photo = request.POST['photo']
-            emp.save()
-        elif request.POST['form'] == "designation":
-            emp, _ = models.EmployeeDesignation.objects.get_or_create(employee=models.Employee.objects.get(pk=emp_id))
-            emp.label = request.POST['designation-1']
             emp.save()
         
         if errors == []:
