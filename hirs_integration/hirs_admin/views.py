@@ -180,7 +180,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         logger.debug(f"post data is: {request.POST}")
         if self._form.is_valid():
             logger.debug("Form is valid, saving()")
-            self._form.save()
+            save_data = self._form.save()
         else:
             logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
             errors = self._form._errors.keys()
@@ -188,7 +188,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
                                  'fields':errors,
                                  'msg':"Please correct the highlighted fields"})
 
-        return JsonResponse({'status':'success'})
+        return JsonResponse({'status':'success','id':save_data.pk})
 
     def put(self, request, *args, **kwargs):
         self.post(request,*args, **kwargs)
@@ -210,10 +210,12 @@ class FormView(TemplateResponseMixin, LoggedInView):
         return mark_safe('\n'.join(output))
 
     def delete(self, request, *args, **kwargs):
-        rev = resolve(request.path)
-        if rev[len(self.edit_postfix)*-1:] == self.edit_postfix:
-            rev = rev[:len(self.edit_postfix)*-1]
-
+#        rev = resolve(request.path)
+#        if rev.view_name[len(self.edit_postfix)*-1:] == self.edit_postfix:
+#            rev = resolve(rev.view_name[:len(self.edit_postfix)])
+        
+#        logger.debug('reverse path {rev}')
+        
         try:
             pk = kwargs['id']
         except KeyError:
@@ -222,7 +224,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         o = self._model.objects.get(pk=pk)
         try:
             o.delete()
-            return JsonResponse({'location':rev})
+            return JsonResponse({'status':'success'})
 
         except Exception as e:
             logger.exception(f'lazy catch of {e}')
