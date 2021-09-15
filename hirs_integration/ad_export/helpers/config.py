@@ -379,7 +379,7 @@ class EmployeeManager:
         return False
 
     def purge_pending(self):
-        if hasattr(self,'__emp_pend') and self.merge:
+        if hasattr(self,'_EmployeeManager__emp_pend') and self.merge:
             logger.info(f"Removing Pending employee object for {str(self.__qs_emp)}")
             self.__emp_pend.delete()
 
@@ -429,8 +429,10 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     for employee in emp_pend:
         add_emp(employee)
         if output[-1].merge:
+            logger.info(f"{output[-1]}, to be merged")
             for x in range(len(output)-1):
                 if output[x].id == output[-1].id:
+                    logger.debug(f"Found employee entry for {output[-1]}, removing duplicate")
                     output.pop(x)
                     break
 
