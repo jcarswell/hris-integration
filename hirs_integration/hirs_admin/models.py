@@ -413,6 +413,11 @@ class Employee(models.Model):
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
+    def __hash__(self):
+        if self.pk is None:
+            raise TypeError("Model instances without primary key value are unhashable")
+        return hash(self.pk)
+
     def clear_password(self,confirm=False):
         if confirm:
             self._password = None
@@ -595,6 +600,11 @@ class EmployeeOverrides(models.Model):
     def __str__(self) -> str:
         return f"{self.employee.emp_id}: {self.firstname} {self.lastname}"
 
+    def __hash__(self):
+        if self.pk is None:
+            raise TypeError("Model instances without primary key value are unhashable")
+        return hash(self.pk)
+
     def __eq__(self, other) -> bool:
         if not isinstance(other,EmployeeOverrides):
             return False
@@ -722,7 +732,7 @@ class EmployeePending(models.Model):
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
     _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
-    employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True, on_delete=models.SET_NULL)
     guid = models.CharField(max_length=40,null=True,blank=True)
     
     def __eq__(self,other) -> bool:
@@ -751,6 +761,14 @@ class EmployeePending(models.Model):
             return False
 
         return True
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        if self.pk is None:
+            raise TypeError("Model instances without primary key value are unhashable")
+        return hash(self.pk)
 
     def __str__(self) -> str:
         return f"{self.firstname} {self.lastname}"
