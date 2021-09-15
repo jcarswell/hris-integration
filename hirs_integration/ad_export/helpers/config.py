@@ -1,11 +1,10 @@
 import logging
 from typing import Union
 
-from django.db.models.query import QuerySet
 from django.db.models import Q
 from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
-                               Employee,EmployeeOverrides,EmployeeDesignation,
+                               Employee,EmployeeOverrides,
                                EmployeePending,Location,GroupMapping)
 from datetime import datetime
 from pyad import ADGroup
