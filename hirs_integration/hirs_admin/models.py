@@ -590,6 +590,7 @@ class EmployeeOverrides(models.Model):
     _lastname = models.CharField(max_length=96, null=True, blank=True)
     nickname = models.CharField(max_length=96, null=True, blank=True)
     _location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
+    designations = models.CharField(max_length=128, null=True, blank=True,)
 
     def __str__(self) -> str:
         return f"{self.employee.emp_id}: {self.firstname} {self.lastname}"
@@ -667,13 +668,6 @@ class EmployeeOverrides(models.Model):
 #Employee Override Model Signal Connects
 pre_save.connect(EmployeeOverrides.pre_save, sender=EmployeeOverrides)
 
-
-class EmployeeDesignation(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    label = models.CharField(max_length=128)
-
-    def __str__(self) -> str:
-        return f"{str(self.employee)} - {self.label}"
 
 class EmployeePhone(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
