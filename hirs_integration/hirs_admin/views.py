@@ -209,13 +209,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         logger.debug(f"Output contains: {output}")
         return mark_safe('\n'.join(output))
 
-    def delete(self, request, *args, **kwargs):
-#        rev = resolve(request.path)
-#        if rev.view_name[len(self.edit_postfix)*-1:] == self.edit_postfix:
-#            rev = resolve(rev.view_name[:len(self.edit_postfix)])
-        
-#        logger.debug('reverse path {rev}')
-        
+    def delete(self, request, *args, **kwargs):        
         try:
             pk = kwargs['id']
         except KeyError:
