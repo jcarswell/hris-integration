@@ -226,7 +226,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
 
         except Exception as e:
             logger.exception(f'lazy catch of {e}')
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(str(e))
             
 
 class Employee(TemplateResponseMixin, LoggedInView):
