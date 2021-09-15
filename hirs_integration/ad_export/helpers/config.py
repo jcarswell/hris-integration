@@ -136,12 +136,10 @@ class EmployeeManager:
     def get(self):
         if isinstance(self.__qs_emp,Employee):
             self.__qs_over = EmployeeOverrides.objects.get(employee=self.__qs_emp)
-            self.__qs_desig = EmployeeDesignation.objects.filter(employee=self.__qs_emp)
             self.__qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
             self.__qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
         else:
             self.__qs_over = self.__qs_emp
-            self.__qs_desig = self.__qs_emp
             self.__qs_phone = None
             self.__qs_addr = None
 
@@ -164,11 +162,8 @@ class EmployeeManager:
         if self.__qs_emp.surname != self.__emp_pend.lastname:
             self.__qs_over.lastname = self.__emp_pend.lastname
 
-        if self.__emp_pend.designation:
-            designation = EmployeeDesignation()
-            designation.employee = self.__qs_emp
-            designation.lable = self.__emp_pend.designation
-            designation.save()
+        if self.__emp_pend.designation != self.__qs_over.designations:
+            self.__qs_over.designations = self.__emp_pend.designation
 
         if self.__emp_pend.photo:
             self.__qs_emp.photo = self.__emp_pend.photo
@@ -191,14 +186,7 @@ class EmployeeManager:
 
     @property
     def designations(self) -> str:
-        if isinstance(self.__qs_desig, QuerySet):
-            output = []
-            for q in self.__qs_desig:
-                output.append(q.label)
-
-            return ", ".join(output)
-        else:
-            return ""
+        return self.__qs_over.designations
 
     @property
     def phone(self):
