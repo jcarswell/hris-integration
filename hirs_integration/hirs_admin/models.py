@@ -138,19 +138,19 @@ def set_username(instance, username:str =None) -> None:
 
     username = username_validator(instance.givenname, instance.surname)
 
-    base = username
-
     loop = 0
     while instance._username != username:
         if loop >= 10:
             logger.error("Something is wrong, unable to set user after 10 iters")
             raise ValidationError(f"unable to set username after 9 iterations")
         logger.debug(f"checking {username}")
-        username = username_validator(base, suffix=str(loop))
-        logger.debug(f"Validator returns {username}")
         if not name_conflict(instance,username):
             instance._username = username
+            break
+
         loop += 1
+        username = username_validator(instance.givenname, instance.surname, suffix=str(loop))
+
 
 def set_upn(instance, upn:str =None) -> None:
     """
@@ -184,7 +184,8 @@ def set_upn(instance, upn:str =None) -> None:
             raise ValidationError(f"{upn} is already taken, failing to change upn")
 
     loop = 0
-
+    upn = upn_validator(instance.firstname, instance.lastname)
+    
     while instance._email_alias != upn:
         if loop >= 10:
             logger.error("Something is wrong, unable to set user after 10 iters")
@@ -375,7 +376,7 @@ class Employee(models.Model):
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
     type = models.CharField(max_length=64,null=True,blank=True)
-    _username = models.CharField(max_length=64)
+    _username = models.CharField(max_length=64,null=True,blank=True)
     primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
     photo = models.FileField(upload_to='uploads/', null=True, blank=True)
@@ -724,7 +725,7 @@ class EmployeePending(models.Model):
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
     type = models.CharField(max_length=64,null=True,blank=True)
-    _username = models.CharField(max_length=64)
+    _username = models.CharField(max_length=64,null=True,blank=True)
     primary_job = models.ForeignKey(JobRole, related_name='pending_primary_job', null=True,
                                     blank=True, on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
