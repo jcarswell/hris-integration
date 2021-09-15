@@ -52,7 +52,8 @@ $("#form_list").submit(function(e) {
         else {location.reload(function(){return get_basepath();})}
       }
     } else {
-      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-danger')
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-danger');
+    }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 });
@@ -62,7 +63,7 @@ function do_delete() {
     url: location.href,
     })
   .done(function(data){
-    location.reload(get_basepath());
+    location.reload(data["location"]);
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 }
