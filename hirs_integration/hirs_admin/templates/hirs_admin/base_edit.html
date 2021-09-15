@@ -46,13 +46,13 @@ $("#form_list").submit(function(e) {
   .done(function(data) {
     doneProcess(data);
     if (data["status"] == "success") {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success')
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-success')
       if (is_new()) {
         if (id !== undefined) {location.reload(function(){return get_basepath() + id.value + '/';})}
         else {location.reload(function(){return get_basepath();})}
       }
     } else {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger')
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-danger')
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 });
