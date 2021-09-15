@@ -87,15 +87,6 @@ class JobRole(Form):
         super().__init__(*args, **kwargs)
         self.fields['bu'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
 
-class Designation(Form):
-    name = _t("Employee Designations")
-    class Meta:
-        model = models.EmployeeDesignation
-        fields = ('label',)
-        labels = {
-            'label': _t("Designation")
-        }
-        
 
 class BusinessUnit(Form):
     name = _t("Business Unit")
@@ -125,7 +116,6 @@ class BusinessUnit(Form):
         self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
         self.fields['ad_ou'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
         self.fields['parent'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        
 
 
 class Location(Form):
@@ -151,6 +141,7 @@ class WordList(Form):
         }
         disabled = ('id',)
 
+
 class Employee(forms.ModelForm):
     class Meta:
         model = models.Employee
@@ -167,6 +158,7 @@ class EmployeePhone(forms.ModelForm):
     class Meta:
         model = models.EmployeePhone
         fields = '__all__'
+
 
 class EmployeePending(Form):
     class Meta:
