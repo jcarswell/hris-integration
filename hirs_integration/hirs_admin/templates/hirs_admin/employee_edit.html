@@ -50,19 +50,6 @@
     <input type="hidden" name="form" value="employee">
     <button type="submit" class="btn btn-success mb-2">Update</button>
   </form>
-  <hr style="border-top:2px solid #bbb;display:None;">
-  <form id="designation-form">
-    {% csrf_token %}
-    <h4>Designations</h4>
-    <div class="input-group">
-      <lable for='designation-1' class="sr-only">Designations</lable>
-      <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designation-1" value="{{ designation }}">
-      <div class="input-group-append">
-        <button class="btn btn-success" type="submit" id="designation-submit">Update</button>
-      </div>
-    </div>
-    <input type="hidden" name="form" value="designation">
-  </form>
   <hr style="border-top:2px solid #bbb;">
   <form id="override-form">
     {% csrf_token %}
@@ -90,6 +77,10 @@
         <lable for="email_alias">Email Alias</lable>
         <input type="text" class="form-control" name="email_alias" value="{{overrides.email_alias}}" placeholder="employee.username">
       </div>
+      <div class="form-group col-md-6">
+        <lable for='designations'>Designations</lable>
+        <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designations" value="{{ overrides.designations }}">
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group col-md-4">
@@ -102,7 +93,7 @@
       </div>
     </div>
     <input type="hidden" name="form" value="overrides">
-    <button type="submit" class="btn btn-success mb-2">Update</button>
+    <button type="submit" class="btn btn-primary mb-2">Update</button>
   </form>
   {% if phones or address %}
   <hr style="border-top:2px solid #bbb;">
@@ -170,7 +161,13 @@ $("#override-form").submit(function(e) {
     url: location.href,
     data: data
   })
-  .done(function(data) {doneProcess(data);})
+  .done(function(data) {
+    doneProcess(data);
+    if (data["status"] == "success") {
+      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success')
+    } else {
+      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger')
+  })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 $("#employee-form").submit(function(e) {
@@ -189,17 +186,6 @@ $("#employee-form").submit(function(e) {
     method: "POST",
     url: location.href,
     data: fd.serialize()
-  })
-  .done(function(data) {doneProcess(data);})
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
-});
-$("#designation-form").submit(function(e) {
-  e.preventDefault();
-
-  $.ajax({
-    method: "POST",
-    url: location.href,
-    data: $(this).serializeArray(),
   })
   .done(function(data) {doneProcess(data);})
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
