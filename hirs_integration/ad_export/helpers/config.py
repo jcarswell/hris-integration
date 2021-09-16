@@ -175,6 +175,10 @@ class EmployeeManager:
 
         self.__qs_over.save()
 
+        #Ensure we set the username and password post override save to preserve the values
+        self.__qs_emp._username == self.__emp_pend._username
+        self.__qs_emp._email_alias = self.__emp_pend._email_alias
+
     @property
     def employee(self) -> Employee:
         return self.__qs_emp
