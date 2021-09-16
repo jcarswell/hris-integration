@@ -13,7 +13,7 @@ GROUP_MAP = 'ftp_import_feild_mapping'
 CAT_SERVER = 'server'
 CAT_CSV = 'csv_parse'
 CAT_FIELD = 'field_config'
-CAT_EXPORT = 'export options'
+CAT_EXPORT = 'export_options'
 SETTINGS_CATAGORIES = (CAT_SERVER,CAT_CSV,CAT_FIELD,CAT_EXPORT)
 SERVER_SERVER = 'server'
 SERVER_PROTOCAL = 'protocal'
@@ -27,6 +27,7 @@ CSV_FIELD_SEP = 'field_sperator'
 CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
+CSV_FUZZ_PCENT = 'fuzzy_pending_match_precentage'
 FIELD_LOC_NAME = 'location_name_field'
 FIELD_JD_NAME = 'job_description_name_field'
 FIELD_JD_BU = 'job_description_business_unit_field'
@@ -58,7 +59,8 @@ CONFIG_DEFAULTS = {
         CSV_FIELD_SEP: ',',
         CSV_FAIL_NOTIF: '',
         CSV_IMPORT_CLASS: 'ftp_import.forms',
-        CSV_USE_EXP: 'True'
+        CSV_USE_EXP: 'True',
+        CSV_FUZZ_PCENT: '70',
     },
     CAT_FIELD: {
         FIELD_LOC_NAME: None,

@@ -5,8 +5,10 @@ import os
 
 from django import conf
 from tempfile import TemporaryFile
+from hirs_integration.smtp_client.smtp import Smtp
 
 from .helpers import config
+from .helpers.stats import Stats
 from .helpers.text_utils import int_or_str
 from .exceptions import ConfigurationError,SFTPIOError
 from .models import FileTrack
@@ -113,13 +115,13 @@ class FTPClient:
 
         logger.warning("Starting ftp import cycle")
         path = self.sftp.listdir(self.basepath)
-        imported = 0
         
         for f in path:
             logger.debug(f"Got file {f} for checking")
             m = re.search(self.file_expr,f)
             if m and not FileTrack.objects.filter(name=f).exists():
-                logger.warning(f"Importing {f}")
+                logger.debug(f"Importing {f}")
+                Stats.files.append(f)
                 
                 with TemporaryFile() as fh:
                     self.sftp.getfo(self.basepath+f,fh)
@@ -131,4 +133,9 @@ class FTPClient:
                 ft.save()
                 del ft
 
-        logger.warning(f"Finished running import. Imported {imported} files.")
+        logger.info(f"Finished running import.")
+        logger.info(str(Stats()))
+
+        if self.parse_error or self.import_error:
+            s = Smtp()
+            s.send(config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF),Stats().as_html,"FTP Import Job")

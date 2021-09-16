@@ -1,16 +1,16 @@
 import json
 import logging
 
-from django.http import HttpResponse,HttpResponseBadRequest
+from django.http import HttpResponse,HttpResponseBadRequest,HttpResponseServerError,JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
-from django.forms.models import ModelForm
 from django.contrib.auth.views import redirect_to_login
 from django.utils.safestring import mark_safe
 from django.urls import resolve
+from django.forms.widgets import Select
 
 from .helpers import settings_view
 from . import models
@@ -18,8 +18,8 @@ from . import models
 logger = logging.getLogger('hirs_admin.view')
 
 class LoggedInView(ContextMixin, View):
-    page_title = 'HIRS Sync'
-    site_title = 'HIRS Sync'
+    page_title = 'HRIS Sync'
+    site_title = 'HRIS Sync'
     page_description = None
     redirect_path = None
 
@@ -180,15 +180,15 @@ class FormView(TemplateResponseMixin, LoggedInView):
         logger.debug(f"post data is: {request.POST}")
         if self._form.is_valid():
             logger.debug("Form is valid, saving()")
-            self._form.save()
+            save_data = self._form.save()
         else:
             logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
             errors = self._form._errors.keys()
-            return HttpResponse({'status':'error',
+            return JsonResponse({'status':'error',
                                  'fields':errors,
                                  'msg':"Please correct the highlighted fields"})
 
-        return HttpResponse({'status':'success'})
+        return JsonResponse({'status':'success','id':save_data.pk})
 
     def put(self, request, *args, **kwargs):
         self.post(request,*args, **kwargs)
@@ -209,11 +209,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         logger.debug(f"Output contains: {output}")
         return mark_safe('\n'.join(output))
 
-    def delete(self, request, *args, **kwargs):
-        rev = resolve(request.path)
-        if rev[len(self.edit_postfix)*-1:] == self.edit_postfix:
-            rev = rev[:len(self.edit_postfix)*-1]
-
+    def delete(self, request, *args, **kwargs):        
         try:
             pk = kwargs['id']
         except KeyError:
@@ -222,13 +218,12 @@ class FormView(TemplateResponseMixin, LoggedInView):
         o = self._model.objects.get(pk=pk)
         try:
             o.delete()
-            return HttpResponse({'location':rev})
+            return JsonResponse({'status':'success'})
 
         except Exception as e:
             logger.exception(f'lazy catch of {e}')
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(str(e))
             
-
 
 class Employee(TemplateResponseMixin, LoggedInView):
     #http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
@@ -262,28 +257,25 @@ class Employee(TemplateResponseMixin, LoggedInView):
         context = self.get_context(**kwargs)
 
         try:
-            designation = models.EmployeeDesignation.objects.get(employee=employee).label
-        except models.EmployeeDesignation.DoesNotExist:
-            designation = ""
-        try:
             overrides = models.EmployeeOverrides.objects.get(employee=employee)
         except models.EmployeeOverrides.DoesNotExist:
             overrides = None
 
         context["employee"] = employee
-        context["designation"] = designation
         context["overrides"] = overrides
         context["locations"] = models.Location.objects.all()
         context["phones"] = models.EmployeePhone.objects.filter(employee=employee)
-        context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
-
+        try:
+            context["address"] = models.EmployeeAddress.objects.filter(employee=employee)[0]
+        except IndexError:
+            context["address"] = None
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         try:
             emp_id = kwargs['id']
         except KeyError:
-            return HttpResponse(json.dumps({"status":"error","feilds":["emp_id"]}), status=400)
+            return JsonResponse({"status":"error","feilds":["emp_id"]})
         
         errors = []
         if request.POST['form'] == 'override':
@@ -306,20 +298,18 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp = models.Employee.objects.get(emp_id)
             emp.photo = request.POST['photo']
             emp.save()
-        elif request.POST['form'] == "designation":
-            emp, _ = models.EmployeeDesignation.objects.get_or_create(employee=models.Employee.objects.get(pk=emp_id))
-            emp.label = request.POST['designation-1']
-            emp.save()
         
         if errors == []:
-            return HttpResponse(json.dumps({"status":"sucess","feilds":errors}))
+            return JsonResponse({"status":"sucess","feilds":errors})
         else:            
-            return HttpResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse({"status":"error","feilds":errors})
 
 
-class Settings(LoggedInView):
+class Settings(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Settings'
+    template_name = 'hirs_admin/settings.html'
+
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -331,7 +321,7 @@ class Settings(LoggedInView):
         context = self.get_context(**kwargs)
         context["settings"] = settings_data
 
-        return HttpResponse(render(request, 'hirs_admin/settings.html', context=context))
+        return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"got post with data: {request.POST}")
@@ -348,9 +338,99 @@ class Settings(LoggedInView):
                 setting.save()
 
         if errors == []:
-           return HttpResponse('{"status":"success"}')
+           return JsonResponse({"status":"success"})
         else:
-            return HttpResponse(json.dumps({"status":"error","feilds":errors}))
+            return JsonResponse({"status":"error","feilds":errors})
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
+
+
+class CsvImport(TemplateResponseMixin, LoggedInView):
+    http_method_names = ['get', 'post', 'head', 'options', 'trace']
+    page_title = 'Pending Employee Imports'
+    template_name = 'hirs_admin/emp_import.html'
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        data = models.CsvPending.objects.all()
+        context = self.get_context(**kwargs)
+        if len(data) == 0:
+            context['page_content'] = False
+            return self.render_to_response(context)
+
+        else:
+            context['page_content'] = self.render_form()
+            return self.render_to_response(context)
+
+    def render_form(self):
+        def model_to_choices(**data):
+            output = []
+            for r in data:
+                output.append((r.pk,str(r)))
+            return output
+
+        data = models.CsvPending.objects.all()
+        field_emp = Select(attrs={'class':'selectpicker form-control',
+                                  'data-style':'bg-white',
+                                  'data-live-search':'true'},
+                           choices=model_to_choices(models.EmployeePending.objects.all()))
+        output = []
+        #Header row
+        output.append(f'<div class="form-row">')
+        output.append(f'<div class="form-group col-md-8>')
+        output.append(f'<h4>HRIS Employee Object</h4>')
+        output.append(f'</div>')
+        output.append(f'<div class="form-group col-md-4>')
+        output.append(f'<h4>Target Pending Employee</h4>')
+        output.append(f'</div>')
+        output.append(f'</div>')
+
+        for row in data:
+            output.append(f'<div class="form-row">')
+            output.append(f'<div class="form-group col-md-8>')
+            output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
+            output.append(f'</div>')
+            output.append(f'<div class="form-group col-md-4>')
+            output.append(field_emp.render("row.emp_id",None))
+            output.append(f'</div>')
+            output.append(f'</div>')
+
+    def put(self, request, *args, **kwargs):
+        self.post(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            from .helpers.csv_import import CsvImport
+        except ImportError:
+            return HttpResponseServerError("System Missing ftp_import module. Please contact the system administartor")
+
+        errors = []
+        for id,value in request.POST.items():
+            try:
+                csv = models.CsvPending.objects.get(emp_id=int(id))
+                pending_emp = models.EmployeePending.objects.get(pk=value)
+            except models.CsvPending.DoesNotExist:
+                errors.append(f"failed to find employee {id}")
+            else:
+                CsvImport(json.loads(pending_emp,csv.row_data))
+        
+        if errors:
+            return JsonResponse({"status":"error","feilds":errors})
+        else:
+            return JsonResponse({"status":"success"})
+
+
+class JobActions(TemplateResponseMixin, LoggedInView):
+    http_method_names = ['get', 'post', 'head', 'options', 'trace']
+    page_title = 'Job Actions'
+    template_name = 'hirs_admin/actions.html'
+
+    def get(self, request, *args, job:str =None, **kwargs):
+        return self.render_to_response(self.get_context(**kwargs))
+
+    def post(self, request, *args, job:str =None, **kwargs):
+        pass
