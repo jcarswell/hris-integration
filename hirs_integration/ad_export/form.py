@@ -41,10 +41,10 @@ class BaseExport:
                     if e.row_count:
                         self.errors.append(f"{str(employee)} is in conflict with {e.row_count} AD user objects")
                         logger.warning(f"Employee {str(employee)} is in conflict with existing AD Users")
-                        user = 0 # <- need to watch out for this one...
+                        user = 0
                     else:
                         pass
-            if user == None:
+            if user == None: # user must be None not 0 or False
                 employee = self.new_user_pre(employee)
                 try:
                     user = self._ad.create_user(employee)
