@@ -3,7 +3,7 @@ import json
 
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
                                WordList, Employee, EmployeeAddress, EmployeePhone,
-                               EmployeeOverrides, set_upn, CsvPending)
+                               CsvPending)
 from django.db.utils import IntegrityError
 from django.db.models import Q
 from distutils.util import strtobool
@@ -37,18 +37,24 @@ class BaseImport():
         if employee_id_field == None or employee_id_field not in kwargs:
             Stats.errors.append(f"Row {Stats.rows_processed} does not contain an Employee ID")
             logger.fatal("Row data does not contain an employee id field mapping")
-            raise ValueError(f"{emp_id_field} is missing from fields, can not continue")
+            raise ValueError(f"'{emp_id_field}'' is missing from fields, can not continue")
         else:
             self.employee_id = int_or_str(kwargs[employee_id_field])
         
-        self.employee,self.new = Employee.objects.get_or_create(pk=self.employee_id)
+        try:
+            self.employee = Employee.objects.get(pk=self.employee_id)
+            self.new = False
+            logger.debug(f'{self.employee_id} exists as {self.employee}')
+        except Employee.DoesNotExist:
+            self.employee = Employee()
+            self.new = True
+            logger.debug(f'{self.employee_id} is a new Employee')
 
         self._set_status()
 
         if self.new and self.status_field and kwargs[self.status_field] == Employee.STAT_TERM:
             logger.debug(f"Employee {self.employee_id} is doesn't exists and is already terminated not importing")
             self.save_user = False
-            self.employee.delete()
             self.employee = None
         else:
             self.save_user = True
@@ -108,19 +114,19 @@ class BaseImport():
         if not self.status_field:
             self.status_field = self.get_field_name('status')
 
-        logger.debug(f"status field is {self.status_field}")
+        logger.debug(f"status field is '{self.status_field}'")
 
         if (self.status_field and
                 self.status_field in self.kwargs and
                 self.kwargs[self.status_field] in [status_leave,status_act,status_term]):
-            logger.debug(f"Source status field is {self.kwargs[self.status_field]}")
+            logger.debug(f"Source status is '{self.kwargs[self.status_field]}'")
             if self.kwargs[self.status_field].lower() == status_term.lower():
                 self.kwargs[self.status_field] = Employee.STAT_TERM
             elif self.kwargs[self.status_field].lower() == status_act.lower():
                 self.kwargs[self.status_field] = Employee.STAT_ACT
             elif status_leave and self.kwargs[self.status_field].lower() == status_leave.lower():
                 self.kwargs[self.status_field] = Employee.STAT_LEA
-            logger.debug(f"revised status field is {self.kwargs[self.status_field]}")
+            logger.debug(f"revised status is '{self.kwargs[self.status_field]}'")
 
     def _expand(self,data:str) -> str:
         if not self.expand:
@@ -266,9 +272,8 @@ class BaseImport():
         raise NotImplementedError('Implement in a sub-class')
 
     def post_save(self):
-        if self.new and self.save_user:
-            pending = EmployeePending()
-            pending.employee = Employee.objects.get(pk=int_or_str(self.employee_id))
+        """This method is called after the save task is completed"""
+        pass
 
     def get_map_to(self,key:str) -> str:
         """
@@ -362,7 +367,13 @@ class EmployeeForm(BaseImport):
                     if self.location_check(int_or_str(value)):
                         self.employee.location = Location.objects.get(pk=int_or_str(value))
                 else:
-                    setattr(self.employee,self.get_map_to(key),value)
+                    try:
+                        setattr(self.employee,map_val,value)
+                    except IntegrityError:
+                        #This may be expexted as the employee has yet to be created in the database
+                        # therfore a forien key relationship cannot be created.
+                        if map_val != 'jobs':
+                            logger.warning(f"Failed to set feild '{map_val}' for {self.employee}")
 
         pend_obj,multiple = self.fuzz_pending()
 
@@ -452,7 +463,7 @@ class EmployeeForm(BaseImport):
                 Stats.rows_imported += 1
             except IntegrityError as e:
                 logger.exception(f"Failed to save employee {self.employee_id}")
-                Stats.errors(f"Failed to save employee {self.employee_id}")
+                Stats.errors.append(f"Failed to save employee {self.employee_id}")
                 raise ValueError("Failed to save Employee object") from e
 
             try:
@@ -465,6 +476,7 @@ class EmployeeForm(BaseImport):
                 logger.exception(f"Failed to save employee phone for {self.employee_id}")
         else:
             logger.info(f"Not saving employee {self.employee_id}, as the don't exist are terminated")
+            return
         
         if self.employee and not self.employee.pk:
             self.employee.delete()
@@ -472,5 +484,6 @@ class EmployeeForm(BaseImport):
         if self.csv_pending and not self.csv_pending.pk:
             self.csv_pending.delete()
 
+        logger.debug(f'\'save()\' complete for {self.employee_id}')
 
 form = EmployeeForm
