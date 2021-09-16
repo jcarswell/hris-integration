@@ -3,8 +3,6 @@ import string
 import importlib
 import csv
 
-from smtp_client.smtp import Smtp
-
 from .helpers import config
 from .helpers.stats import Stats
 from .helpers.text_utils import safe,decode
@@ -91,7 +89,6 @@ class CsvImport():
                     self.data.append(row_data)
 
     def add_data(self):
-        self.import_error = []
         try:
             form_module = importlib.import_module(self.form)
         except ModuleNotFoundError as e:
@@ -105,14 +102,15 @@ class CsvImport():
             logger.critical(f"Form module has no attribute form")
             raise ConfigurationError(f"Form module has no attribute form")
         
-        for row in self.data:
+        for row in range(0,len(self.data)):
             try:
-                f = form(self.fields,**row)
+                #logger.debug(f"{type(self.data[row])} - {self.data[row]}")
+                f = form(self.fields,**self.data[row])
                 f.save()
                 f.post_save()
             except ValueError as e:
                 logger.error("Failed to save Employee refere to previous logs for more details")
-                self.import_error.append(f"{row[0]} - Error: {e}")
+                Stats.errors.append(f"Line: {self.data[row]} - Error: {e}")
             except ObjectCreationError as e:
                 logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
-                self.import_error.append(f"{row[0]} - Error: {e}")
+                Stats.errors.append(f"Line: {self.data[row]} - Error: {e}")
