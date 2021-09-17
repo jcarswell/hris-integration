@@ -1,7 +1,7 @@
+from hirs_integration.smtp_client.exceptions.errors import ConfigError
 import logging
 import paramiko
 import re
-import os
 
 from django import conf
 from tempfile import TemporaryFile
@@ -13,6 +13,7 @@ from .helpers.text_utils import int_or_str
 from .exceptions import ConfigurationError,SFTPIOError
 from .models import FileTrack
 from .csv import CsvImport
+from hirs_integration.smtp_client import SmtpToInvalid,SmtpClientConfig,SmtpServerError
 
 logger = logging.getLogger('ftp.FTPClient')
 
@@ -136,6 +137,15 @@ class FTPClient:
         logger.info(f"Finished running import.")
         logger.info(str(Stats()))
 
-        if self.parse_error or self.import_error:
-            s = Smtp()
-            s.send(config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF),Stats().as_html,"FTP Import Job")
+        try:
+            to = config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF).split(',')
+            if to:
+                s = Smtp()
+                s.send(to,Stats().as_html,"FTP Import Job")
+        except SmtpToInvalid as e:
+            logger.warning(str(e))
+        except SmtpServerError:
+            logger.error("Please review the SMTP server configuration")
+        except ConfigError:
+            logger.error("Please double check the configured SMTP Credentials")
+        
