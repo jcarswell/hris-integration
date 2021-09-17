@@ -3,6 +3,7 @@ import logging
 
 from distutils.util import strtobool
 from email.message import EmailMessage
+from typing import List, Union, AnyStr
 
 from .helpers import config
 from .exceptions import ConfigError,SmtpServerError,SmtpToInvalid
@@ -10,6 +11,14 @@ from .exceptions import ConfigError,SmtpServerError,SmtpToInvalid
 logger = logging.getLogger('SMTP')
 
 class Smtp:
+    """SMTP Client is a wrapper for the built-in SMTP library. Used for sending emails to 
+        a set of target recipient(s).
+        
+        Usage:
+        s = Smtp()
+        s.send([recipient(s)],[email body],[subject]) 
+    """
+
     def __init__(self):
         config_data = config.get_config_cat(config.CAT_CONFIG)
 
@@ -36,6 +45,7 @@ class Smtp:
         self.sender = config_data[config.SERVER_SENDER]
 
     def connect(self):
+        """Connect to the SMTP Server and send an EHLO"""
         logger.debug(f"connecting to SMTP Server {self.server} on port {self.port}")
         try:
             self.__conn = self.smtp_class(host=self.server,port=self.port)
@@ -64,7 +74,24 @@ class Smtp:
         del self.__conn
         logger.debug("Server connection closed. Until next time.")
 
-    def send(self,to,msg:str,subject:str):
+    def send(self,to:Union[AnyStr,List],msg:str,subject:str):
+        """Send an email message to the target recepient(s)
+
+        Args:
+            to (Str,List): A list of target email addresses
+            msg (str): The body of the email
+            subject (str): Subject line
+
+        Raises:
+            ValueError: Invalid to type
+            ConfigError: Authentication with the server failed
+            SmtpToInvalid: one or more requested target email address(es) rejected by the server
+            SmtpServerError: SMTP Configuration is invalid
+        """
+        if isinstance(to,str):
+            to = to.split(',')
+        elif not isinstance(to,list):
+            raise ValueError(f"'to' should be a string or list, got {type(to)}")
         email = EmailMessage()
         email.set_content(msg)
         email['Subject'] = self.prefix + subject
@@ -78,8 +105,12 @@ class Smtp:
         except smtplib.SMTPSenderRefused as e:
             logger.exception('sender does not have premission to send emails')
             raise ConfigError("Sender does not have permission on the server") from e
-        except smtplib.SMTPRecipientsRefused:
+        except smtplib.SMTPRecipientsRefused as e:
             logger.exception("to address(es) were rejected by the server")
-            raise SmtpToInvalid(f"to {to} was rejected be the server")
+            errors = []
+            for u in to:
+                errors.append(f"Code: {e.recipients[u][0]}, Message: {e.recipients[u][1]}")
+            e_str = '\n\t'.join(errors)
+            raise SmtpToInvalid(f"Recievied the following errors \n\t{e_str}")
         
         self.close()
