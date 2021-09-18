@@ -323,6 +323,13 @@ class EmployeeForm(BaseImport):
                             changed = True
                     except Employee.DoesNotExist:
                         logger.warning(f"Manager {value} doesn't exist yet")
+                        if self.employee.manager:
+                            self.employee.manager = None
+                            changed = True
+                    except ValueError:
+                        if self.employee.manager:
+                            self.employee.manager = None
+                            changed = True
 
                 elif map_val == 'primary_job':
                     if self.jobs_check(int_or_str(value)):
