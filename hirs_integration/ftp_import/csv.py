@@ -36,7 +36,7 @@ class CsvImport():
         headers = decode(file_handle.readline())
         logger.debug(f"parsing potentail header row {headers[0:60]}")
 
-        while headers[0] not in string.ascii_letters + string.digits:
+        while headers[0] not in string.ascii_letters + string.digits + ["'",'"']:
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
             logger.debug(f"line: {headers}")
             if headers[0] == self.sep:
