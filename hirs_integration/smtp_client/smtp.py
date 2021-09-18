@@ -106,11 +106,11 @@ class Smtp:
             logger.exception('sender does not have premission to send emails')
             raise ConfigError("Sender does not have permission on the server") from e
         except smtplib.SMTPRecipientsRefused as e:
-            logger.exception("to address(es) were rejected by the server")
             errors = []
             for u in to:
                 errors.append(f"Code: {e.recipients[u][0]}, Message: {e.recipients[u][1]}")
             e_str = '\n\t'.join(errors)
+            logger.exception(f"Send email failed with the following errors \n\t{e_str}")
             raise SmtpToInvalid(f"Recievied the following errors \n\t{e_str}")
         
         self.close()
