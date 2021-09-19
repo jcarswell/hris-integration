@@ -1,10 +1,8 @@
 import time
 
-from django.utils.html import format_html
-
 def fmt_date(sec):
     t = time.gmtime(sec)
-    return f"{t.tm_year}/{t.tm_mon}/{t.tm_mday} {t.tm_hour}:{t.tm_min:01d}"
+    return f"{t.tm_year}/{t.tm_mon}/{t.tm_mday} {t.tm_hour}:{t.tm_min:02d}"
 
 class Stats:
     time_start = None
@@ -82,5 +80,5 @@ class Stats:
         output.append("</ol>")
 
         output.append("</body>")
-        return format_html("\n".join(output))
+        return "\n".join(output)
 
