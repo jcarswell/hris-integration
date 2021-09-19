@@ -109,7 +109,7 @@ class CsvImport():
                 f.save()
             except ValueError as e:
                 logger.error("Failed to save Employee refere to previous logs for more details")
-                Stats.errors.append(f"Line: {self.data[row]} - Error: {e}")
+                Stats.errors.append(f"Line: {row} - Error: {e}")
             except ObjectCreationError as e:
                 logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
-                Stats.errors.append(f"Line: {self.data[row]} - Error: {e}")
+                Stats.errors.append(f"Line: {row} - Error: {e}")
