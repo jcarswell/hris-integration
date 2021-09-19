@@ -2,6 +2,7 @@ from hirs_integration.smtp_client.exceptions.errors import ConfigError
 import logging
 import paramiko
 import re
+import time
 
 from django import conf
 from tempfile import TemporaryFile
@@ -39,6 +40,7 @@ class FTPClient:
         file_expr = config.get_config(config.CAT_SERVER,config.SERVER_FILE_EXP)
         protocol = config.get_config(config.CAT_SERVER,config.SERVER_PROTOCAL)
         self.__password = config.get_config(config.CAT_SERVER,config.SERVER_PASSWORD)
+        Stats.time_start = time.time()
         
         self.file_expr = re.compile(file_expr)
         self.basepath = ''
@@ -135,7 +137,10 @@ class FTPClient:
                 del ft
 
         logger.info(f"Finished running import.")
+        Stats.time_end = time.time()
         logger.info(str(Stats()))
+        if Stats.errors:
+            logger.error("Errors:\n\t" + "\n\t".join(Stats.errors))
 
         try:
             to = config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF).split(',')
