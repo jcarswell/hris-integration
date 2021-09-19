@@ -4,7 +4,7 @@ from django.utils.html import format_html
 
 def fmt_date(sec):
     t = time.gmtime(sec)
-    return f"{t.tm_year}\\{t.tm_mon}\\{t.tm_mday} {t.tm_hour}:{t.tm_min}"
+    return f"{t.tm_year}/{t.tm_mon}/{t.tm_mday} {t.tm_hour}:{t.tm_min:01d}"
 
 class Stats:
     time_start = None
@@ -48,7 +48,7 @@ class Stats:
             f"<tr><td>Start Time</td><td>{fmt_date(self.time_start)}</td></tr>",
             f"<tr><td>End Time</td><td>{fmt_date(self.time_end)}</td></tr>",
             f"<tr><td>Processing Time</td><td>{self.runtime}s</td></tr>",
-            f"<tr><td>Files Processed</td><td>{len(self.rows_processed)}</td></tr>",
+            f"<tr><td>Files Processed</td><td>{len(self.files)}</td></tr>",
             f"<tr><td>Rows Processed</td><td>{self.rows_processed}</td></tr>",
             f"<tr><td>Rows Imported</td><td>{self.rows_imported}</td></tr>",
             "</table>"
