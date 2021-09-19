@@ -28,6 +28,10 @@ CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
 CSV_FUZZ_PCENT = 'fuzzy_pending_match_precentage'
+CSV_IMPORT_ALL_JOBS = "import_all_jobs"
+CSV_IMPORT_JOBS = "import_new_jobs"
+CSV_IMPORT_BU = "import_business_units"
+CSV_IMPORT_LOC = "import_locations"
 FIELD_LOC_NAME = 'location_name_field'
 FIELD_JD_NAME = 'job_description_name_field'
 FIELD_JD_BU = 'job_description_business_unit_field'
@@ -61,6 +65,10 @@ CONFIG_DEFAULTS = {
         CSV_IMPORT_CLASS: 'ftp_import.forms',
         CSV_USE_EXP: 'True',
         CSV_FUZZ_PCENT: '70',
+        CSV_IMPORT_ALL_JOBS: 'True',
+        CSV_IMPORT_JOBS: 'True',
+        CSV_IMPORT_BU: 'True',
+        CSV_IMPORT_LOC: 'True',
     },
     CAT_FIELD: {
         FIELD_LOC_NAME: None,
@@ -112,7 +120,6 @@ class CsvSetting():
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
             field = safe(get_config(CAT_FIELD,field_conf))
-            logger.debug(f"Field {field} is setup as a configuration field")
             if field and field in self.fields.keys():
                 logger.debug(f"Marking {field} for import")
                 self.fields[field]['import'] = True
@@ -163,6 +170,11 @@ class CsvSetting():
             warn(f"{field} is already defined")
             logger.warning(f"Attempted to create existing CSV Feild {field}")
             return False
+
+    def get_by_map_val(self,map_to:str) -> str:
+        for k,v in self.fields.items():
+            if v['map_to'] == map_to:
+                return k
 
 
 def configuration_fixures():
