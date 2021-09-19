@@ -1,16 +1,17 @@
 import logging
 import json
 
+from typing import AnyStr, Dict, List
+from datetime import datetime
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
                                WordList, Employee, EmployeeAddress, EmployeePhone,
-                               CsvPending)
+                               CsvPending, EmployeeOverrides)
 from django.db.utils import IntegrityError
 from django.db.models import Q
 from distutils.util import strtobool
 
 from .helpers import config
 from .helpers.text_utils import fuzz_name
-from .exceptions import ObjectCreationError
 from .helpers.text_utils import int_or_str,clean_phone
 from .helpers.stats import Stats
 
@@ -24,10 +25,36 @@ def get_pk(model) -> str:
             return f.name
 
 class BaseImport():
-    def __init__(self,field_config:list, **kwargs) -> None:
+    """
+    Base import form for parsing employee data. This class provides numerous
+    supporting functions along with the shell to which processing happens.
+    
+    Initialization:
+      The class expects a list of feild configuration data that will be provided as kwargs.
+      The list should be structured as: 
+      [
+          {
+              'field': <kwarg field name>,
+              'map_to': <Employee model field or property>
+          },
+          ...
+      ]
+      
+      Durring initalization the following things happen:
+       - Employee object is initailized either with the existing object or an empty object
+       - The status field from the import is re-mapped to the expexted model value
+       - If this is a "new" Employee the save attribute is set
+       - csv_pending is initialized with the kwargs and employee id
+    """
+
+    def __init__(self,field_config:List[Dict], **kwargs) -> None:
         self.kwargs = kwargs
         self.field_config = field_config
         self.expand = strtobool(config.get_config(config.CAT_CSV,config.CSV_USE_EXP))
+        self.import_jobs = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_JOBS))
+        self.import_bu = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_BU))
+        self.import_jobs_all = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS))
+        self.import_loc = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_LOC))
 
         Stats.rows_processed += 1
 
@@ -37,14 +64,13 @@ class BaseImport():
         if employee_id_field == None or employee_id_field not in kwargs:
             Stats.errors.append(f"Row {Stats.rows_processed} does not contain an Employee ID")
             logger.fatal("Row data does not contain an employee id field mapping")
-            raise ValueError(f"'{emp_id_field}'' is missing from fields, can not continue")
+            raise ValueError(f"'{emp_id_field}' is missing from fields, can not continue")
         else:
             self.employee_id = int_or_str(kwargs[employee_id_field])
         
         try:
             self.employee = Employee.objects.get(pk=self.employee_id)
             self.new = False
-            logger.debug(f'{self.employee_id} exists as {self.employee}')
         except Employee.DoesNotExist:
             self.employee = Employee()
             self.new = True
@@ -152,128 +178,223 @@ class BaseImport():
         logger.debug(f"Expanded Value is {' '.join(output)}")
         return " ".join(output)
 
-    def location_check(self,data):
-        loc,new = Location.objects.get_or_create(pk=data)
-        loc_desc = config.get_config(config.CAT_FIELD,config.FIELD_LOC_NAME)
-
-        if new and loc_desc not in self.kwargs:
-            logger.error(f"Location description field, {loc_desc} not in fields imported")
-            raise ObjectCreationError(f"Location description field, {loc_desc} not in fields")
-
-        if new and loc_desc in self.kwargs:
-            logger.debug(f"Creating location {self.kwargs[loc_desc]}")
-            loc.bld_id = data
-            loc.name = self._expand(self.kwargs[loc_desc])
-            loc.save()
-
-            logger.info(f"Created Location {str(loc)}")
-            return True
-        elif not new:
-            return True
-
-        return False
-
-    def jobs_check(self,data:int) -> bool:
-        """
-        Check if a Job description exists, if it doesn't create it.
-
-        Args:
-            data (int): the Job Description ID
-
-        Raises:
-            ObjectCreationError: If requied data to create the Job Description is missing
-        """
-        logger.debug(f"Checking for job role with id {data}")
-        job,new = JobRole.objects.get_or_create(pk=data)
-        job_desc = config.get_config(config.CAT_FIELD,config.FIELD_JD_NAME)
-        bu_id = config.get_config(config.CAT_FIELD,config.FIELD_JD_BU)
-        if new and job_desc not in self.kwargs:
-            logger.error(f"Job description field, {job_desc} not in fields imported")
-            raise ObjectCreationError(f"Job description field, {job_desc} not in fields")
-        if new and job_desc in self.kwargs:
-            logger.debug(f"Creating new job {self.kwargs[job_desc]}")
-            job.name = self._expand(self.kwargs[job_desc]) or self.kwargs[job_desc]
-            job.save()
-
-            if bu_id in self.kwargs:
-                try:
-                    self.business_unit_check(self.kwargs[bu_id])
-                    job.bu = BusinessUnit.objects.get(pk=self.kwargs[bu_id])
-                except ObjectCreationError:
-                    logger.warning(f"Failed to create business unit for JobRole {data}")
-            try:
-                job.save()
-            except Exception as e:
-                logger.exception(e)
-            logger.info(f"Created Job {str(job)}")
-            return True
-        elif not new:
-            logger.debug(f"Job Role Exists {job}")
-            return True
-
-        return False
+    @staticmethod
+    def location_check(id:int) -> bool:
+        """check if the Location exists"""
+        return Location.objects.filter(pk=id).exists()
 
     @staticmethod
-    def business_unit_exists(data:int) -> bool:
-        """
-        Check if the business unit exists
-        Args:
-            data (int): business unit id
+    def jobs_check(id:int) -> bool:
+        """Check if the JobRole exists"""
+        return JobRole.objects.filter(pk=id).exists()
 
-        Returns:
-            bool: state of business unit
-        """
+    @staticmethod
+    def business_unit_check(data:int) -> bool:
+        """Check if the BusinessUnit exists"""
         return BusinessUnit.objects.filter(pk=data).exists()
 
-    def business_unit_check(self,data:int) -> bool:
-        """
-        Check if the Business unit exists, if it doesn't create it.
+    def add_location(self,id:int) -> Location:
+        """Add or update a Location. If updating a location, ensure that all
+        Employee and EmployeeOverride objects that use the Location are flagged
+        that they are updated
 
         Args:
-            data (int): Business Unit ID
+            id (int): The location id
 
-        Raises:
-            ObjectCreationError: if there is missing data needed to create the Business Unit
+        Returns:
+            Location: the created/updated Location
+                May return None if the creation fails
         """
-        logger.debug(f"Checking for business unit with id {data} ")
-        bu,new = BusinessUnit.objects.get_or_create(pk=data)
+        if not isinstance(id,int):
+            raise ValueError(f"Expexted int got type {type(id)}")
+
+        loc_desc = config.get_config(config.CAT_FIELD,config.FIELD_LOC_NAME)
+        changed = False
+
+        location,new = Location.objects.get_or_create(pk=id)
+        
+        if int_or_str(self.kwargs[loc_desc]) and location.name != int_or_str(self.kwargs[loc_desc]):
+            location.name = int_or_str(self.kwargs[loc_desc])
+            changed = True
+
+        try:
+            location.save()
+            if new:
+                logger.info(f"Added new location {location}")
+        except IntegrityError as e:
+            logger.error(f"Unable to save '{location.pk} - {location.name}' error {e}")
+            if new:
+                location.delete()
+                return
+
+        if not new and changed:
+            for u in Employee.objects.filter(location=location):
+                u.updated_on = datetime.utcnow()
+                u.save()
+            for u in EmployeeOverrides.objects.filter(_location=location):
+                u.employee.updated_on = datetime.utcnow()
+                u.save()
+
+    def update_location(self,id:int) -> Location:
+        return self.add_location(id)
+
+    def add_job(self,id:int) -> JobRole:
+        """
+        Create or update a JobRole. If updating the Job Role ensure that 
+        the Employee objects that have the job as its primary_job are
+        flagged to get updated.
+
+        Args:
+            id (int): The Job ID to be created/updated
+
+        Returns:
+            JobRole: the created/updated JobRole
+                May return None if the creation fails
+        """
+        if not isinstance(id,int):
+            raise ValueError(f"Expexted int got type {type(id)}")
+
+        job_desc = config.get_config(config.CAT_FIELD,config.FIELD_JD_NAME)
+        job_bu = config.get_config(config.CAT_FIELD,config.FIELD_JD_BU)
         bu_desc = config.get_config(config.CAT_FIELD,config.FIELD_BU_NAME)
-        bu_parent_field = config.get_config(config.CAT_FIELD,config.FIELD_BU_PARENT)
-        if new and bu_desc not in self.kwargs:
-            logger.error(f"Business unit name field, {bu_desc} not in fields imported")
-            raise ObjectCreationError(f"Job description field, {bu_desc} not in fields")
-        if new and bu_desc in self.kwargs:
-            logger.debug(f"Creating business unit {self.kwargs[bu_desc]}")
-            if bu_parent_field and bu_parent_field in self.kwargs:
-                bu_parent = self.kwargs[bu_parent_field]
+        bu_parent = config.get_config(config.CAT_FIELD,config.FIELD_BU_PARENT)
+        changed = False
+        
+        job,new = JobRole.objects.get_or_create(pk=id)
+
+        if self.import_bu:
+            if job_bu in self.kwargs.keys() and bu_desc in self.kwargs.keys():
+                try:
+                    if bu_parent in self.kwargs.keys():
+                        bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]),
+                                        int_or_str(self.kwargs[bu_parent]))
+                    else:
+                        bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]))
+                except Exception as e:
+                    logger.debug(f"Caught Error while creating bu: {e}")
+                    bu = None
             else:
-                bu_parent = None
+                logger.warning(f"Current row is missing fields '{job_bu}' and '{bu_desc}' cannot create or updated business units")
+        elif self.jobs_check(int_or_str(self.kwargs[job_bu])):
+            bu = BusinessUnit.objects.get(pk=int_or_str(self.kwargs[job_bu]))
+        else:
+            bu = None
 
-            if bu_parent and not self.business_unit_exists(bu_parent):
-                bu_parent = None
-                logger.warning(f"Business Unit parent id {bu_parent} does not exist for {data}")
+        if int_or_str(self.kwargs[job_desc]) and job.name != int_or_str(self.kwargs[job_desc]):
+            job.name = int_or_str(self.kwargs[job_desc])
+            changed = True
 
-            bu.bu_id = data
-            bu.name = self._expand(self.kwargs[bu_desc])
-            bu.parent = BusinessUnit.objects.get(pk=bu_parent)
+        if new or (job.bu != bu):
+            job.bu = bu
+            changed = True
+
+        try:
+            job.save()
+            if new:
+                logger.info(f"Added new job {job}")
+        except IntegrityError as e:
+            logger.error(f"Unable to save job '{job.job_id} - {job.name}' error {e}")
+            if new:
+                job.delete()
+                return
+        
+        if not new and changed:
+            for u in Employee.objects.filter(primary_job=job):
+                u.updated_on = datetime.utcnow()
+                u.save()
+
+        return job
+
+    def update_job(self,id:int) -> JobRole:
+        return self.add_job(id)
+
+    def add_bu(self,id:int,name:AnyStr,parent:int = None) -> BusinessUnit:
+        """
+        Add or update a business unit, if updating the bussiness unit
+        ensure that all impacted employee objects are getting flagged that
+        their is new infomation impacting them.
+
+        Args:
+            id (int): The ID of the business unit
+            name (AnyStr): The name of the business unit
+            parent [optional](int): An optional parrent business unit
+
+        Returns:
+            BusinessUnit: returns the new/updated buesiness unit
+                may return None if the creation of a new JobRole Fails
+        """
+        if not (isinstance(id,int) or isinstance(name,str) or isinstance(parent,(id,None))):
+            raise ValueError(f"Expexted int got type {type(id)}")
+
+        bu,new = BusinessUnit.objects.get_or_create(pk=id)
+        changed = False
+        if new or (bu.name != name):
+            bu.name = name
+            changed = True
+
+        if parent and self.business_unit_check(parent):
+            bu.parent = BusinessUnit.objects.get(pk=parent)
+            changed = True
+
+        try:
             bu.save()
-            logger.info(f"Created Business Unit {str(bu)}")
-            return True
-        elif not new:
-            logger.debug(f"Business Unit Exists")
-            return True
+            if new:
+                logger.info(f"Added new business unit {bu}")
+        except IntegrityError as e:
+            logger.error(f"Unable to save business unit '{bu.bu_id} - {bu.name}' error {e}")
+            if new:
+                bu.delete()
+                return
 
-        return False
+        if not new and changed:
+            for job in JobRole.objects.filter(bu=bu):
+                for u in Employee.objects.filter(primary_job=job):
+                    u.updated_on = datetime.utcnow()
+                    u.save()
 
-    def save(self):
+        return bu
+
+    def update_bu(self,id:int,name:AnyStr,parent:int):
+        """A wrapper call for add_bu for simplicity"""
+        return self.add_bu(id,name,parent)
+
+    def save_pre(self):
+        """Pre-save: Process the creation and updating of jobs and business units"""
+        if not (self.import_jobs_all or self.import_jobs or self.import_bu or self.import_loc):
+            return
+
+        fields = config.CsvSetting()
+        job_id = fields.get_by_map_val('primary_job')
+        loc_id = fields.get_by_map_val('location')
+
+        if self.import_jobs_all or (self.import_jobs and self.save_user) and job_id in self.kwargs.keys():
+            try:
+                self.add_job(int_or_str(self.kwargs[job_id]))
+            except Exception as e:
+                logger.debug(f"Caught Error will adding job: {e}")
+        
+        if self.import_loc and self.save_user and loc_id in self.kwargs.keys():
+            try:
+                self.add_location(int_or_str(self.kwargs[loc_id]))
+            except Exception as e:
+                logger.debug(f"Caught Error will adding location: {e}")
+            
+
+    def save_main(self):
         """
-        This method must be defined in a sub class
-        """
-        raise NotImplementedError('Implement in a sub-class')
+        This is the main save logic that needs to be implement based on the individual 
+        organizations need. Refer to the class doc for more details"""
+        pass
 
-    def post_save(self):
+    def save_post(self):
         """This method is called after the save task is completed"""
         pass
+
+    def save(self):
+        """This is a wrapper function to call the various save tasks in the correct order"""
+        self.save_pre()
+        self.save_main()
+        self.save_post()
 
     def get_map_to(self,key:str) -> str:
         """
@@ -314,7 +435,7 @@ class EmployeeForm(BaseImport):
         for key,value in self.kwargs.items():
             map_val = self.get_map_to(key)
             if hasattr(self.employee,map_val):
-                logger.debug(f"setting {map_val}")
+                #logger.debug(f"setting {map_val}")
                 if map_val == 'manager':
                     try:
                         manager = Employee.objects.get(pk=int_or_str(value))
@@ -460,7 +581,7 @@ class EmployeeForm(BaseImport):
             address.primary = False
             address.save()
 
-    def save(self):
+    def save_main(self):
         if self.save_user:
             try:
                 if self.new:
