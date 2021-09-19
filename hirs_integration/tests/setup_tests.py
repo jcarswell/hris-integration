@@ -1,4 +1,5 @@
 import logging
+import time
 
 from hirs_admin.models import Setting
 from pathlib import Path
@@ -185,10 +186,15 @@ def setup_smtp():
 
 def import_employees():
     from ftp_import.csv import CsvImport
+    from ftp_import.helpers.stats import Stats
+    Stats.time_start = time.time()
+
     path = str(Path(__file__).resolve().parent) + '\\employee_data.csv'
-    
     with open(path) as csv:
         CsvImport(csv)
+
+    Stats.time_end = time.time()
+    logger.info(f"Import Stat:\n{Stats()}")
 
 def run_ad_export():
     import ad_export
@@ -202,6 +208,12 @@ def run_setup():
     setup_ad_export()
     import_employees()
     setup_hirs_admin_after()
+
+def send_email():
+    from smtp_client import smtp
+    dest = input(f"Send Test Email to: ")
+    s = smtp.Smtp()
+    s.send(dest,"Test email sent from setup_tests.send_email()","HRIS Sync Test Email")
 
 if __name__ == "__main__":
     import os

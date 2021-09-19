@@ -1,6 +1,7 @@
 from .apps import AdExportConfig
+from .excpetions import ADResultsError,UserDoesNotExist,ConfigError,ADCreateError
 
-__all__ = ("setup","run","AdExportConfig")
+__all__ = ("setup","run","AdExportConfig","ADResultsError","UserDoesNotExist","ConfigError","ADCreateError")
 
 def setup():
     from .helpers import config
@@ -10,5 +11,13 @@ def setup():
     cj.save()
 
 def run(full=False):
-    from .ad_export import Export
-    Export(full).run()
+    from .helpers import config
+    from .form import BaseExport
+    import importlib
+
+    modelclass = importlib.import_module(config.get_config(config.CONFIG_CAT,config.CONFIG_IMPORT_FORM))
+    if hasattr(modelclass,'form') and isinstance(modelclass.form(),BaseExport):
+        modelclass.form(full).run()
+    else:
+        raise ConfigError("configured form does not appear to be a valid module. "\
+                          "Please Ensure that it's extending form.BaseExport and the form attrib is defined")

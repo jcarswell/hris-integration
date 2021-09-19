@@ -48,8 +48,11 @@ $form.submit(function(e) {
   })
   .done(function(data) {
     doneProcess(data);
-    if (data["status"] != "success") {
+    if (data["status"] == "success") {
       startItems = convertSerializedArrayToHash($form.serializeArray());
+      $('form[id=settings] button:submit').removeClass('btn-primary').addClass('btn-success')
+    } else {
+      $('form[id=settings] button:submit').removeClass('btn-primary').addClass('btn-danger')
     }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});

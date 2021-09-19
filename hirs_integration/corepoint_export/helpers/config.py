@@ -20,6 +20,7 @@ CONFIG_EXEC = 'executable_name'
 EMPLOYEE_EMAIL_DOMAIN = 'email_domain'
 EMPLOYEE_SUPER_DESIGNATIONS = 'Supervisor Designations'
 CONFIG_LAST_SYNC = 'last_sycronization_run'
+CONFIG_BOOL_EXPORT = 'bool_export_format'
 COREPOINT_FIELDS = ['map_Employee_no','map_Full_Name','map_Last_Name','map_First_Name',
                     'map_SITE_CODE','map_Middle_Name','map_Street_addr','map_Street',
                     'map_City','map_Province','map_POSTAL_CODE','map_PhoneAll',
@@ -41,7 +42,8 @@ CONFIG_DEFAULTS = {
         CONFIG_URL: 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
         CONFIG_PATH: 'c:\\corepoint\\',
         CONFIG_EXEC: 'CorePointWebServiceConnector.exe',
-        CONFIG_LAST_SYNC: '1999-01-01 00:00'
+        CONFIG_LAST_SYNC: '1999-01-01 00:00',
+        CONFIG_BOOL_EXPORT: '0,1'
     },
     CAT_EMPLOYEE: {
         EMPLOYEE_EMAIL_DOMAIN: 'example.com',

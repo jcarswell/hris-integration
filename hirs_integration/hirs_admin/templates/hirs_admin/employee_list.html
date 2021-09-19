@@ -2,6 +2,14 @@
 {% block extra_style %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"/>
 {% endblock %}
+{% block page_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a href="{% url 'pending' %}0/" class="btn btn-success">
+    <i class="fas fa-plus"></i>
+    New Pending Employee
+  </a>
+</div>
+{% endblock %}
 {% block content %}
 <div class="container">
   <div class="table-responsive">
