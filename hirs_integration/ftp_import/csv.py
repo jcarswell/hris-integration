@@ -36,7 +36,7 @@ class CsvImport():
         headers = decode(file_handle.readline())
         logger.debug(f"parsing potentail header row {headers[0:60]}")
 
-        while headers[0] not in string.ascii_letters + string.digits + ["'",'"']:
+        while headers[0] not in string.ascii_letters + string.digits + "'" + '"':
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
             logger.debug(f"line: {headers}")
             if headers[0] == self.sep:
@@ -107,7 +107,6 @@ class CsvImport():
                 #logger.debug(f"{type(self.data[row])} - {self.data[row]}")
                 f = form(self.fields,**self.data[row])
                 f.save()
-                f.post_save()
             except ValueError as e:
                 logger.error("Failed to save Employee refere to previous logs for more details")
                 Stats.errors.append(f"Line: {self.data[row]} - Error: {e}")
