@@ -20,7 +20,7 @@ Mako==1.1.4
 MarkupSafe==1.1.1
 mccabe==0.6.1
 paramiko==2.7.2
-pyad==0.6.0
+pyad @ git+https://github.com/jcarswell/pyad.git@cc7455934bfab6aae1a760b0b5c2b3e6f609b5a3
 pycparser==2.20
 python-dateutil==2.8.1
 python-editor==1.0.4
@@ -32,3 +32,4 @@ sqlparse==0.4.1
 toml==0.10.2
 visitor==0.1.3
 wrapt==1.12.1
+fuzzywuzzy==0.18.0
