@@ -6,7 +6,9 @@ def copy_field(apps, schema_editor):
     EmployeeOverride = apps.get_model('hirs_admin','EmployeeOverrides')
     Employee = apps.get_model('hirs_admin','Employee')
     for emp in EmployeeOverride.objects.all():
-        Employee.objects.get(emp_id=emp.employee.pk).update(_email_alias=emp._email_alias)
+        e = Employee.objects.get(emp_id=emp.employee.pk)
+        e._email_alias = emp._email_alias
+        e.save(update_fields=['_email_alias'])
 
 class Migration(migrations.Migration):
 
