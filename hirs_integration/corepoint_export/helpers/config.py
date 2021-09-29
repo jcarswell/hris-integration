@@ -20,6 +20,7 @@ CONFIG_EXEC = 'executable_name'
 EMPLOYEE_EMAIL_DOMAIN = 'email_domain'
 EMPLOYEE_SUPER_DESIGNATIONS = 'Supervisor Designations'
 CONFIG_LAST_SYNC = 'last_sycronization_run'
+CONFIG_BOOL_EXPORT = 'bool_export_format'
 COREPOINT_FIELDS = ['map_Employee_no','map_Full_Name','map_Last_Name','map_First_Name',
                     'map_SITE_CODE','map_Middle_Name','map_Street_addr','map_Street',
                     'map_City','map_Province','map_POSTAL_CODE','map_PhoneAll',
@@ -41,7 +42,8 @@ CONFIG_DEFAULTS = {
         CONFIG_URL: 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
         CONFIG_PATH: 'c:\\corepoint\\',
         CONFIG_EXEC: 'CorePointWebServiceConnector.exe',
-        CONFIG_LAST_SYNC: '1999-01-01 00:00'
+        CONFIG_LAST_SYNC: '1999-01-01 00:00',
+        CONFIG_BOOL_EXPORT: '0,1'
     },
     CAT_EMPLOYEE: {
         EMPLOYEE_EMAIL_DOMAIN: 'example.com',
@@ -140,7 +142,7 @@ def get_config(catagory:str ,item:str) -> str:
 class CPEmployeeManager(EmployeeManager):
     @property
     def status(self) -> bool:
-        if self.__qs_emp.status != "Active":
+        if self.employee.status != Employee.STAT_ACT:
             return False
 
         return True
@@ -155,7 +157,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def bu_id(self):
-        return self.__qs_emp.primary_job.bu.pk
+        return self.employee.primary_job.bu.pk
 
     @property
     def is_supervisor(self):
@@ -167,7 +169,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def employeetype(self):
-        return self.__qs_emp.type
+        return self.employee.type
 
 class MapSettings(dict):
     def __init__(self,) -> None:
@@ -207,7 +209,10 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
         #   or
         # if user status is not Terminated
         if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
-            output.append(CPEmployeeManager(employee.emp_id,employee))
+            try:
+                output.append(CPEmployeeManager(employee.emp_id,employee))
+            except Exception:
+                logger.error(f"Failed to get Employee {employee.emp_id}")
 
     return output
 

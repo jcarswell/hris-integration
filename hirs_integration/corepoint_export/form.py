@@ -83,11 +83,13 @@ class Export(BaseExport):
                 keys.append(value)
         with open(self.export_file, 'w') as output:
             output.write(",".join(keys))
+            output.write("\n")
             for employee in self.employees:
                 line = []
                 for key in keys:
                     line.append(str(getattr(employee,key,'')))
                 output.write(",".join(line))
+                output.write("\n")
         
         subprocess.run(self.callable)
         self.set_last_run()

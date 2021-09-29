@@ -1,4 +1,5 @@
 import logging
+import time
 
 from hirs_admin.models import Setting
 from pathlib import Path
@@ -133,18 +134,22 @@ def setup_ftp_import():
 def setup_ad_export():
     from ad_export.helpers import config
 
+    print("Please set your upn domain and route address")
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
             config.CONFIG_AD_USER: 'importadmin',
             config.CONFIF_AD_PASSWORD: 'quiuj5Aegh$ief3iXee1d',
             config.CONFIG_UPN: 'wch.net',
+            config.CONFIG_ROUTE_ADDRESS: 'thecarswells-ca.mail.onmicrosoft.com',
+            config.CONFIG_ENABLE_MAILBOXES: 'True',
+            config.CONFIG_MAILBOX_TYPE: 'remote',
             config.CONFIG_LAST_SYNC:'1999-01-01 00:00'
         },
         config.EMPLOYEE_CAT: {
             config.EMPLOYEE_DISABLE_LEAVE: 'False',
-            config.EMPLOYEE_LEAVE_GROUP_ADD: '\'active user\'',
-            config.EMPLOYEE_LEAVE_GROUP_DEL: '\'leave user\'',
+            config.EMPLOYEE_LEAVE_GROUP_ADD: 'active user',
+            config.EMPLOYEE_LEAVE_GROUP_DEL: 'leave user',
         },
         config.DEFAULTS_CAT: {
             config.DEFAULT_ORG: 'Constco',
@@ -161,12 +166,35 @@ def setup_ad_export():
 
     set_configuration(config.GROUP_CONFIG,module_config)
 
+def setup_smtp():
+    from smtp_client.helpers import config
+    
+    print("Please set your defaults for testing")
+    module_config = {
+        config.CAT_CONFIG: {
+            config.SERVER_SERVER: 'localhost',
+            config.SERVER_PORT: '25',
+            config.SERVER_TLS: 'False',
+            config.SERVER_SSL: 'False',
+            config.SERVER_USERNAME: '',
+            config.SERVER_PASSWORD: ['',True],
+            config.SERVER_SENDER: '',
+        },
+    }
+
+    set_configuration(config.GROUP_CONFIG,module_config)
+
 def import_employees():
     from ftp_import.csv import CsvImport
+    from ftp_import.helpers.stats import Stats
+    Stats.time_start = time.time()
+
     path = str(Path(__file__).resolve().parent) + '\\employee_data.csv'
-    
     with open(path) as csv:
         CsvImport(csv)
+
+    Stats.time_end = time.time()
+    logger.info(f"Import Stat:\n{Stats()}")
 
 def run_ad_export():
     import ad_export
@@ -180,6 +208,12 @@ def run_setup():
     setup_ad_export()
     import_employees()
     setup_hirs_admin_after()
+
+def send_email():
+    from smtp_client import smtp
+    dest = input(f"Send Test Email to: ")
+    s = smtp.Smtp()
+    s.send(dest,"Test email sent from setup_tests.send_email()","HRIS Sync Test Email")
 
 if __name__ == "__main__":
     import os

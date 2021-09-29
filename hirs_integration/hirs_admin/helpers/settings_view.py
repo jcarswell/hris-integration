@@ -4,14 +4,13 @@ from django.utils.safestring import mark_safe
 
 from hirs_admin import widgets as w
 
-logger = logging.getLogger('hirs_admin.helpers.settings_view')
+logger = logging.getLogger('hirs_admin.settings_view')
 
 class Settings():
 
     def __init__(self,objects):
         self.items = {}
         self.update_groups(objects)
-        logger.warning(f"Data: {self.as_html}")
 
     def update_groups(self,objects):
         output = {}
@@ -22,7 +21,7 @@ class Settings():
                     "name": x.group_text,
                     "catagories": {}
                 }
-                logger.info(f"Added Catagory: {group}")
+                logger.debug(f"Added Catagory: {group}")
             
             output[group]["catagories"] = self.update_catagories(output[group]["catagories"], x)
             
@@ -36,7 +35,7 @@ class Settings():
                 "name": object.catagory_text,
                 "items": {}
             }
-            logger.info(f"Added group {cat}")
+            logger.debug(f"Added group {cat}")
         
         data[cat]["items"] = self.update_item(data[cat]["items"], object)
         
@@ -44,7 +43,7 @@ class Settings():
 
 
     def update_item(self,data, object):
-        item = object.item
+        item = object.pk
 
         if object.hidden:
             widget = w.Hidden

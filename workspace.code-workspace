@@ -26,6 +26,16 @@
 					"runserver"
 				],
 				"django": true
+			},
+			{
+				"name": "Python: Django AD Export",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}\\hirs_integration\\manage.py",
+				"args": [
+					"runadexport"
+				],
+				"django": true
 			}
 		]
 	}

@@ -3,6 +3,7 @@ import cron
 import ftp_import
 import ad_export
 import corepoint_export
+import smtp_client
 import subprocess
 import sys
 import os
@@ -21,8 +22,8 @@ def setup(service=True):
             sys.exit(-1)
 
     from django.contrib.auth.models import User
-    _,new = User.objects.get_or_create(email='admin@example.com')
-    if new:
+    qs = User.objects.filter(email='admin@example.com')
+    if len(qs) == 0:
         pw = "".join(choice(string.ascii_letters + string.digits + string.punctuation) for char in range(15))
         User.objects.create_superuser('admin@example.com', 'admin', pw)
         print(f"Admin user 'admin' created with password '{pw}'")
@@ -32,6 +33,7 @@ def setup(service=True):
     ftp_import.setup()
     ad_export.setup()
     corepoint_export.setup()
+    smtp_client.setup()
 
     from ftp_import.csv import CsvImport
     with open(str(settings.BASE_DIR) + '\\ftp_csv_headers.csv', 'r') as f:

@@ -14,16 +14,18 @@
 </div>
 {% endblock %}
 {% block content %}
-<div class="table-responsive">
-  <table class="table table-striped" id="{{ form.id|default:'form_list' }}" style="width:100%;">
-    <tr>
-    {% for header in form.fields %}
-      <th>{{ header }}</th>
-    {% endfor %}
-    </tr>
-    {{ row.list_rows }}
-  </table>
-<div>
+<div class="container">
+  <div class="table-responsive">
+    <table class="table table-striped" id="{{ form.id|default:'form_list' }}" style="width:100%;">
+      <tr>
+      {% for header in form_fields %}
+        <th>{{ header }}</th>
+      {% endfor %}
+      </tr>
+      {{ form_row }}
+    </table>
+  <div>
+</div>
 {% endblock content %}
 {% block base_js %}
 {% include 'hirs_admin/components/_scripts.html' %}

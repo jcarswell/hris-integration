@@ -1,0 +1,56 @@
+{% extends "hirs_admin/base.html" %}
+{% load static i18n%}
+
+{% block page_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+<div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% if page_content == False %}
+  <a>There's nothing to do for now. Please check back tomorrow.</a>
+  {% else %}
+  <form id="form_list"{% if form_url %} action="{{ form_url }}"{% endif %}>
+    {% csrf_token %}
+    {{ page_content }}
+    <div class="form-row">
+      <button type="submit" class="btn btn-success" style="margin: 4pt 0 0 auto;">Go <i class="fas fa-arrow-circle-right"></i></button>
+    </div>
+  </form>
+  {% endif %}
+<div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
+<script>
+$("#form_list").submit(function(e) {
+  e.preventDefault();
+  data = $(this).serializeArray()
+  if (id !== undefined) {data.push({name:id.name,value:id.value});}
+
+  $.ajax({
+    method: "POST",
+    url: location.href,
+    data: data
+  })
+  .done(function(data) {
+    doneProcess(data);
+    if (data['status'] === 'success') {
+      location.reload();
+    }
+  })
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+});
+$(function() {
+  const csrftoken = getCookie('csrftoken')
+  $.ajaxSetup({
+    headers: { "X-CSRFToken": csrftoken }
+  });
+  $('#btn_back')[0].href = get_basepath()
+});
+</script>
+{% endblock %}

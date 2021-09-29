@@ -4,6 +4,7 @@ import importlib
 import csv
 
 from .helpers import config
+from .helpers.stats import Stats
 from .helpers.text_utils import safe,decode
 from .exceptions import ConfigurationError, ObjectCreationError
 
@@ -25,7 +26,6 @@ class CsvImport():
         self.parse_headers(file_handle)
         self.parse_data(file_handle)
         self.add_data()
-        #TODO: if self.import_errors -> send notification email
 
     def parse_headers(self, file_handle) -> None:
         import_fields = config.get_fields()
@@ -36,7 +36,7 @@ class CsvImport():
         headers = decode(file_handle.readline())
         logger.debug(f"parsing potentail header row {headers[0:60]}")
 
-        while headers[0] not in string.ascii_letters + string.digits:
+        while headers[0] not in string.ascii_letters + string.digits + "'" + '"':
             logger.debug("Discarding starting line(s) as it doesn't start with a valid character")
             logger.debug(f"line: {headers}")
             if headers[0] == self.sep:
@@ -71,7 +71,7 @@ class CsvImport():
             logger.debug(f"There are {len(self.fields)} headers in the file")
 
     def parse_data(self, file_handle):
-        self.import_error = []
+        self.parse_error = []
         
         for row in file_handle:
             for vals in csv.reader([decode(row)]):
@@ -79,12 +79,13 @@ class CsvImport():
                 if len(vals) != len(self.fields):
                     logger.debug(f"Headers: {len(self.fields)} This row: {len(vals)}")
                     logger.error(f"Unable to parse employee {vals[0]}")
-                    self.import_error.append(vals[0])
+                    Stats.errors.append(f"Unable to parse employee {vals[0]} - Incorrect number of fields")
+                    self.parse_error.append(vals[0])
                 else:
                     for x in range(len(self.fields)):
                         if self.fields[x] and self.fields[x]['import']:
                             row_data[self.fields[x]['field']] = vals[x]
-                    logger.debug(f"Parsed keys for row: {row_data.keys()}")
+                    #logger.debug(f"Parsed keys for row: {row_data.keys()}")
                     self.data.append(row_data)
 
     def add_data(self):
@@ -92,6 +93,7 @@ class CsvImport():
             form_module = importlib.import_module(self.form)
         except ModuleNotFoundError as e:
             logger.critical(f"failed to import configure form module {self.form}. Please ensure that the configured value is for a module not a class or function.")
+            Stats.errors.append(f"Failed to import importer. Please check the configuration")
             raise ConfigurationError(f"unable to import form lib {self.form}") from e
         
         if hasattr(form_module,'form'):
@@ -100,12 +102,14 @@ class CsvImport():
             logger.critical(f"Form module has no attribute form")
             raise ConfigurationError(f"Form module has no attribute form")
         
-        for row in self.data:
+        for row in range(0,len(self.data)):
             try:
-                f = form(self.fields,**row)
+                #logger.debug(f"{type(self.data[row])} - {self.data[row]}")
+                f = form(self.fields,**self.data[row])
                 f.save()
-                f.post_save()
-            except ValueError:
+            except ValueError as e:
                 logger.error("Failed to save Employee refere to previous logs for more details")
-            except ObjectCreationError:
+                Stats.errors.append(f"Line: {row} - Error: {e}")
+            except ObjectCreationError as e:
                 logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
+                Stats.errors.append(f"Line: {row} - Error: {e}")

@@ -33,14 +33,18 @@ def get_adgroups():
 
 def get_adous():
     ad_query = AD()
-    
+    output = []
     try:
         base_dn = get_config(CONFIG_CAT,BASE_DN)
-        ad_query.execute_query(attributes=["distinguishedName","name"], 
+        ad_query.execute_query(attributes=["distinguishedName"], 
                             where_clause="objectCategory = 'organizationalUnit'",
                             base_dn=base_dn)
         
-        return ad_query.get_all_results_tuple()
+        res = ad_query.get_all_results()
+        for r in res:
+            output.append((r["distinguishedName"],r["distinguishedName"]))
+        
+        return output
     except pyodbc.ProgrammingError:
         logger.warning("Caught pyodbc.ProgrammingError")
         return INIT_ERROR

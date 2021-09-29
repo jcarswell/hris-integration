@@ -1,5 +1,6 @@
 from typing import Union
 from string import ascii_letters,digits
+from fuzzywuzzy import fuzz
 
 def int_or_str(val:str) -> Union[int,str]:
     """
@@ -22,6 +23,15 @@ def int_or_str(val:str) -> Union[int,str]:
         return val
 
 def safe(val:str) -> str:
+    """Cleans a string for safe parsing in the database and function. Helps ensure
+    that the source value is always future matchable.
+
+    Args:
+        val (str): source string
+
+    Returns:
+        str: cleaned string stripped of all special characters except - or _
+    """
     output = []
     for l in val:
         if l == ' ':
@@ -30,10 +40,18 @@ def safe(val:str) -> str:
             output.append('-')
         else:
             output.append(l.lower())
-    
+
     return "".join(output)
 
 def decode(s) -> str:
+    """Decodes a bytes object to a string
+
+    Args:
+        s (bytes|str): source string
+
+    Returns:
+        str: decoded string value
+    """
     if isinstance(s,bytes):
         return s.decode('utf-8')
     elif isinstance(s,str):
@@ -41,13 +59,46 @@ def decode(s) -> str:
     else:
         return str(s)
 
-def clean_phone(s:str) -> int:
+def clean_phone(s:str,pretty=True) -> int:
+    """Pretty format source phone number and strips non-numeric characters
+
+    Args:
+        s (str): source phone number
+        pretty: return 10 digit phone number as (xxx) xxx-xxxx
+
+    Returns:
+        int: cleaned and formatted phone number
+    """
     output = []
     for l in s:
         if l in digits:
             output.append(l)
-    
-    if len(output) == 10:
+
+    if len(output) == 10 and pretty:
         return "(%s%s%s) %s%s%s-%s%s%s%s" % tuple(output)
     else:
         return "".join(output)
+
+def fuzz_name(csv_fname:str,csv_lname:str,emp_fname:str,emp_lname:str,match_pcent:int =80) -> tuple[bool,int]:
+    """Compares and employees name and scores it on likely hood of match. Returns true if the match 
+    percentage is above [default] 80%.
+
+    Args:
+        csv_fname (str): source firstname
+        csv_lname (str): source lastname
+        emp_fname (str): test firstname
+        emp_lname (str): test lastname
+        match_pcent (int, optional): Define the matching percentage value. Defaults to 80.
+
+    Returns:
+        tuple[bool,int]: If a potential match was found and what matching percentage was.
+    """
+
+    ratios = (fuzz.token_sort_ratio(csv_fname,emp_fname) +
+             fuzz.token_sort_ratio(csv_lname,emp_lname) +
+             fuzz.partial_ratio(f"{csv_fname} {csv_lname}".lower(),f"{emp_fname} {emp_lname}".lower()))
+
+    if ratios/3 >= float(match_pcent):
+        return True,int(round(match_pcent,0))
+    else:
+        return False,int(round(match_pcent,0))

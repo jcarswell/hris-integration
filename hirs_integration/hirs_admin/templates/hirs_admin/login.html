@@ -30,15 +30,15 @@
                         {% endfor %}
                     {% endif %}
                 {% endblock login_errors %}
-                <p class="login-box-msg">Login</p>
+                <h3 class="login-box-msg">Login</h3>
                 {% block login_form %}
-                    <form action="" method="post">
+                    <form action="{{ app_path }}" method="post" id="login-form">
                         {% csrf_token %}
                         {% if message %}
                             <p class="login-box-msg" style="color: red;">{{ message }}</p>
                         {% endif %}
                         <div class="input-group mb-3">
-                          <input type="input" class="form-control" placeholder="{% trans 'Username' %}" autocomplete="username">
+                          <input type="text" name="username" class="form-control" id="id_username" autofocus autocapitalize="none" maxlength="150" required placeholder="{% trans 'Username' %}" autocomplete="username">
                           <div class="input-group-append">
                             <div class="input-group-text">
                               <ion-icon name="person"></ion-icon>
@@ -46,13 +46,14 @@
                           </div>
                         </div>
                         <div class="input-group mb-3">
-                          <input type="password" class="form-control" placeholder="{% trans 'Password' %}" autocomplete="current-password">
+                          <input type="password" class="form-control" name="password" id="id_password" placeholder="{% trans 'Password' %}" required autocomplete="current-password">
                           <div class="input-group-append">
                             <div class="input-group-text">
                               <ion-icon name="key"></ion-icon>
                             </div>
                           </div>
                         </div>
+                        <input type="hidden" name="next" value="/">
                         <div class="row">
                             <div class="col-xs-8">
                                 {% block login_form_links %}

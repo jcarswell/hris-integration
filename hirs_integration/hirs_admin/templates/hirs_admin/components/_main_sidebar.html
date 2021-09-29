@@ -4,7 +4,7 @@
   <!-- Brand Logo -->
   <a href="/" class="brand-link">
     <img src="{{ site.logo |default:"https://static.evrazplace.com/logos/REAL-WHITE-RGB.png" }}" alt="The Regina Exhibition Association Ltd Logo" class="brand-image">
-    <span class="brand-text font-weight-light">{{ site.name | default:"HIRS Sync" }}</span>
+    <span class="brand-text font-weight-light">{{ site.name | default:"HRIS Sync" }}</span>
   </a>
 
   <!-- Sidebar -->
@@ -42,6 +42,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a href="{% url 'pending' %}" class="nav-link">
+                <i class="far fa-user nav-icon"></i>
+                <p>Pending Employees</p>
+              </a>
+            </li>
+            <li class="nav-item">
               <a href="{% url 'jobs' %}" class="nav-link">
                 <i class="fas fa-hat-cowboy-side nav-icon"></i>
                 <p>Job Roles</p>
@@ -68,6 +74,29 @@
               <a href="{% url 'location' %}" class="nav-link">
                 <i class="far fa-building nav-icon"></i>
                 <p>Locations</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-sync-alt"></i>
+            <p>
+              Import/Export
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'pending_import' %}" class="nav-link">
+                <i class="fas fa-exclamation-circle nav-icon"></i>
+                <p>Pending Import</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'actions' %}" class="nav-link">
+                <i class="fas fa-meteor nav-icon"></i>
+                <p>Actions</p>
               </a>
             </li>
           </ul>

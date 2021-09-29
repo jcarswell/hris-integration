@@ -2,62 +2,86 @@
 {% load i18n static %}
 
 {% block page_actions %}
-{% if form_new %}
 <div class="btn-toolbar mb-2 mb-md-0">
-  <a class="btn btn-sm btn-outline-secondary" href="{{ form_new }}">Add New</a>
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+  {% block toolbar %}{% endblock %}
+  {% if form_delete %}
+  <a class="btn btn-md btn-danger" style="margin:0 2pt;" id="btn_delete" onclick="do_delete()"><i class="fas fa-trash-alt"></i> Delete</a>
+  {% endif %}
+  {% block toolbar_end %}{% endblock %}
 <div>
-{% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="container">
   {% block feild_set %}
-  <form id="{{ form.id|default:'form_list' }}"{% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
+  <form id="form_list" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
     {% csrf_token %}
     {{ form.as_form }}
-    <button type="submit" class="btn btn-primary">submit</button>
+    <div class="form-row">
+      <button type="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+    </div>
   </form>
   {% endblock %}
 <div>
 {% endblock content %}
 
-{% block base_js %}
-{% include 'hirs_admin/components/_scripts.html' %}
+{% block extra_js %}
+<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
-var itemsOverride
-function hashDiff(h1,h2){var d={};for(var k in h2){if(h1[k]!==h2[k])d[k]=h2[k];}return d;}
-function convertSerializedArrayToHash(a){var r={};for(var i=0;i<a.length;i++){r[a[i].name]=a[i].value;}return r;}
-function doneProcess(data) {
-  if (data["status"] != "success") {
-    $('.alert').text(data["message"]);
-    $('.alert').alert();
-    $('.alert').addClass("alert-danger");
-    for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
-  } else {
-    $('.alert').text("Success");
-    $('.alert').alert();
-    $('.alert').addClass("alert-sucess");
-    itemsOverride = convertSerializedArrayToHash($(this).serializeArray());
-    $('.is-invalid').removeClass("is-invalid");
-  }
-}
-function errorProcess(jqXHR,status,error) {
-  $('.alert').text("A Server error occured: " + status);
-  $('.alert').alert();
-  $('.alert').addClass("alert-danger");
-}
-$("#" + "{{ form.id|default:'form_list' }}").submit(function(e) {
+var id = $('#form_list input[type=number]')[0]
+$("#form_list").submit(function(e) {
   e.preventDefault();
-  var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
-  data["csrfmiddlewaretoken"] = csrftoken
+  data = $(this).serializeArray()
+  $("#form_list input:disabled").each(function(i,e) {
+    data.push({name:e.name,value:e.value});
+  })
 
   $.ajax({
-    type: "POST",
+    method: "POST",
     url: location.href,
-    data: form_data
+    data: data
   })
-  .done(doneProcess(data);)
-  .error(errorProcess(jqXHR,status,error);)
+  .done(function(data) {
+    doneProcess(data);
+    if (data["status"] == "success") {
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-success')
+      if (data["id"] !== undefined) {location.replace(get_basepath() + data["id"] + '/');}
+      else {location.replace(get_basepath());}
+    } else {
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-danger');
+    }
+  })
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+});
+function do_delete() {
+  $.ajax({
+    method: "delete",
+    url: location.href,
+    })
+  .done(function(data){
+    location.replace(get_basepath());
+  })
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+}
+function is_new() {
+  if (isNaN(get_id())) {return undefined;}
+  else if (get_id() > 0) {return false;}
+  else {return true;}
+}
+$(function() {
+  if (is_new()) {
+    if (id !== undefined) {
+      id.disabled = false;
+      id.readOnly = false;
+    }
+  }
+  const csrftoken = getCookie('csrftoken')
+  $.ajaxSetup({
+    headers: { "X-CSRFToken": csrftoken }
+  });
+  $('#btn_back')[0].href = get_basepath()
 });
 </script>
 {% endblock %}

@@ -1,12 +1,15 @@
 import logging
 import paramiko
 import re
-import os
+import time
 
 from django import conf
 from tempfile import TemporaryFile
+from smtp_client.smtp import Smtp
+from smtp_client import SmtpToInvalid,SmtpServerError,ConfigError
 
 from .helpers import config
+from .helpers.stats import Stats
 from .helpers.text_utils import int_or_str
 from .exceptions import ConfigurationError,SFTPIOError
 from .models import FileTrack
@@ -36,6 +39,7 @@ class FTPClient:
         file_expr = config.get_config(config.CAT_SERVER,config.SERVER_FILE_EXP)
         protocol = config.get_config(config.CAT_SERVER,config.SERVER_PROTOCAL)
         self.__password = config.get_config(config.CAT_SERVER,config.SERVER_PASSWORD)
+        Stats.time_start = time.time()
         
         self.file_expr = re.compile(file_expr)
         self.basepath = ''
@@ -113,13 +117,13 @@ class FTPClient:
 
         logger.warning("Starting ftp import cycle")
         path = self.sftp.listdir(self.basepath)
-        imported = 0
         
         for f in path:
             logger.debug(f"Got file {f} for checking")
             m = re.search(self.file_expr,f)
             if m and not FileTrack.objects.filter(name=f).exists():
-                logger.warning(f"Importing {f}")
+                logger.debug(f"Importing {f}")
+                Stats.files.append(f)
                 
                 with TemporaryFile() as fh:
                     self.sftp.getfo(self.basepath+f,fh)
@@ -131,4 +135,21 @@ class FTPClient:
                 ft.save()
                 del ft
 
-        logger.warning(f"Finished running import. Imported {imported} files.")
+        logger.info(f"Finished running import.")
+        Stats.time_end = time.time()
+        logger.info(str(Stats()))
+        if Stats.errors:
+            logger.error("Errors:\n\t" + "\n\t".join(Stats.errors))
+
+        try:
+            to = config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF).split(',')
+            if to:
+                s = Smtp()
+                s.send(to,Stats().as_html,"FTP Import Job")
+        except SmtpToInvalid as e:
+            logger.warning(str(e))
+        except SmtpServerError:
+            logger.error("Please review the SMTP server configuration")
+        except ConfigError:
+            logger.error("Please double check the configured SMTP Credentials")
+        
