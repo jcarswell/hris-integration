@@ -153,4 +153,3 @@ class FTPClient:
             logger.error("Please review the SMTP server configuration")
         except ConfigError:
             logger.error("Please double check the configured SMTP Credentials")
-        
