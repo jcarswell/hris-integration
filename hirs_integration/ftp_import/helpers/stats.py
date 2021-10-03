@@ -82,3 +82,45 @@ class Stats:
         output.append("</body>")
         return "\n".join(output)
 
+    @property
+    def as_text(self):
+        output = [
+            "FTP Import Summary",
+            "",
+            "Stats:",
+            f"  Start Time:      {fmt_date(self.time_start)}",
+            f"  End Time:        {fmt_date(self.time_end)}",
+            f"  Processing Time: {self.runtime}s",
+            f"  Files Processed: {len(self.files)}",
+            f"  Rows Processed:  {self.rows_processed}",
+            f"  Rows Imported:   {self.rows_imported}",
+        ]
+
+        if self.pending_users:
+            output.append("")
+            output.append("")
+            output.append("Users Pending Import:")
+            for r in self.pending_users:
+                output.append(f" - {r}")
+
+        if self.new_users:
+            output.append("")
+            output.append("")
+            output.append("New Users:")
+            for r in self.new_users:
+                output.append(f" - {r}")
+
+        if self.errors:
+            output.append("")
+            output.append("")
+            output.append("Errors:")
+            for r in self.errors:
+                output.append(f" - {r}")
+
+        output.append("")
+        output.append("")
+        output.append("Files Processed:")
+        for r in self.files:
+            output.append(f" - {r}")
+
+        return "\n".join(output)
