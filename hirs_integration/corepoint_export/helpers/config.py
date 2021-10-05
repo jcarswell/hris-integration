@@ -43,7 +43,7 @@ CONFIG_DEFAULTS = {
         CONFIG_PATH: 'c:\\corepoint\\',
         CONFIG_EXEC: 'CorePointWebServiceConnector.exe',
         CONFIG_LAST_SYNC: '1999-01-01 00:00',
-        CONFIG_BOOL_EXPORT: '0,1'
+        CONFIG_BOOL_EXPORT: 'True,False'
     },
     CAT_EMPLOYEE: {
         EMPLOYEE_EMAIL_DOMAIN: 'example.com',
