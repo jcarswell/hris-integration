@@ -5,6 +5,7 @@ import subprocess
 from jinja2 import Environment,PackageLoader,select_autoescape
 
 from .helpers import config
+from .helpers.utils import CSVSafe
 from .exceptions import ConfigError
 
 logger = logging.getLogger('corepoint_export.form')
@@ -75,19 +76,20 @@ class BaseExport:
         if os.path.isfile(self.export_file):
             os.remove(self.export_file)
 
+
 class Export(BaseExport):
     def run(self):
         keys = []
         for key,value in self.map.items():
             if value:
-                keys.append(value)
+                keys.append(CSVSafe().parse(value))
         with open(self.export_file, 'w') as output:
             output.write(",".join(keys))
             output.write("\n")
             for employee in self.employees:
                 line = []
                 for key in keys:
-                    line.append(str(getattr(employee,key,'')))
+                    line.append(CSVSafe().parse(getattr(employee,key,'')))
                 output.write(",".join(line))
                 output.write("\n")
         
