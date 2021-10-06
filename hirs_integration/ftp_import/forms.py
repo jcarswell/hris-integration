@@ -214,7 +214,7 @@ class BaseImport():
         location,new = Location.objects.get_or_create(pk=id)
         
         if int_or_str(self.kwargs[loc_desc]) and location.name != int_or_str(self.kwargs[loc_desc]):
-            location.name = int_or_str(self.kwargs[loc_desc])
+            location.name = self._expand(int_or_str(self.kwargs[loc_desc]))
             changed = True
 
         try:
@@ -281,7 +281,7 @@ class BaseImport():
             bu = None
 
         if int_or_str(self.kwargs[job_desc]) and job.name != int_or_str(self.kwargs[job_desc]):
-            job.name = int_or_str(self.kwargs[job_desc])
+            job.name = self._expand(int_or_str(self.kwargs[job_desc]))
             changed = True
 
         if new or (job.bu != bu):
@@ -329,7 +329,7 @@ class BaseImport():
         bu,new = BusinessUnit.objects.get_or_create(pk=id)
         changed = False
         if new or (bu.name != name):
-            bu.name = name
+            bu.name = self._expand(name)
             changed = True
 
         if parent and self.business_unit_check(parent):
