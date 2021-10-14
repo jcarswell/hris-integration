@@ -246,11 +246,23 @@ class SettingsManager(models.Manager):
 
 class Setting(models.Model):
     """Application Settings"""
-    FIELD_SEP = '/'
     class Meta:
         db_table = 'setting'
+
+    FIELD_SEP = '/'
+    DEFAULT_FIELD = 'CharField'
+    BASE_PROPERTIES = {
+        'type': DEFAULT_FIELD,
+        'help': None,
+        'choices': None,
+        'required': True,
+        'disabled': False,
+        'widget': None,
+    }
+
     setting = models.CharField(max_length=128,unique=True)
     _value = models.TextField(null=True,blank=True)
+    field_properties = models.TextField(null=True,blank=True,default=BASE_PROPERTIES)
     hidden = models.BooleanField(default=False)
     
     o2 = SettingsManager()
@@ -280,11 +292,22 @@ class Setting(models.Model):
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
+        field_types = ('CharField','ChoiceField','DateField','BooleanField',
+                       'DecimalField','MultipleChoiceField','FloatField',
+                       'DateTimeField','RegexField','IntegerField')
+
         for char in instance.setting:
             if char not in ascii_letters + digits + instance.FIELD_SEP + '_-':
                 instance.setting.replace(char,'_')
+
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
+
+        if not instance.field_properties:
+            instance.field_properties = instance.BASE_PROPERTIES
+
+        if instance.field_properties['type'] not in field_types:
+            raise ValueError(f"Field type must be one of {field_types}")
 
     @staticmethod
     def _as_text(text:str) -> str:
