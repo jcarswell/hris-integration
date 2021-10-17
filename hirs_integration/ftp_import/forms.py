@@ -378,7 +378,6 @@ class BaseImport():
                 self.add_location(int_or_str(self.kwargs[loc_id]))
             except Exception as e:
                 logger.debug(f"Caught Error will adding location: {e}")
-            
 
     def save_main(self):
         """
