@@ -35,22 +35,22 @@ def SettingFieldGenerator(setting:Setting) -> Field:
         args = ['max_length','min_length','strip','empty_value']
         setting_data.setdefault('max_length',128)
         
-        field(setting.value,**clean_kwargs(setting_data,args))
+        return field(setting.value,**clean_kwargs(setting_data,args))
 
     elif setting_data['type'] == 'BooleanField':
         field(strtobool(setting.value,**clean_kwargs(setting_data)))
 
     elif setting_data['type'] in ('ChoiceField','MultipleChoiceField'):
         args = ['Choices']
-        field(setting.value,**clean_kwargs(setting_data,['choices']))
+        return field(setting.value,**clean_kwargs(setting_data,['choices']))
 
     elif setting_data['type'] in ('IntegerField','FloatField'):
         args = ['max_value','min_value']
-        field(setting.value,**clean_kwargs(setting_data,args))
+        return field(setting.value,**clean_kwargs(setting_data,args))
 
     elif setting_data['type'] == 'DecimalField':
         args = ['max_value','min_value','max_digits','decimal_places']
-        field(setting.value,**clean_kwargs(setting_data,args))
+        return field(setting.value,**clean_kwargs(setting_data,args))
 
     elif setting_data['type'] in ('DateTimeField','DateField'):
-        field(setting.value,**clean_kwargs(setting_data,['input_formats']))
+        return field(setting.value,**clean_kwargs(setting_data,['input_formats']))
