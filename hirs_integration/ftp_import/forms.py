@@ -262,21 +262,19 @@ class BaseImport():
         
         job,new = JobRole.objects.get_or_create(pk=id)
 
-        if self.import_bu:
-            if job_bu in self.kwargs.keys() and bu_desc in self.kwargs.keys():
-                try:
-                    if bu_parent in self.kwargs.keys():
-                        bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]),
-                                        int_or_str(self.kwargs[bu_parent]))
-                    else:
-                        bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]))
-                except Exception as e:
-                    logger.debug(f"Caught Error while creating bu: {e}")
-                    bu = None
-            else:
-                logger.warning(f"Current row is missing fields '{job_bu}' and '{bu_desc}' cannot create or updated business units")
-        elif self.jobs_check(int_or_str(self.kwargs[job_bu])):
+        if job_bu in self.kwargs.keys() and self.jobs_check(int_or_str(self.kwargs[job_bu])):
             bu = BusinessUnit.objects.get(pk=int_or_str(self.kwargs[job_bu]))
+            logger.debug(f"Got business unit: {bu}")
+        elif self.import_bu and job_bu in self.kwargs.keys() and bu_desc in self.kwargs.keys():
+            try:
+                if bu_parent in self.kwargs.keys():
+                    bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]),
+                                    int_or_str(self.kwargs[bu_parent]))
+                else:
+                    bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]))
+            except Exception as e:
+                logger.debug(f"Caught Error while creating bu: {e}")
+                bu = None
         else:
             bu = None
 
@@ -291,7 +289,9 @@ class BaseImport():
         try:
             job.save()
             if new:
-                logger.info(f"Added new job {job}")
+                logger.info(f"Added new job: {job}")
+            elif changed:
+                logger.debug(f"Updated Job: {job}")
         except IntegrityError as e:
             logger.error(f"Unable to save job '{job.job_id} - {job.name}' error {e}")
             if new:
