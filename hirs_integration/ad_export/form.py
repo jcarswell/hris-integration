@@ -44,7 +44,7 @@ class BaseExport:
                         user = 0
                     else:
                         pass
-            if user == None: # user must be None not 0 or False
+            if user == None and employee.status: # user must be None not 0 or False
                 employee = self.new_user_pre(employee)
                 try:
                     user = self._ad.create_user(employee)
