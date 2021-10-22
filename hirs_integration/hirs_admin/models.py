@@ -293,7 +293,7 @@ class Setting(models.Model):
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
         field_types = ('CharField','ChoiceField','DateField','BooleanField',
-                       'DecimalField','MultipleChoiceField','FloatField',
+                       'DecimalField','FloatField',
                        'DateTimeField','RegexField','IntegerField')
 
         for char in instance.setting:
