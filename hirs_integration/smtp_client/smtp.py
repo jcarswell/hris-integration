@@ -89,7 +89,7 @@ class Smtp:
     def send_html(self,to:Union[AnyStr,List],msg:MIMEMultipart):
         if isinstance(to,str):
             to = to.split(',')
-        if not isinstance(to,str):
+        if not isinstance(to,list):
             raise ValueError(f"'to' should be a string or list, got {type(to)}")
         if not isinstance(msg,MIMEMultipart):
             raise ValueError(f"expexted MIMEMultipart for msg got {type(msg)}")
@@ -130,7 +130,7 @@ class Smtp:
 
         if isinstance(to,str):
             to = to.split(',')
-        if not isinstance(to,str):
+        if not isinstance(to,list):
             raise ValueError(f"'to' should be a string or list, got {type(to)}")
         email = EmailMessage()
         email.set_content(msg)
