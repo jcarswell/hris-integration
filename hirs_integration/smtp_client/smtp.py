@@ -87,7 +87,7 @@ class Smtp:
         msg.attach(MIMEText(html, 'html'))
 
     def send_html(self,to:Union[AnyStr,List],msg:MIMEMultipart):
-        if isinstance(to,list):
+        if isinstance(to,str):
             to = to.split(',')
         if not isinstance(to,str):
             raise ValueError(f"'to' should be a string or list, got {type(to)}")
@@ -128,7 +128,7 @@ class Smtp:
             SmtpServerError: SMTP Configuration is invalid
         """
 
-        if isinstance(to,list):
+        if isinstance(to,str):
             to = to.split(',')
         if not isinstance(to,str):
             raise ValueError(f"'to' should be a string or list, got {type(to)}")
