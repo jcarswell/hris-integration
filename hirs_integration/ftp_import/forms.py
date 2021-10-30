@@ -55,7 +55,7 @@ class BaseImport():
         self.import_bu = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_BU))
         self.import_jobs_all = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS))
         self.import_loc = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_LOC))
-
+        logger.debug(f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} - bu: {self.import_bu} - location: {self.import_loc}")
         Stats.rows_processed += 1
 
         emp_id_field = get_pk(Employee)
@@ -212,10 +212,18 @@ class BaseImport():
         changed = False
 
         location,new = Location.objects.get_or_create(pk=id)
-        
-        if int_or_str(self.kwargs[loc_desc]) and location.name != int_or_str(self.kwargs[loc_desc]):
+
+        if new and not self.import_loc:
+            logger.debug("Importing new jobs is disabled")
+            location.delete()
+            return
+
+        if (loc_desc in self.kwargs.keys() and int_or_str(self.kwargs[loc_desc]) 
+                and location.name != int_or_str(self.kwargs[loc_desc])):
             location.name = self._expand(int_or_str(self.kwargs[loc_desc]))
             changed = True
+
+        logger.debug(f"location: {location} - changed {changed}")
 
         try:
             location.save()
@@ -256,26 +264,24 @@ class BaseImport():
 
         job_desc = config.get_config(config.CAT_FIELD,config.FIELD_JD_NAME)
         job_bu = config.get_config(config.CAT_FIELD,config.FIELD_JD_BU)
-        bu_desc = config.get_config(config.CAT_FIELD,config.FIELD_BU_NAME)
-        bu_parent = config.get_config(config.CAT_FIELD,config.FIELD_BU_PARENT)
         changed = False
         
         job,new = JobRole.objects.get_or_create(pk=id)
 
-        if job_bu in self.kwargs.keys() and self.jobs_check(int_or_str(self.kwargs[job_bu])):
-            bu = BusinessUnit.objects.get(pk=int_or_str(self.kwargs[job_bu]))
-            logger.debug(f"Got business unit: {bu}")
-        elif self.import_bu and job_bu in self.kwargs.keys() and bu_desc in self.kwargs.keys():
-            try:
-                if bu_parent in self.kwargs.keys():
-                    bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]),
-                                    int_or_str(self.kwargs[bu_parent]))
-                else:
-                    bu = self.add_bu(int_or_str(self.kwargs[job_bu]),int_or_str(self.kwargs[bu_desc]))
-            except Exception as e:
-                logger.debug(f"Caught Error while creating bu: {e}")
-                bu = None
+        if new and not self.import_jobs or not self.import_jobs_all:
+            logger.debug("Importing new jobs is disabled")
+            job.delete()
+            return
+
+        logger.debug(f"Fields - {job_desc},{job_bu}")
+
+        if job_bu in self.kwargs.keys():
+            logger.debug(f"found '{job_bu}' in user - {self.kwargs[job_bu]}")
+            bu = self.add_bu(int_or_str(self.kwargs[job_bu]))
+            logger.debug(f"BU is {bu}")
         else:
+            logger.debug(f"BU not present in user")
+            logger.debug(f"user keys: {self.kwargs.keys()}")
             bu = None
 
         if int_or_str(self.kwargs[job_desc]) and job.name != int_or_str(self.kwargs[job_desc]):
@@ -308,7 +314,7 @@ class BaseImport():
     def update_job(self,id:int) -> JobRole:
         return self.add_job(id)
 
-    def add_bu(self,id:int,name:AnyStr,parent:int = None) -> BusinessUnit:
+    def add_bu(self,id:int) -> BusinessUnit:
         """
         Add or update a business unit, if updating the bussiness unit
         ensure that all impacted employee objects are getting flagged that
@@ -323,18 +329,32 @@ class BaseImport():
             BusinessUnit: returns the new/updated buesiness unit
                 may return None if the creation of a new JobRole Fails
         """
-        if not (isinstance(id,int) or isinstance(name,str) or isinstance(parent,(id,None))):
+
+        if not isinstance(id,int):
             raise ValueError(f"Expexted int got type {type(id)}")
+
+        bu_desc = config.get_config(config.CAT_FIELD,config.FIELD_BU_NAME)
+        bu_parent = config.get_config(config.CAT_FIELD,config.FIELD_BU_PARENT)
 
         bu,new = BusinessUnit.objects.get_or_create(pk=id)
         changed = False
-        if new or (bu.name != name):
-            bu.name = self._expand(name)
+
+        if new and not self.import_bu:
+            logger.debug("Importing BU's disabled in configuraion")
+            bu.delete()
+            return
+
+        if bu_desc in self.kwargs.keys() and new or bu.name != self._expand(self.kwargs[bu_desc]):
+            bu.name = self._expand(self.kwargs[bu_desc])
             changed = True
 
-        if parent and self.business_unit_check(parent):
-            bu.parent = BusinessUnit.objects.get(pk=parent)
-            changed = True
+        if bu_parent in self.kwargs.keys() and self.business_unit_check(int(self.kwargs[bu_parent])):
+            parent = BusinessUnit.objects.get(pk=int(self.kwargs[bu_parent]))
+            if parent != bu.parent:
+                bu.parent = parent
+                changed = True
+
+        logger.debug(f"BU: {bu}")
 
         try:
             bu.save()
@@ -372,12 +392,14 @@ class BaseImport():
                 self.add_job(int_or_str(self.kwargs[job_id]))
             except Exception as e:
                 logger.debug(f"Caught Error will adding job: {e}")
-        
+                Stats.errors.append(f"Pre-Save (job) - {e}")
+
         if self.import_loc and self.save_user and loc_id in self.kwargs.keys():
             try:
                 self.add_location(int_or_str(self.kwargs[loc_id]))
             except Exception as e:
                 logger.debug(f"Caught Error will adding location: {e}")
+                Stats.errors.append(f"Pre-Save (location) - {e}")
 
     def save_main(self):
         """
