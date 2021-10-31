@@ -260,7 +260,7 @@ class Setting(models.Model):
         'widget': None,
     }
 
-    setting = models.CharField(max_length=128,unique=True)
+    setting = models.CharField(max_length=256,unique=True)
     _value = models.TextField(null=True,blank=True)
     field_properties = models.TextField(null=True,blank=True,default=BASE_PROPERTIES)
     hidden = models.BooleanField(default=False)
