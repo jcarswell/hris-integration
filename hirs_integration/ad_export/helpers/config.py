@@ -172,6 +172,9 @@ class EmployeeManager:
 
         if self.__emp_pend.password:
             self.__qs_emp.password = self.__emp_pend.password
+        
+        if self.__emp_pend.guid:
+            self.__qs_emp.guid = self.__emp_pend.guid
 
         self.__qs_over.save()
 
@@ -351,9 +354,7 @@ class EmployeeManager:
 
     @property
     def guid(self) -> str:
-        if hasattr(self,'__qs_emp_pend'):
-            return self.__emp_pend.guid
-        elif hasattr(self.__qs_emp,'guid'):
+        if hasattr(self.__qs_emp,'guid'):
            return self.__qs_emp.guid
         else:
             return None
