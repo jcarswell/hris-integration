@@ -33,7 +33,7 @@ def SettingFieldGenerator(setting:Setting) -> Field:
 
     if setting_data['type'] in ('CharField','RegexField'):
         args = ['max_length','min_length','strip','empty_value']
-        setting_data.setdefault('max_length',128)
+        setting_data.setdefault('max_length',256)
         
         return field(setting.value,**clean_kwargs(setting_data,args))
 
