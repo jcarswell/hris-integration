@@ -105,9 +105,8 @@ class BaseExport:
 
     def new_user_post(self,employee:config.EmployeeManager,user:ADUser) -> None:
         """To be implemented in a sub-class. Perform and modifcation to the user after creation"""
-        if employee.pending:
-            employee.employee.guid=str(user.guid)
-            employee.employee.save()
+        employee.employee.guid=str(user.guid)
+        employee.employee.save()
 
     def update_user(self,employee:config.EmployeeManager,user:ADUser) -> None:
         attribs = {
