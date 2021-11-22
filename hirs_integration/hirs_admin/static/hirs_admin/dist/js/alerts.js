@@ -1,9 +1,10 @@
-function doneProcess(data) {
-  if (data["status"] != "success") {
-    $('.alert').text(data["message"]);
+function doneProcess(ret_data) {
+  if (ret_data["status"] != "success") {
+    $('.alert').text(ret_data["message"]);
     $('.alert').alert();
     $('.alert').addClass("alert-danger");
-    for(f in data["feilds"]){$('#'+f).addClass("is-invalid");}
+    ret_data["fields"].forEach(i => {$("input[name="+i+"]").addClass('is-invalid');})
+
   } else {
     $('.alert').text("Success");
     $('.alert').alert();

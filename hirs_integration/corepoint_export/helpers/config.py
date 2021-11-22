@@ -43,7 +43,7 @@ CONFIG_DEFAULTS = {
         CONFIG_PATH: 'c:\\corepoint\\',
         CONFIG_EXEC: 'CorePointWebServiceConnector.exe',
         CONFIG_LAST_SYNC: '1999-01-01 00:00',
-        CONFIG_BOOL_EXPORT: '0,1'
+        CONFIG_BOOL_EXPORT: 'True,False'
     },
     CAT_EMPLOYEE: {
         EMPLOYEE_EMAIL_DOMAIN: 'example.com',
@@ -210,9 +210,9 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
         # if user status is not Terminated
         if (employee.status == "Terminated" and not terminated) or employee.status != "Terminated":
             try:
-                output.append(CPEmployeeManager(employee.emp_id,employee))
-            except Exception:
-                logger.error(f"Failed to get Employee {employee.emp_id}")
+                output.append(CPEmployeeManager(employee))
+            except Exception as e:
+                logger.error(f"Failed to get Employee {employee.emp_id} - Error {e}")
 
     return output
 

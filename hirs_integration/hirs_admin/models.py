@@ -406,6 +406,7 @@ class Employee(models.Model):
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
     _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
+    guid = models.CharField(max_length=40,null=True,blank=True)
 
     def __eq__(self,other) -> bool:
         if not isinstance(other,Employee) or self.emp_id != other.pk:

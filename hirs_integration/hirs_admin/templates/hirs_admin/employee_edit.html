@@ -8,34 +8,35 @@
 <div>
 {% endblock %}
 {% block content %}
+<div class="alert">
+</div>
 <div class="container">
   <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {%if employee.middlename %}{{ employee.middlename}}{% endif %}
    {{ employee.surname }} {% if employee.suffix %}{{ employee.suffix }}{% endif %}</h2>
   <div class="row">
     <p class='col-sm'><strong>Status</strong><br>
     {% if employee.status == employee.STAT_LEA %}
-    On Leave
+    <span class="text-warning">On Leave</span>
     {% elif employee.status == employee.STAT_TERM %}
-    Terminated
+    <span class="text-danger">Terminated</span>
     {% else %}
-    Active
+    <span class="text-success">Active</span>
     {% endif %}</p>
+    <p class='col-sm'><strong>Given Name</strong><br>
+    {{ employee.givenname }}</p>
+    <p class='col-sm'><strong>Surname</strong><br>
+    {{ employee.surname }}</p>
+  </div>
+  <div class="row">
+    <p class='col-sm'><strong>Start Date</strong><br>
+    {{ employee.start_date }}</p>
     <p class='col-sm'><strong>Position</strong><br>
     {{ employee.primary_job.name }}</p>
     <p class='col-sm'><strong>Manager</strong><br>
     {{ employee.manager }}</p>
   </div>
-  <div class="row">
-    <p class='col-sm'><strong>Start Date</strong><br>
-    {{ employee.start_date }}</p>
-    <p class='col-sm'><strong>Username</strong><br>
-    {{ employee.username }}</p>
-    <p class='col-sm'><strong>Email Alias</strong><br>
-    {{ employee.email_alias }}</p>
-  </div>
   <hr style="border-top:2px solid #bbb;display:None;">
   <form style="display:None;" id="employee-form" enctype="multipart/form-data">
-    {% csrf_token %}
     <h4>Photo</h4>
     {% if employee.photo %}
     <img class="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{{ employee.photo }}">
@@ -52,12 +53,11 @@
   </form>
   <hr style="border-top:2px solid #bbb;">
   <form id="override-form">
-    {% csrf_token %}
     <h4>Overrides</h4>
     <div class="form-row">
       <div class="form-group col-md-4">
         <lable for="firstname">First Name</lable>
-        <input type="text" class="form-control" name="fistname" value="{{overrides.firstname}}" placeholder="{{employee.givenname}}">
+        <input type="text" class="form-control" name="firstname" value="{{overrides.firstname}}" placeholder="{{employee.givenname}}">
       </div>
       <div class="form-group col-md-4">
         <lable for="lastname">Last Name</lable>
@@ -150,25 +150,37 @@ $(function() {
   $.ajaxSetup({
     headers: { "X-CSRFToken": csrftoken }
   });
+  $(".alert").addClass("d-none");
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
-  var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
-  data['form'] = 'override'
+  data = $(this).serializeArray()
+  $("#override-form input:disabled").each(function(i,e) {
+    data.push({name:e.name,value:e.value});
+  })
+  data.push({name:'form',value:'override'});
   
   $.ajax({
     method: "POST",
     url: location.href,
-    data: data
+    data: data,
+    headers: { "X-CSRFToken": getCookie('csrftoken') }
   })
-  .done(function(data) {
-    doneProcess(data);
-    if (data["status"] == "success") {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success')
+  .done(function(r) {
+    doneProcess(r);
+    if (r["status"] == "success") {
+      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success');
     } else {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger')
+      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger');
+      $('.alert').removeClass("d-none");
+      $('.alert').text(r["message"]);
+      $('.alert').alert();
+      $('.alert').addClass("alert-danger");
+      r["fields"].forEach(i => {$("input[name="+i+"]").addClass('is-invalid');})
+      console.debug(r)
+    }
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+  .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 $("#employee-form").submit(function(e) {
   e.preventDefault();

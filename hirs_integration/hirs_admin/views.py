@@ -290,7 +290,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
                             errors.append(key)
                     else:
                         setattr(emp, key, val)
-                else:
+                elif not key in ["form","csrfmiddlewaretoken"]:
                     errors.append(key)
 
             emp.save()
@@ -300,9 +300,9 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp.save()
         
         if errors == []:
-            return JsonResponse({"status":"sucess","feilds":errors})
+            return JsonResponse({"status":"success","fields":errors})
         else:            
-            return JsonResponse({"status":"error","feilds":errors})
+            return JsonResponse({"status":"error","fields":errors,"message":"Error saving fields"})
 
 
 class Settings(TemplateResponseMixin, LoggedInView):
