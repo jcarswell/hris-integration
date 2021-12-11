@@ -1,18 +1,7 @@
 import logging
 
 from hirs_admin.models import Setting
-from pyad.adbase import ADBase
-
-GROUP_CONFIG = 'global_settings'
-CONFIG_CAT = 'configuration'
-CATAGORY_SETTINGS = (CONFIG_CAT,)
-BASE_DN = 'ad_search_base_dn'
-
-CONFIG_DEFAULTS = {
-    CONFIG_CAT: {
-        BASE_DN: ADBase().default_domain
-    }
-}
+from .settings_fields import *
 
 logger = logging.getLogger('hirs_admin.config')
 
