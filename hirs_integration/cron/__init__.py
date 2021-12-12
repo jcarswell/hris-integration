@@ -1,5 +1,5 @@
 from .apps import CronConfig
-from .excpetions import AlreadyExists,ModuleOrMethodInvalid
+from .exceptions import AlreadyExists,ModuleOrMethodInvalid
 
 __all__ = ("Setup","CronConfig",'AlreadyExists','ModuleOrMethodInvalid')
 
