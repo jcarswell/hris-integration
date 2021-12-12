@@ -126,8 +126,8 @@ def set_job(name, path, schedule, args, state):
     def save(setting,value):
         item,_ = Setting.o2.get_or_create(setting=setting)
         if item.value != value:
-            o.value = value
-            o.save()
+            item.value = value
+            item.save()
             return True
         else:
             return False
