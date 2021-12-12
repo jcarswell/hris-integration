@@ -45,7 +45,7 @@ EXPORT_TERM = 'terminated_status_field_value'
 
 CONFIG_DEFAULTS = {
     CAT_SERVER: {
-        SERVER_SERVER:{
+        SERVER_SERVER: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
@@ -57,7 +57,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type":"ChoiceField",
                 "help":"Server connection protocol to use",
-                "choices": [('sftp','SFTP')]
+                "choices": [('sftp',_t('SFTP'))]
             },
         },
         SERVER_PORT: {
@@ -103,7 +103,7 @@ CONFIG_DEFAULTS = {
             "default_value": '.*',
             "field_properties": {
                 "type": "RegexField",
-                "help": _t("Regular express search string (Max 768 characters)")
+                "help": _t("Regular expresion search string (Max 768 characters)")
             },
         },
     },
@@ -117,7 +117,7 @@ CONFIG_DEFAULTS = {
             },
         },
         CSV_FAIL_NOTIF: {
-            "default_value": '',
+            "default_value": None,
             "field_properties": {
                 "type": "CharField",
                 "help": _t("Comma seperated list of email's to notify on import completion")
