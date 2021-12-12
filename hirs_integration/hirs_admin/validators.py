@@ -19,8 +19,12 @@ for app in INSTALLED_APPS + ['common']:
             if hasattr(module,'__all__'):
                 __ALL_APPS__.append(module)
                 for validator in module.__all__:
+                    logger.debug(f"Trying to add {module.__name__}.{validator} to global name space")
                     if validator not in globals():
-                        globals()[validator] = eval(f"module.{validator}")
+                        try:
+                            globals()[validator] = eval(f"module.{validator}")
+                        except AttributeError:
+                            logger.warn(f"Failed to import {validator}")
                     else:
                         warn(f"{validator} from {module} is duplicated ")
             else:

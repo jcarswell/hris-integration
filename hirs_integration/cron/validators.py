@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-__all__ = ('cron_validator')
+__all__ = ('cron_validator',)
 
 def cron_validator(value):
     try:

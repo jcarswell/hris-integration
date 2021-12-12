@@ -1,7 +1,7 @@
 from common.validators import import_validator,ValidationError
 from django.utils.translation import gettext_lazy as _t
 
-__all__= ('employee_fields')
+__all__= ('employee_fields',)
 
 employee_fields = [
     ('phone',_t('Phone Number')),

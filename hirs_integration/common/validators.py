@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-__all__ = ('import_validator')
+__all__ = ('import_validator',)
 
 def import_validator(value) -> None:
     import importlib
