@@ -9,67 +9,13 @@ from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
 from datetime import datetime
 from pyad import ADGroup
 
+from .settings_fields import * # Yes I hate this, deal with it!
+
 #CONST REFERANCES
 STAT_LEA = Employee.STAT_LEA
 STAT_TERM = Employee.STAT_TERM
 STAT_ACT = Employee.STAT_ACT
 
-GROUP_CONFIG = 'ad_export'
-CONFIG_CAT = 'configuration'
-EMPLOYEE_CAT = 'employee_configurations'
-DEFAULTS_CAT = 'user_defaults'
-CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
-EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
-EMPLOYEE_LEAVE_GROUP_ADD = 'leave_groups_add'
-EMPLOYEE_LEAVE_GROUP_DEL = 'leave_groups_remove'
-DEFAULT_ORG = 'orginization'
-DEFAULT_PHONE = 'office_phone'
-DEFAULT_FAX = 'fax_number'
-DEFAULT_STREET = 'street_address'
-DEFAULT_PO = 'po_box'
-DEFAULT_CITY = 'city'
-DEFAULT_STATE = 'province_or_state'
-DEFAULT_ZIP = 'zip_or_postal_code'
-DEFAULT_COUNTRY = 'country'
-CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
-CONFIG_LAST_SYNC = 'last_sycronization_run'
-CONFIG_AD_USER = 'ad_export_user'
-CONFIF_AD_PASSWORD = 'ad_export_password'
-CONFIG_UPN = 'ad_upn_suffix'
-CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
-CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
-CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
-CONFIG_IMPORT_FORM = 'export_model_form'
-
-CONFIG_DEFAULTS = {
-    CONFIG_CAT: {
-        CONFIG_NEW_NOTIFICATION:'',
-        CONFIG_AD_USER: '',
-        CONFIF_AD_PASSWORD: ['',True],
-        CONFIG_UPN: '',
-        CONFIG_ROUTE_ADDRESS: 'you.mail.onmicrosoft.com',
-        CONFIG_IMPORT_FORM: 'ad_export.form',
-        CONFIG_ENABLE_MAILBOXES: 'False',
-        CONFIG_MAILBOX_TYPE: 'local',
-        CONFIG_LAST_SYNC:'1999-01-01 00:00'
-    },
-    EMPLOYEE_CAT: {
-        EMPLOYEE_DISABLE_LEAVE: 'False',
-        EMPLOYEE_LEAVE_GROUP_ADD: '',
-        EMPLOYEE_LEAVE_GROUP_DEL: ''
-    },
-    DEFAULTS_CAT: {
-        DEFAULT_ORG: '',
-        DEFAULT_PHONE: '',
-        DEFAULT_FAX: '',
-        DEFAULT_STREET: '',
-        DEFAULT_PO: '',
-        DEFAULT_CITY: '',
-        DEFAULT_STATE: '',
-        DEFAULT_ZIP: '',
-        DEFAULT_COUNTRY: ''
-    }
-}
 
 logger = logging.getLogger('ad_export.config')
 
