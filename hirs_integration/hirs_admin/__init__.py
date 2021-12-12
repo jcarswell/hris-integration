@@ -1,6 +1,6 @@
-from .apps import HirsAdminConfig
+from .apps import HrisAdminConfig
 
-__all__ = ('HirsAdminConfig','setup')
+__all__ = ('HrisAdminConfig','setup')
 
 def setup():
     from .helpers import config

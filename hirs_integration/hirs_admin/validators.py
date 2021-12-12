@@ -3,8 +3,7 @@ import logging
 import re
 
 from warnings import warn
-from django.core.exceptions import ValidationError
-from hirs_integration.settings import INSTALLED_APPS
+from hris_integration.settings import INSTALLED_APPS
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _t
 
