@@ -69,7 +69,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": "API Token"
+                "label": _t("API Token")
             },
         },
         CONFIG_ID: {
@@ -77,7 +77,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": "API ID"
+                "label": _t("API ID")
             },
         },
         CONFIG_URL: {
@@ -85,7 +85,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": "API Traget",
+                "label": _t("API Traget"),
                 "initial": 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
             },
         },
@@ -94,7 +94,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Location of Corepoint syncronization executable",
+                "help": _t("Location of Corepoint syncronization executable"),
                 "initial": 'c:\\corepoint\\',
             },
         },
@@ -103,7 +103,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Corepoint syncronization executable file name",
+                "help": _t("Corepoint syncronization executable file name"),
             },
         },
         CONFIG_LAST_SYNC: {
@@ -117,7 +117,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'True,False',
             "field_properties": {
                 "type": "CharField",
-                "help": "values to use for True and False during export specifed as <True Value>,<False Value>"
+                "help": _t("values to use for True and False during export specifed as <True Value>,<False Value>")
             },
         },            
     },
@@ -126,7 +126,7 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": "Email domain for users",
+                "help": _t("Email domain for users"),
                 "inital": "example.com",
                 "required": False
             },
