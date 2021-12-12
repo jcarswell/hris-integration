@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hirs_integration.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hris_integration.settings')
 
 application = get_wsgi_application()
