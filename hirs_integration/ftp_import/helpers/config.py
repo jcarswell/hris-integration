@@ -1,8 +1,11 @@
 import logging
 
 from distutils.util import strtobool
+from typing import Any
 from warnings import warn
 from hirs_admin.models import Setting
+from common.functions import ConfigurationManagerBase
+
 from .text_utils import safe
 from .settings_fields import *
 
@@ -105,50 +108,16 @@ class CsvSetting():
             if v['map_to'] == map_to:
                 return k
 
-
-def configuration_fixures():
-    def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
-
-        hidden = False
-
-        if type(value) == list and value[0] in [True,False]:
-            hidden=value[0]
-            value = value[1]
-        elif type(value) == list and value[1] in [True,False]:
-            hidden=value[1]
-            value = value[0]
-
-        obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
-        if new:
-            obj.hidden = hidden
-            obj.value = value
-            obj.save()
-
-        return new
-
-    for key,val in CONFIG_DEFAULTS.items():
-        if type(val) == dict:
-            for item,data in val.items():
-                add_fixture(key,item,data)
-
 def get_fields() -> dict:
     settings = CsvSetting()
     return settings.fields
 
-def get_config(catagory:str ,item:str) -> str:
-    if not catagory in SETTINGS_CATAGORIES:
-        return ValueError(f"Invalid Catagory requested valid options are: {SETTINGS_CATAGORIES}")
+class Config(ConfigurationManagerBase):
+    root_group = GROUP_CONFIG
+    catagory_list = SETTINGS_CATAGORIES
+    fixtures = CONFIG_DEFAULTS
+    Setting = Setting
 
-    q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-    if len(q) == 0 and item in CONFIG_DEFAULTS[catagory]:
-        configuration_fixures()
-        q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-        if len(q) == 0:
-            logger.fatal("Failed to install fixture data")
-            raise SystemError(f"Installation of fixture data failed.")
-    elif len(q) == 0:
-        logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
-        raise ValueError(f"Unable to find requested item {item}")
-
-    return q[0].value
+def get_config(catagory:str ,item:str) -> Any:
+    """Now depricated use Config instead to manage the value"""
+    return Config()(catagory,item)

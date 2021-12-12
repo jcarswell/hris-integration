@@ -1,55 +1,22 @@
 import logging
 
+from typing import Any
 from hirs_admin.models import Setting
+from common.functions import ConfigurationManagerBase
 
 from .settings_fields import *
 
 logger = logging.getLogger('SMTP.config')
 
-def configuration_fixures():
-    def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+class Config(ConfigurationManagerBase):
+    root_group = GROUP_CONFIG
+    catagory_list = CATAGORY_SETTINGS
+    fixtures = CONFIG_DEFAULTS
+    Setting = Setting
 
-        hidden = False
-        
-        if type(value) == list and value[0] in [True,False]:
-            hidden=value[0]
-            value = value[1]
-        elif type(value) == list and value[1] in [True,False]:
-            hidden=value[1]
-            value = value[0]
-
-        obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
-        if new:
-            obj.setting = PATH % (catagory,item)
-            obj.hidden = hidden
-            obj.value = value
-            obj.save()
-        
-        return new
-
-    for key,val in CONFIG_DEFAULTS.items():
-        if type(val) == dict:
-            for item,data in val.items():
-                add_fixture(key,item,data)
-
-def get_config(catagory:str ,item:str =None) -> str:
-    if not catagory in CATAGORY_SETTINGS:
-        return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
-
-    q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-
-    if item in CONFIG_DEFAULTS[catagory] and len(q) == 0:
-        configuration_fixures()
-        q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-        if len(q) == 0:
-            logger.fatal("Failed to install fixture data")
-            raise SystemError(f"Installation of fixture data failed.")
-    elif len(q) == 0:
-        logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
-        raise ValueError(f"Unable to find requested item {item}")
-
-    return q[0].value
+def get_config(catagory:str ,item:str) -> Any:
+    """Now depricated use Config instead to manage the value"""
+    return Config()(catagory,item)
 
 def get_config_cat(catagory:str) -> dict:
     if not catagory in CATAGORY_SETTINGS:
