@@ -4,23 +4,14 @@ from hirs_admin.models import Setting
 from distutils.util import strtobool
 
 from .data_structures import CronJob
+from cron import validators
+from .settings_fields import *
 
-GROUP_CONFIG = 'cron'
-CONFIG_CAT = 'configuration'
-CONFIG_ENABLED = 'enabled'
-CATAGORY_SETTINGS = (CONFIG_CAT,)
-GROUP_JOBS =  'cron_jobs'
 ITEM_SCHEDULE = 'schedule'
 ITEM_PATH = 'path'
 ITEM_ARGS = 'options'
 ITEM_STATE = 'status'
 ITEM_JOBS = (ITEM_ARGS,ITEM_PATH,ITEM_SCHEDULE,ITEM_STATE)
-
-CONFIG_DEFAULTS = {
-    CONFIG_CAT: {
-        CONFIG_ENABLED: 'False'
-    }
-}
 
 logger = logging.getLogger('cron.config_helper')
 
@@ -115,17 +106,33 @@ def get_config(catagory:str ,item:str) -> str:
 
 def set_job(name, path, schedule, args, state):
     query_path = GROUP_JOBS + Setting.FIELD_SEP + name + Setting.FIELD_SEP + '%s'
+    field_properties_schedule = {
+        "type": "CharField",
+        "validators": [validators.cron_validator]
+    }
+    field_properties_path = {
+        "type": "CharField",
+        "help": "Path to executable or module to excute",       
+    }
+    field_properties_args = {
+        "type": "CharField",
+        "help": "Flags or arguments to pass to the executable",   
+        "required": False            
+    }
+    field_properties_state = {
+        "type": "BooleanField",
+    }
 
     def save(setting,value):
-        o,_ = Setting.o2.get_or_create(setting=setting)
-        if o.value != value:
+        item,_ = Setting.o2.get_or_create(setting=setting)
+        if item.value != value:
             o.value = value
             o.save()
             return True
         else:
             return False
 
-    save(query_path % ITEM_SCHEDULE, str(schedule))
-    save(query_path % ITEM_PATH, path)
-    save(query_path % ITEM_ARGS, args)
-    save(query_path % ITEM_STATE, f"{state}")
+    save(query_path % ITEM_SCHEDULE, str(schedule), field_properties_schedule)
+    save(query_path % ITEM_PATH, path, field_properties_path)
+    save(query_path % ITEM_ARGS, args, field_properties_args)
+    save(query_path % ITEM_STATE, f"{state}", field_properties_state)
