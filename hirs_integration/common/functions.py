@@ -4,7 +4,6 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date,parse_datetime
 
-from hirs_integration.hirs_admin.models import Setting
 from .exceptions import FixturesError,SettingsError
 from distutils.util import strtobool
 
