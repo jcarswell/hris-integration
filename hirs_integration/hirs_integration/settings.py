@@ -26,7 +26,7 @@ SECRET_KEY = ''
 ENCRYPTION_KEY = '' #cryptography.fernet.Fernet.generate_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -40,9 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hirs_admin.apps.HirsAdminConfig',
-    'cron.CronConfig',
-    'ftp_import.FTPImportConfig'
+    'hirs_admin',
+    'cron',
+    'ftp_import',
+    'corepoint_export'
 ]
 
 MIDDLEWARE = [
@@ -82,8 +83,8 @@ WSGI_APPLICATION = 'hirs_integration.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'HrisIntegration',
-        'HOST': 'LOCALHOST',
+        'NAME': '',
+        'HOST': '',
         'OPTIONS': {
             'driver': "SQL Server Native Client 11.0"
         }
@@ -139,10 +140,10 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s - [%(levelname)s] - (%(module)s-%(process)d:%(thread)d) - %(message)s'
+            'format': '%(asctime)s - [%(levelname)s] - (%(name)s-%(process)d:%(thread)d) - %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s - [%(levelname)s] - - %(message)s',
+            'format': '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
         },
     },
     'handlers': {
