@@ -2,10 +2,10 @@ from django.utils.translation import gettext_lazy as _t
 
 ## Config Groups
 GROUP_CONFIG = 'cron'
+GROUP_JOBS =  'cron_jobs'
 
 ## Config Catagories
 CONFIG_CAT = 'configuration'
-GROUP_JOBS =  'cron_jobs'
 
 CATAGORY_SETTINGS = (CONFIG_CAT,)
 
