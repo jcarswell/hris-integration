@@ -4,87 +4,15 @@ from distutils.util import strtobool
 from warnings import warn
 from hirs_admin.models import Setting
 from .text_utils import safe
+from .settings_fields import *
 
 logger = logging.getLogger("ftp_import.helpers")
-
-#CONSTANTS
-GROUP_CONFIG = 'ftp_import_config'
-GROUP_MAP = 'ftp_import_feild_mapping'
-CAT_SERVER = 'server'
-CAT_CSV = 'csv_parse'
-CAT_FIELD = 'field_config'
-CAT_EXPORT = 'export_options'
-SETTINGS_CATAGORIES = (CAT_SERVER,CAT_CSV,CAT_FIELD,CAT_EXPORT)
-SERVER_SERVER = 'server'
-SERVER_PROTOCAL = 'protocal'
-SERVER_PORT = 'port'
-SERVER_USER = 'user'
-SERVER_PASSWORD = 'password'
-SERVER_SSH_KEY = 'ssh_key'
-SERVER_PATH = 'base_path'
-SERVER_FILE_EXP = 'file_name_expression'
-CSV_FIELD_SEP = 'field_sperator'
-CSV_FAIL_NOTIF = 'import_failure_notification_email'
-CSV_IMPORT_CLASS = 'import_form_class'
-CSV_USE_EXP = 'use_word_expansion'
-CSV_FUZZ_PCENT = 'fuzzy_pending_match_precentage'
-CSV_IMPORT_ALL_JOBS = "import_all_jobs"
-CSV_IMPORT_JOBS = "import_new_jobs"
-CSV_IMPORT_BU = "import_business_units"
-CSV_IMPORT_LOC = "import_locations"
-FIELD_LOC_NAME = 'location_name_field'
-FIELD_JD_NAME = 'job_description_name_field'
-FIELD_JD_BU = 'job_description_business_unit_field'
-FIELD_BU_NAME = 'business_unit_name_field'
-FIELD_BU_PARENT = 'business_unit_parent_field'
-FIELD_STATUS = 'employee_status_field'
-EXPORT_ACTIVE = 'actve_status_field_value'
-EXPORT_LEAVE = 'leave_status_field_value'
-EXPORT_TERM = 'terminated_status_field_value'
-FIELD_ITEMS = ('import','map_to')
 
 IMPORT_DEFAULTS = {
     'import': 'False',
     'map_to': ''
 }
-
-CONFIG_DEFAULTS = {
-    CAT_SERVER: {
-        SERVER_SERVER: None,
-        SERVER_PROTOCAL: 'sftp',
-        SERVER_PORT: '22',
-        SERVER_USER: None,
-        SERVER_PASSWORD: [None,True],
-        SERVER_SSH_KEY: [None,True],
-        SERVER_PATH: '.',
-        SERVER_FILE_EXP: '.*'
-    },
-    CAT_CSV: {
-        CSV_FIELD_SEP: ',',
-        CSV_FAIL_NOTIF: '',
-        CSV_IMPORT_CLASS: 'ftp_import.forms',
-        CSV_USE_EXP: 'True',
-        CSV_FUZZ_PCENT: '70',
-        CSV_IMPORT_ALL_JOBS: 'True',
-        CSV_IMPORT_JOBS: 'True',
-        CSV_IMPORT_BU: 'True',
-        CSV_IMPORT_LOC: 'True',
-    },
-    CAT_FIELD: {
-        FIELD_LOC_NAME: None,
-        FIELD_JD_NAME: None,
-        FIELD_JD_BU: None,
-        FIELD_BU_NAME: None,
-        FIELD_BU_PARENT: None,
-        FIELD_STATUS: None,
-    },
-    CAT_EXPORT: {
-        EXPORT_ACTIVE: 'Active',
-        EXPORT_TERM: 'Terminated',
-        EXPORT_LEAVE: 'Leave',
-    },
-}
-
+FIELD_ITEMS = ('import','map_to')
 
 class CsvSetting():
     PATH_FORMAT = GROUP_MAP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
@@ -98,10 +26,7 @@ class CsvSetting():
         fields = {}
         for row in Setting.o2.get_by_path(GROUP_MAP):
             if row.catagory not in fields:
-                fields[row.catagory] = {
-                    "import": 'False',
-                    "map_to": ''
-                }
+                fields[row.catagory] = IMPORT_DEFAULTS
             if row.item in FIELD_ITEMS:
                 fields[row.catagory][row.item] = row.value
 
