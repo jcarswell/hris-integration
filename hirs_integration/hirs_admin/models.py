@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 from django.core.exceptions import ValidationError
 
 from django.db import models
@@ -251,7 +252,7 @@ class Setting(models.Model):
 
     FIELD_SEP = '/'
     DEFAULT_FIELD = 'CharField'
-    BASE_PROPERTIES = {
+    __BASE_PROPERTIES__ = {
         'type': DEFAULT_FIELD,
         'help': None,
         'choices': None,
@@ -260,9 +261,9 @@ class Setting(models.Model):
         'widget': None,
     }
 
-    setting = models.CharField(max_length=256,unique=True)
+    setting = models.CharField(max_length=768,unique=True)
     _value = models.TextField(null=True,blank=True)
-    field_properties = models.TextField(null=True,blank=True,default=BASE_PROPERTIES)
+    _field_properties = models.TextField(null=True,blank=True)
     hidden = models.BooleanField(default=False)
     
     o2 = SettingsManager()
@@ -280,7 +281,7 @@ class Setting(models.Model):
         if value == None:
             value = ''
         if not isinstance(value,str):
-            raise ValueError(f"Expected a str got {type(value)}")
+            raise ValueError(f"Expected a str got {value.__class__.__name__}")
         if self.hidden:
             self._value = FieldEncryption().encrypt(value)
         else:
@@ -288,6 +289,18 @@ class Setting(models.Model):
 
     def __str__(self):
         return f"{self.setting} - {self._value}"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        try:
+            self.field_properties = json.loads(self._field_properties)
+        except json.decoder.JSONDecodeError as e:
+            if self._field_properties != None or self._field_properties != "":
+                # Continue the error if we are failing to decode actual data
+                raise e
+            self.field_properties = self.__BASE_PROPERTIES__
+        except TypeError:
+            self.field_properties = self.__BASE_PROPERTIES__
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
@@ -299,12 +312,19 @@ class Setting(models.Model):
         for char in instance.setting:
             if char not in ascii_letters + digits + instance.FIELD_SEP + '_-':
                 instance.setting.replace(char,'_')
-
+ 
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
 
-        if not instance.field_properties:
-            instance.field_properties = instance.BASE_PROPERTIES
+        if not instance._field_properties:
+            instance._field_properties = json.dumps(instance.__BASE_PROPERTIES__)
+        
+        if json.loads(instance._field_properties) != instance.field_properties:
+            #DEBUG
+            #print(t.__class__.__name__)
+            #for k,v in t.items():
+            #    print(f"{k}:{v} - {k.__class__.__name__}:{v.__class__.__name__}")
+            instance._field_properties = json.dumps(instance.field_properties)
 
         if instance.field_properties['type'] not in field_types:
             raise ValueError(f"Field type must be one of {field_types}")
