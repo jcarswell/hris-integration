@@ -112,11 +112,11 @@ def set_job(name, path, schedule, args, state):
     }
     field_properties_path = {
         "type": "CharField",
-        "help": "Path to executable or module to excute",       
+        "help": _t("Path to executable or module to excute"),
     }
     field_properties_args = {
         "type": "CharField",
-        "help": "Flags or arguments to pass to the executable",   
+        "help": _t("Flags or arguments to pass to the executable"),
         "required": False            
     }
     field_properties_state = {
