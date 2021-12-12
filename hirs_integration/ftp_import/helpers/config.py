@@ -6,6 +6,8 @@ from hirs_admin.models import Setting
 from .text_utils import safe
 from .settings_fields import *
 
+from ftp_import import validators
+
 logger = logging.getLogger("ftp_import.helpers")
 
 IMPORT_DEFAULTS = {
@@ -81,10 +83,16 @@ class CsvSetting():
             i = Setting()
             i.setting = self.PATH_FORMAT % (field,'import')
             i.value = str(enable)
+            i.field_properties = i.__BASE_PROPERTIES__
+            i.field_properties["type"] = "BooleanField"
             i.save()
             i = Setting()
             i.setting = self.PATH_FORMAT % (field,'map_to')
             i.value = map_to
+            i.field_properties = i.__BASE_PROPERTIES__
+            i.field_properties["type"] = 'ChoiceField'
+            i.field_properties["required"] = False
+            i.field_properties["choices"] = validators.import_field_map_to
             i.save()
 
             if enable:
