@@ -11,7 +11,7 @@ from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from base64 import b64encode
 from hirs_admin.models import set_username
-from ad_export.excpetions import ADResultsError,UserDoesNotExist
+from ad_export.exceptions import ADResultsError,UserDoesNotExist
 from smtp_client.smtp import Smtp
 from distutils.util import strtobool
 from time import time

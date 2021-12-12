@@ -1,5 +1,5 @@
 from .apps import AdExportConfig
-from .excpetions import ADResultsError,UserDoesNotExist,ConfigError,ADCreateError
+from .exceptions import ADResultsError,UserDoesNotExist,ConfigError,ADCreateError
 
 __all__ = ("setup","run","AdExportConfig","ADResultsError","UserDoesNotExist","ConfigError","ADCreateError")
 
