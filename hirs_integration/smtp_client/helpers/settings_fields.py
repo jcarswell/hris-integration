@@ -26,39 +26,39 @@ CONFIG_DEFAULTS = {
             "default_value": 'localhost',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("SMTP server for sending emails"),
+                "help": "SMTP server for sending emails",
             },
         },            
         SERVER_PORT: {
             "default_value": '25',
             "field_properties": {
                 "type": "IntegerField",
-                "help": _t("SMTP server port"),
+                "help": "SMTP server port",
             },
         },
         SERVER_TLS: {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "label": _t("Use StartTLS"),
-                "help": _t("Used the word expansion module during data import"),
+                "label": "Use StartTLS",
+                "help": "Used the word expansion module during data import",
             },
         },
         SERVER_SSL: {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "label": _t("Use StartTLS"),
-                "help": _t("Used the word expansion module during data import"),
+                "label": "Use SSL",
+                "help": "Used the word expansion module during data import",
             },
         },
         SERVER_USERNAME: {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("SMTP server username"),
+                "help": "SMTP server username",
                 "required": False,
-                "label": _t("Server Username (Optional)"),
+                "label": "Server Username (Optional)",
             },
         },
         SERVER_PASSWORD:  {
@@ -66,16 +66,16 @@ CONFIG_DEFAULTS = {
             "hidden": True,
             "field_properties": {
                 "type": "CharField",
-                "help": _t("SMTP server password"),
+                "help": "SMTP server password",
                 "required": False,
-                "label": _t("Server Password (Optional)"),
+                "label": "Server Password (Optional)",
             },
         },
         SERVER_SENDER: {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Email address the emails should come from"),
+                "help": "Email address the emails should come from",
                 "required": False,
             },
         },
@@ -85,7 +85,7 @@ CONFIG_DEFAULTS = {
             "default_value": '[HRIS Sync]',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Subject line prefix"),
+                "help": "Subject line prefix",
                 "required": False,
             },
         },

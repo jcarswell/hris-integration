@@ -1,4 +1,3 @@
-from ad_export import validators
 from django.utils.translation import gettext_lazy as _t
 
 ## Config Groups
@@ -41,14 +40,14 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Comma seperated list of email's to notify about new users")
+                "help": "Comma seperated list of email's to notify about new users"
             },
         },
         CONFIG_AD_USER: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": _t("AD Import User (Not Used)"),
+                "help": "AD Import User (Not Used)",
                 "disabled": True,
                 "required": False,
             },
@@ -58,7 +57,7 @@ CONFIG_DEFAULTS = {
             "hidden": True,
             "field_properties": {
                 "type": "CharField",
-                "help": _t("AD Import Password (Not Used)"),
+                "help": "AD Import Password (Not Used)",
                 "disabled": True,
                 "required": False,
             },
@@ -67,15 +66,15 @@ CONFIG_DEFAULTS = {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": _t("The domain name that your users use to login."),
-                "label": _t("UPN Suffix")
+                "help": "The domain name that your users use to login.",
+                "label": "UPN Suffix"
             },
         },
         CONFIG_ROUTE_ADDRESS: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": _t("The domain name that your users use to login."),
+                "help": "The domain name that your users use to login.",
                 "initial": 'you.mail.onmicrosoft.com',
             },
         },
@@ -83,22 +82,22 @@ CONFIG_DEFAULTS = {
             "default_value": 'ad_export.form',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Class to use to export users to AD"),
-                "validators": [validators.import_validator]
+                "help": "Class to use to export users to AD",
+                "validators": ["validators.import_validator"]
             },
         },
         CONFIG_ENABLE_MAILBOXES: {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "help": _t("Enable mailboxed for new users"),
+                "help": "Enable mailboxed for new users",
             },
         },
         CONFIG_MAILBOX_TYPE: {
             "default_value": 'local',
             "field_properties": {
                 "type": "ChoiceField",
-                "label": _t("Mailbox Type"),
+                "label": "Mailbox Type",
                 "choices": [('local',"On Premise"),('remote','Remote Mailbox')],
             },
         },
@@ -106,7 +105,7 @@ CONFIG_DEFAULTS = {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help": _t("The time the AD Export last ran")
+                "help": "The time the AD Export last ran"
             },
         },            
     },
@@ -115,7 +114,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "help": _t("Disable user accounts when they are on leave"),
+                "help": "Disable user accounts when they are on leave",
             },
         },
         EMPLOYEE_LEAVE_GROUP_ADD: {
@@ -123,7 +122,7 @@ CONFIG_DEFAULTS = {
              "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": _t("Comma seperated list of groups names to add when a user goes on leave"),
+                "help": "Comma seperated list of groups names to add when a user goes on leave",
              },
         },
         EMPLOYEE_LEAVE_GROUP_DEL: {
@@ -131,7 +130,7 @@ CONFIG_DEFAULTS = {
              "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": _t("Comma seperated list of groups names to remove when a user goes on leave"),
+                "help": "Comma seperated list of groups names to remove when a user goes on leave",
              },
         },
     },
@@ -169,7 +168,7 @@ CONFIG_DEFAULTS = {
              "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": _t("PO Box Number")
+                "label": "PO Box Number"
              },
         },
         DEFAULT_CITY: {

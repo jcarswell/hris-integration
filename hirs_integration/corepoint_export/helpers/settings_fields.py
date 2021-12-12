@@ -1,4 +1,3 @@
-from corepoint_export import validators
 from django.utils.translation import gettext_lazy as _t
 
 ## Config Groups
@@ -39,7 +38,7 @@ default_field_config = {
     "default_value": None,
     "field_properties": {
         "type": "ChoiceField",
-        "choices": validators.employee_fields,
+        "choices": "validators.employee_fields",
         "required": False,
     },
 }
@@ -51,8 +50,8 @@ CONFIG_DEFAULTS = {
             "default_value": 'corepoint_export.form',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Class to use to export data for the Corepoint sync tool"),
-                "validators": [validators.import_validator]
+                "help": "Class to use to export data for the Corepoint sync tool",
+                "validators": ["validators.import_validator"]
             },
         },
         CONFIG_PUB_KEY: {
@@ -69,7 +68,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": _t("API Token")
+                "label": "API Token"
             },
         },
         CONFIG_ID: {
@@ -77,7 +76,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": _t("API ID")
+                "label": "API ID"
             },
         },
         CONFIG_URL: {
@@ -85,7 +84,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": _t("API Traget"),
+                "label": "API Traget",
                 "initial": 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
             },
         },
@@ -94,7 +93,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": _t("Location of Corepoint syncronization executable"),
+                "help": "Location of Corepoint syncronization executable",
                 "initial": 'c:\\corepoint\\',
             },
         },
@@ -103,21 +102,21 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": _t("Corepoint syncronization executable file name"),
+                "help": "Corepoint syncronization executable file name",
             },
         },
         CONFIG_LAST_SYNC: {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help": _t("The time the Corepoint Export last ran")
+                "help": "The time the Corepoint Export last ran"
             },
         },
         CONFIG_BOOL_EXPORT: {
             "default_value": 'True,False',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("values to use for True and False during export specifed as <True Value>,<False Value>")
+                "help": "values to use for True and False during export specifed as <True Value>,<False Value>"
             },
         },            
     },
@@ -126,7 +125,7 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": _t("Email domain for users"),
+                "help": "Email domain for users",
                 "inital": "example.com",
                 "required": False
             },
@@ -135,7 +134,7 @@ CONFIG_DEFAULTS = {
             "default_value": '([sS]upervisor|[lL]ead|[Mm]anager|[dD]irector|[vV]Vice [Pp]resident|[Vv][Pp]|[Cc][Ee][Oo])',
             "field_properties": {
                 "type": "RegexField",
-                "help": _t("Regular expresion search string used to match Jobs to a Supervisor role")
+                "help": "Regular expresion search string used to match Jobs to a Supervisor role"
             },
         },
     },

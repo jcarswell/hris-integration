@@ -1,6 +1,5 @@
 from pyad.adbase import ADBase
-from django.core.validators import RegexValidator
-from hirs_admin import validators
+from django.utils.translation import gettext_lazy as _t
 
 GROUP_CONFIG = 'global_settings'
 CONFIG_CAT = 'configuration'
@@ -13,9 +12,9 @@ CONFIG_DEFAULTS = {
             "default_value": ADBase().default_domain,
             "field_properties": {
                 "type":"CharField",
-                "help":"Base DN Search for the GUI"
+                "help": "Base DN Search for the GUI"
                 },
-            "validators": [validators.DnValidator],
+            "validators": ["validators.DnValidator"],
         }
     }
 }
