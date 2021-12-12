@@ -2,33 +2,7 @@ import logging
 
 from hirs_admin.models import Setting
 
-GROUP_CONFIG = 'outbound_email'
-CAT_CONFIG = 'server_configuration'
-CAT_EMAIL = 'email_options'
-CATAGORY_SETTINGS = (CAT_CONFIG,CAT_EMAIL)
-SERVER_SERVER = 'smtp_server'
-SERVER_PORT = 'port'
-SERVER_TLS = 'use_starttls'
-SERVER_SSL = 'use_ssl'
-SERVER_USERNAME = 'username_optional'
-SERVER_PASSWORD = 'password_optional'
-SERVER_SENDER = 'from_address'
-EMAIL_PREFIX = 'subject line prefix'
-
-CONFIG_DEFAULTS = {
-    CAT_CONFIG: {
-        SERVER_SERVER: 'localhost',
-        SERVER_PORT: '25',
-        SERVER_TLS: 'False',
-        SERVER_SSL: 'False',
-        SERVER_USERNAME: '',
-        SERVER_PASSWORD: ['',True],
-        SERVER_SENDER: '',
-    },
-    CAT_EMAIL: {
-        EMAIL_PREFIX: '[HRIS Sync]',
-    },
-}
+from .settings_fields import *
 
 logger = logging.getLogger('SMTP.config')
 
