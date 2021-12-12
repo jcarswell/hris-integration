@@ -16,7 +16,7 @@ from time import sleep
 def setup(service=True):
     if service:
         nssm = str(settings.BASE_DIR) + "\\bin\\nssm.exe"
-        srv_name = 'hirs_integration_cron'
+        srv_name = 'hris_integration_cron'
         if not os.path.exists(nssm):
             print(f"Sorry the nssm executable doesn't seem to exist at {nssm}")
             sys.exit(-1)

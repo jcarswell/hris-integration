@@ -1,5 +1,5 @@
 """
-WSGI config for hirs_integration project.
+WSGI config for HRIS Integration project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

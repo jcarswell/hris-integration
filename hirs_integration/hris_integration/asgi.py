@@ -1,5 +1,5 @@
 """
-ASGI config for hirs_integration project.
+ASGI config for HRIS Integration project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
