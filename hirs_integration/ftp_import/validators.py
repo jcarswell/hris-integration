@@ -10,6 +10,7 @@ def import_field_choices():
         yield((field,field))
 
 import_field_map_to = [
+    (None,""),
     ('emp_id', _t("Employee ID")),
     ('start_date', _t("Start Date")),
     ('manager',_t("Manager")),
