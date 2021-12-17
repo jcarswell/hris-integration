@@ -103,12 +103,14 @@ class FieldConversion:
         TypeError: Unsupported type provided
     """
 
-    def __init__(self,type:str) -> None:
+    def __init__(self,type:str, value:str =None) -> None:
         try:
             self.field = eval(f"self.{type}")
             self.type = type
         except NameError:
             raise TypeError("Unsupported Type provided")
+        if value:
+            self.field(value)
     
     def __call__(self, value: str) -> Any:
         self.field(value)
@@ -124,6 +126,9 @@ class FieldConversion:
 
     def ChoiceField(self,value):
         self.CharField(value)
+
+    def MultipleChoiceField(self,value):
+        self.value = value.split(',')
 
     def IntegerField(self,value):
         self.value = int(value)
@@ -142,6 +147,9 @@ class FieldConversion:
 
     def Pattern(self):
         return str(self.value.pattern)
+
+    def list(self):
+        return ','.join(self.value)
 
     def __str__(self) -> str:
         if not hasattr(self,'value'):
