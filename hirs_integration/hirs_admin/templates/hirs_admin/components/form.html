@@ -1,0 +1,7 @@
+<form id="{{ form_id }}" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
+  <h4>{{ title }}</h4>'
+  {{ form.as_form }}
+  <div class="form-row">
+    <button type="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+  </div>
+</form>
