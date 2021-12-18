@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _t
 __all__= ('employee_fields',)
 
 employee_fields = [
+    (None,""),
     ('phone',_t('Phone Number')),
     ('designations',_t('Designations')),
     ('address',_t('Address')),
