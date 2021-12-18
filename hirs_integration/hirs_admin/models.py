@@ -215,9 +215,11 @@ class FieldEncryption:
             return self.key.encrypt(data.encode('utf-8')).decode('utf-8')
         except Exception as e:
             logger.critical("An Error occured encrypting the data provided")
-            raise ValueError from e
+            raise ValueError(e) from e
 
     def decrypt(self,data:bytes) -> str:
+        if data in (None,""):
+            return ""
         if not isinstance(data,bytes):
             data = data.encode('utf-8')
 
