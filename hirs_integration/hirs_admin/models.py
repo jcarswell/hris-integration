@@ -1,11 +1,12 @@
 import logging
 import time
 import json
-from django.core.exceptions import ValidationError
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
+from copy import deepcopy
 from django import conf
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
@@ -224,7 +225,7 @@ class FieldEncryption:
             return self.key.decrypt(data).decode('utf-8')
         except Exception as e:
             logger.critical("An Error occured decypting the data provided")
-            raise ValueError from e
+            raise ValueError(e) from e
 
 #######################
 #####            ######
@@ -254,11 +255,8 @@ class Setting(models.Model):
     DEFAULT_FIELD = 'CharField'
     __BASE_PROPERTIES__ = {
         'type': DEFAULT_FIELD,
-        'help': None,
-        'choices': None,
         'required': True,
         'disabled': False,
-        'widget': None,
     }
 
     setting = models.CharField(max_length=768,unique=True)
@@ -295,12 +293,14 @@ class Setting(models.Model):
         try:
             self.field_properties = json.loads(self._field_properties)
         except json.decoder.JSONDecodeError as e:
-            if self._field_properties != None or self._field_properties != "":
+            if self._field_properties not in (None, ""):
                 # Continue the error if we are failing to decode actual data
                 raise e
-            self.field_properties = self.__BASE_PROPERTIES__
+            self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
+            logger.debug(f"self.setting doesn't have field properties set yet")
         except TypeError:
-            self.field_properties = self.__BASE_PROPERTIES__
+            self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
+            logger.debug(f"self.setting doesn't have field properties set yet")
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
@@ -316,18 +316,12 @@ class Setting(models.Model):
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
 
-        if not instance._field_properties:
-            instance._field_properties = json.dumps(instance.__BASE_PROPERTIES__)
-        
-        if json.loads(instance._field_properties) != instance.field_properties:
-            #DEBUG
-            #print(t.__class__.__name__)
-            #for k,v in t.items():
-            #    print(f"{k}:{v} - {k.__class__.__name__}:{v.__class__.__name__}")
-            instance._field_properties = json.dumps(instance.field_properties)
-
         if instance.field_properties['type'] not in field_types:
             raise ValueError(f"Field type must be one of {field_types}")
+        
+        if (not instance._field_properties or 
+                (json.loads(instance._field_properties) != instance.field_properties)):
+            instance._field_properties = json.dumps(instance.field_properties)
 
     @staticmethod
     def _as_text(text:str) -> str:
