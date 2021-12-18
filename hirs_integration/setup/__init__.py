@@ -6,26 +6,19 @@ import corepoint_export
 import smtp_client
 import subprocess
 import sys
-import os
 import string
 
 from random import choice
 from django.conf import settings
 from time import sleep
 
-def setup(service=True):
-    if service:
-        nssm = str(settings.BASE_DIR) + "\\bin\\nssm.exe"
-        srv_name = 'hris_integration_cron'
-        if not os.path.exists(nssm):
-            print(f"Sorry the nssm executable doesn't seem to exist at {nssm}")
-            sys.exit(-1)
+def setup(service=False):
 
     from django.contrib.auth.models import User
     qs = User.objects.filter(email='admin@example.com')
     if len(qs) == 0:
-        pw = "".join(choice(string.ascii_letters + string.digits + string.punctuation) for char in range(15))
-        User.objects.create_superuser('admin@example.com', 'admin', pw)
+        pw = "".join(choice(string.ascii_letters + string.digits) for char in range(24))
+        User.objects.create_superuser('admin', email='admin@example.com', password=pw)
         print(f"Admin user 'admin' created with password '{pw}'")
 
     hirs_admin.setup()
@@ -40,10 +33,7 @@ def setup(service=True):
         CsvImport(f)
 
     if service:
-        subprocess.run([nssm,'install',srv_name,sys.executable])
-        subprocess.run([nssm,'set',srv_name,'AppParameters','%s\\cron\\service.py'])
-        subprocess.run([nssm,'set',srv_name,'AppDirectory',str(settings.BASE_DIR)])
-        subprocess.run([nssm,'set',srv_name,'AppStdout',str(settings.LOG_DIR) + "\\cron_service.out"])
+        cron.install_service()
 
 def create_keys():
     from django.core.management import utils
