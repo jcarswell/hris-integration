@@ -40,6 +40,7 @@ def forward_func(apps, schema_editor):
                 field.field_properties["type"] = "BooleanField"
             else:
                 logger.debug(f"un-matched setting {field} encountered while updating cron_job fields")
+            field.save()
 
     # Update HRIS Admin Module
     from hirs_admin.helpers import settings_fields as hris_fields
