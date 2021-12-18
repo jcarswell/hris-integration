@@ -19,7 +19,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "help": "Use built-in cron scheduler daemon",
+                "help_text": "Use built-in cron scheduler daemon",
             },
         },
     }

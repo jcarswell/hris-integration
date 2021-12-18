@@ -50,7 +50,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'corepoint_export.form',
             "field_properties": {
                 "type": "CharField",
-                "help": "Class to use to export data for the Corepoint sync tool",
+                "help_text": "Class to use to export data for the Corepoint sync tool",
                 "validators": ["validators.import_validator"]
             },
         },
@@ -93,7 +93,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Location of Corepoint syncronization executable",
+                "help_text": "Location of Corepoint syncronization executable",
                 "initial": 'c:\\corepoint\\',
             },
         },
@@ -102,21 +102,21 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Corepoint syncronization executable file name",
+                "help_text": "Corepoint syncronization executable file name",
             },
         },
         CONFIG_LAST_SYNC: {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help": "The time the Corepoint Export last ran"
+                "help_text": "The time the Corepoint Export last ran"
             },
         },
         CONFIG_BOOL_EXPORT: {
             "default_value": 'True,False',
             "field_properties": {
                 "type": "CharField",
-                "help": "values to use for True and False during export specifed as <True Value>,<False Value>"
+                "help_text": "values to use for True and False during export specifed as <True Value>,<False Value>"
             },
         },            
     },
@@ -125,7 +125,7 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": "Email domain for users",
+                "help_text": "Email domain for users",
                 "inital": "example.com",
                 "required": False
             },
@@ -134,7 +134,7 @@ CONFIG_DEFAULTS = {
             "default_value": '([sS]upervisor|[lL]ead|[Mm]anager|[dD]irector|[vV]Vice [Pp]resident|[Vv][Pp]|[Cc][Ee][Oo])',
             "field_properties": {
                 "type": "RegexField",
-                "help": "Regular expresion search string used to match Jobs to a Supervisor role"
+                "help_text": "Regular expresion search string used to match Jobs to a Supervisor role"
             },
         },
     },

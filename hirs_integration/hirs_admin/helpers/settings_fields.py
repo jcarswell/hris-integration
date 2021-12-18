@@ -12,7 +12,7 @@ CONFIG_DEFAULTS = {
             "default_value": ADBase().default_domain,
             "field_properties": {
                 "type":"CharField",
-                "help": "Base DN Search for the GUI"
+                "help_text": "Base DN Search for the GUI"
                 },
             "validators": ["validators.DnValidator"],
         }

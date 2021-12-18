@@ -26,14 +26,14 @@ CONFIG_DEFAULTS = {
             "default_value": 'localhost',
             "field_properties": {
                 "type": "CharField",
-                "help": "SMTP server for sending emails",
+                "help_text": "SMTP server for sending emails",
             },
         },            
         SERVER_PORT: {
             "default_value": '25',
             "field_properties": {
                 "type": "IntegerField",
-                "help": "SMTP server port",
+                "help_text": "SMTP server port",
             },
         },
         SERVER_TLS: {
@@ -41,7 +41,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use StartTLS",
-                "help": "Used the word expansion module during data import",
+                "help_text": "Used the word expansion module during data import",
             },
         },
         SERVER_SSL: {
@@ -49,14 +49,14 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use SSL",
-                "help": "Used the word expansion module during data import",
+                "help_text": "Used the word expansion module during data import",
             },
         },
         SERVER_USERNAME: {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": "SMTP server username",
+                "help_text": "SMTP server username",
                 "required": False,
                 "label": "Server Username (Optional)",
             },
@@ -66,7 +66,7 @@ CONFIG_DEFAULTS = {
             "hidden": True,
             "field_properties": {
                 "type": "CharField",
-                "help": "SMTP server password",
+                "help_text": "SMTP server password",
                 "required": False,
                 "label": "Server Password (Optional)",
             },
@@ -75,7 +75,7 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": "Email address the emails should come from",
+                "help_text": "Email address the emails should come from",
                 "required": False,
             },
         },
@@ -85,7 +85,7 @@ CONFIG_DEFAULTS = {
             "default_value": '[HRIS Sync]',
             "field_properties": {
                 "type": "CharField",
-                "help": "Subject line prefix",
+                "help_text": "Subject line prefix",
                 "required": False,
             },
         },
