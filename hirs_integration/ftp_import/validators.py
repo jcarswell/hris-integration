@@ -5,9 +5,13 @@ __all__ = ('import_field_choices','import_field_map_to')
         
 def import_field_choices():
     from ftp_import.helpers.config import get_fields
-    fields = get_fields()
+    fields = {None:""}
+    fields.update(get_fields())
     for field in fields.keys():
-        yield((field,field))
+        if field == None:
+            yield((None,""))
+        else:
+            yield((field,field))
 
 import_field_map_to = [
     (None,""),
