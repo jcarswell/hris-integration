@@ -40,14 +40,14 @@ CONFIG_DEFAULTS = {
             "default_value": '',
             "field_properties": {
                 "type": "CharField",
-                "help": "Comma seperated list of email's to notify about new users"
+                "help_text": "Comma seperated list of email's to notify about new users"
             },
         },
         CONFIG_AD_USER: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": "AD Import User (Not Used)",
+                "help_text": "AD Import User (Not Used)",
                 "disabled": True,
                 "required": False,
             },
@@ -57,7 +57,7 @@ CONFIG_DEFAULTS = {
             "hidden": True,
             "field_properties": {
                 "type": "CharField",
-                "help": "AD Import Password (Not Used)",
+                "help_text": "AD Import Password (Not Used)",
                 "disabled": True,
                 "required": False,
             },
@@ -66,7 +66,7 @@ CONFIG_DEFAULTS = {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": "The domain name that your users use to login.",
+                "help_text": "The domain name that your users use to login.",
                 "label": "UPN Suffix"
             },
         },
@@ -74,7 +74,7 @@ CONFIG_DEFAULTS = {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help": "The domain name that your users use to login.",
+                "help_text": "The domain name that your users use to login.",
                 "initial": 'you.mail.onmicrosoft.com',
             },
         },
@@ -82,7 +82,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'ad_export.form',
             "field_properties": {
                 "type": "CharField",
-                "help": "Class to use to export users to AD",
+                "help_text": "Class to use to export users to AD",
                 "validators": ["validators.import_validator"]
             },
         },
@@ -90,7 +90,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "help": "Enable mailboxed for new users",
+                "help_text": "Enable mailboxed for new users",
             },
         },
         CONFIG_MAILBOX_TYPE: {
@@ -105,7 +105,7 @@ CONFIG_DEFAULTS = {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help": "The time the AD Export last ran"
+                "help_text": "The time the AD Export last ran"
             },
         },            
     },
@@ -114,7 +114,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'False',
             "field_properties": {
                 "type": "BooleanField",
-                "help": "Disable user accounts when they are on leave",
+                "help_text": "Disable user accounts when they are on leave",
             },
         },
         EMPLOYEE_LEAVE_GROUP_ADD: {
@@ -122,7 +122,7 @@ CONFIG_DEFAULTS = {
              "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Comma seperated list of groups names to add when a user goes on leave",
+                "help_text": "Comma seperated list of groups names to add when a user goes on leave",
              },
         },
         EMPLOYEE_LEAVE_GROUP_DEL: {
@@ -130,7 +130,7 @@ CONFIG_DEFAULTS = {
              "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "help": "Comma seperated list of groups names to remove when a user goes on leave",
+                "help_text": "Comma seperated list of groups names to remove when a user goes on leave",
              },
         },
     },
