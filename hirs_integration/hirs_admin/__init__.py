@@ -4,5 +4,5 @@ from .exceptions import RenderError
 __all__ = ('HrisAdminConfig','setup','RenderError')
 
 def setup():
-    from .helpers import config
-    config.configuration_fixures()
+    """No setup tasks required for this module"""
+    pass
