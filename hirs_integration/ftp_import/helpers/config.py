@@ -62,12 +62,8 @@ class CsvSetting():
                 _ = Setting.o2.get(setting=self.PATH_FORMAT % (arg,'import'))
 
             except Setting.DoesNotExist:
-                for item in FIELD_ITEMS:
-                    s = Setting()
-                    s.setting = self.PATH_FORMAT % (arg,item)
-                    s.value = IMPORT_DEFAULTS[item]
-                    logger.info(f"Adding new field: {s}")
-                    s.save()
+                logger.debug(f"Adding field '{arg}'")
+                self.add_field(arg)
 
             else:
                 warn(f"{arg} is already defined")
@@ -76,23 +72,23 @@ class CsvSetting():
         self.get()
         logger.debug(f"New Fields: {self.fields}")
 
-    def add_feild(self,field:str, enable:bool =False, map_to:str =None) -> bool:
+    def add_field(self,field:str, enable:bool =False, map_to:str =None) -> bool:
         try:
             _ = Setting.o2.get(setting=self.PATH_FORMAT % (field,'import'))
 
         except Setting.DoesNotExist:
-            i = Setting()
-            i.setting = self.PATH_FORMAT % (field,'import')
-            i.value = str(enable)
-            i.field_properties["type"] = "BooleanField"
-            i.save()
-            i = Setting()
-            i.setting = self.PATH_FORMAT % (field,'map_to')
-            i.value = map_to
-            i.field_properties["type"] = 'ChoiceField'
-            i.field_properties["required"] = False
-            i.field_properties["choices"] = 'validators.import_field_map_to'
-            i.save()
+            impt = Setting()
+            impt.setting = self.PATH_FORMAT % (field,'import')
+            impt.value = str(enable)
+            impt.field_properties["type"] = "BooleanField"
+            impt.save()
+            map = Setting()
+            map.setting = self.PATH_FORMAT % (field,'map_to')
+            map.value = map_to
+            map.field_properties["type"] = 'ChoiceField'
+            map.field_properties["required"] = False
+            map.field_properties["choices"] = 'validators.import_field_map_to'
+            map.save()
 
             if enable:
                 self.fields[field] = map_to
