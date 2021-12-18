@@ -6,8 +6,8 @@ class Command(BaseCommand):
     requires_system_checks = []
     
     def add_arguments(self,parser):
-        parser.add_argument('--no-service',action='store_true',help="don't try to install/update the cron job service")
+        parser.add_argument('--service',action='store_true',help="install the cron job service")
     
     def handle(self, *args, **kwargs):
         import setup
-        setup.setup(not kwargs['no_service'])
+        setup.setup(kwargs['service'])
