@@ -4,13 +4,10 @@ import ftp_import
 import ad_export
 import corepoint_export
 import smtp_client
-import subprocess
-import sys
 import string
 
 from random import choice
 from django.conf import settings
-from time import sleep
 
 def setup(service=False):
 
@@ -19,7 +16,6 @@ def setup(service=False):
     if len(qs) == 0:
         pw = "".join(choice(string.ascii_letters + string.digits) for char in range(24))
         User.objects.create_superuser('admin', email='admin@example.com', password=pw)
-        print(f"Admin user 'admin' created with password '{pw}'")
 
     hirs_admin.setup()
     cron.setup()
@@ -34,6 +30,10 @@ def setup(service=False):
 
     if service:
         cron.install_service()
+
+    if len(qs) == 0:
+        print(f"Admin user 'admin' created with password '{pw}'")
+
 
 def create_keys():
     from django.core.management import utils
