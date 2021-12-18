@@ -21,7 +21,7 @@ def SettingFieldGenerator(setting:Setting):
 
         keys={}
         for k in kwargs.keys():
-            if k in base:
+            if k in base and kwargs[k] not in (None,''):
                 keys[k] = kwargs[k]
         keys.setdefault('label',setting.item_text)
         if 'validators' in kwargs.keys():
@@ -62,6 +62,7 @@ def SettingFieldGenerator(setting:Setting):
 
     elif setting.field_properties['type'] == 'BooleanField':
         kw = clean_kwargs(setting.field_properties)
+        kw.setdefault('widget',widgets.CheckboxInput)
         return field(**kw),value
 
     elif setting.field_properties['type'] == 'ChoiceField':
