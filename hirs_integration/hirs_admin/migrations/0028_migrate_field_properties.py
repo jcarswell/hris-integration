@@ -30,6 +30,7 @@ def forward_func(apps, schema_editor):
         for field in fields:
             if field.item == 'schedule':
                 field.field_properties["type"] = "CharField"
+                field.field_properties["validators"] = ["validators.cron_validator"]
             elif field.item == 'path':
                 field.field_properties["type"] = "CharField"
                 field.field_properties["help"] = _t("Path to executable or module to excute"),
