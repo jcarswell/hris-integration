@@ -41,7 +41,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use StartTLS",
-                "help_text": "Used the word expansion module during data import",
             },
         },
         SERVER_SSL: {
@@ -49,7 +48,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use SSL",
-                "help_text": "Used the word expansion module during data import",
             },
         },
         SERVER_USERNAME: {
