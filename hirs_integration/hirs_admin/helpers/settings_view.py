@@ -6,7 +6,6 @@ from django.utils.datastructures import MultiValueDict
 from django.template import loader
 from django.forms.fields import Field
 
-from hirs_admin import widgets as w
 from hirs_admin.fields import SettingFieldGenerator
 from hirs_admin.helpers.config import setting_parse
 from hirs_admin.exceptions import RenderError
@@ -34,8 +33,9 @@ class Form(forms.Form):
             else:
                 if bf.label:
                     label = bf.label_tag() or ''
-                output.append('<div class="form-row">')
+                output.append('<div>')
                 output.append(label)
+                output.append(f'<span class="text-secondary">{bf.help_text}</span>')
                 output.append(bf.as_widget(attrs={'class':" ".join(classes)}))
                 output.append('</div>')
 
@@ -63,31 +63,24 @@ class Settings():
                     "_NAME_": row.group_text,
                 }
                 logger.debug(f"Added Catagory: {group}")
-            
+
             output[group].update(self.update_catagories(output[group], row))
-            
-        for x in sorted(output):
-            output[x] = dict(sorted(output[x].items()))
-            self.items[x] = output[x]
-  
+
+            self.items = dict(sorted(output.items()))
+
     def update_catagories(self, data, row):
         if row.catagory not in data:
             data[row.catagory] = {
                 "_NAME_": row.catagory_text,
             }
             logger.debug(f"Added group {row.catagory}")
-        
+
         data[row.catagory].update(self.update_item(data[row.catagory], row))
-        
+
         return data
 
     def update_item(self, data, row):
         field,value = SettingFieldGenerator(row)
-
-        #if object.hidden:
-        #    widget = w.Hidden
-        #else:
-        #    widget = w.Item
 
         data[setting_parse(setting=row)] = field
         self.fields[setting_parse(setting=row)] = value
@@ -140,7 +133,6 @@ class Settings():
                 form_fields = {}
                 values = MultiValueDict()
                 if cname[0]+cname[-1] != "__":
-                    logger.debug(f"Catagory {cname} - {cat}")
                     for id,item in cat.items():
                         if id != "_NAME_":
                             form_fields[id] = item
