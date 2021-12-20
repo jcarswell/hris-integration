@@ -30,9 +30,9 @@ def setting_parse(setting:Setting =None,html_id:str =None):
     Raises:
         ValueError: if the html_id is not a valid or parsable html safe id
     """
-    if setting:
+    if setting and isinstance(setting,Setting):
         return ".".join(setting.setting.split(Setting.FIELD_SEP))
-    if str:
+    if html_id and isinstance(html_id,str):
         s = html_id.split('.')
         if len(s) != 3:
             raise ValueError("provided ID is not a properly formated setting id string")
