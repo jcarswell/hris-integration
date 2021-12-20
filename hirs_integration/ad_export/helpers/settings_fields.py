@@ -76,6 +76,7 @@ CONFIG_DEFAULTS = {
                 "type": "CharField",
                 "help_text": "The domain name that your users use to login.",
                 "initial": 'you.mail.onmicrosoft.com',
+                "required": False,
             },
         },
         CONFIG_IMPORT_FORM: {
@@ -91,6 +92,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Enable mailboxed for new users",
+                "required": False,
             },
         },
         CONFIG_MAILBOX_TYPE: {
@@ -115,6 +117,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Disable user accounts when they are on leave",
+                "required": False,
             },
         },
         EMPLOYEE_LEAVE_GROUP_ADD: {

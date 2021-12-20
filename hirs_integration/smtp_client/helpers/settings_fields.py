@@ -41,6 +41,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use StartTLS",
+                "required": False,
             },
         },
         SERVER_SSL: {
@@ -48,6 +49,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use SSL",
+                "required": False,
             },
         },
         SERVER_USERNAME: {

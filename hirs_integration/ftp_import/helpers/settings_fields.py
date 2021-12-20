@@ -135,6 +135,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Used the word expansion module during data import",
+                "required": False,
             },
         },
         CSV_FUZZ_PCENT: {
@@ -149,6 +150,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Import Jobs regardless of if the employee would be imported",
+                "required": False,
             },
         },
         CSV_IMPORT_JOBS: {
@@ -156,6 +158,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically update or create missing jobs during import",
+                "required": False,
             },
         },
         CSV_IMPORT_BU: {
@@ -163,6 +166,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically update or create missing business units",
+                "required": False,
             },
         },
         CSV_IMPORT_LOC: {
@@ -170,6 +174,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically create or update missing locations",
+                "required": False,
             },
         },
     },
