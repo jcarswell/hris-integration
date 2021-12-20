@@ -77,18 +77,19 @@ class CsvSetting():
             _ = Setting.o2.get(setting=self.PATH_FORMAT % (field,'import'))
 
         except Setting.DoesNotExist:
-            impt = Setting()
-            impt.setting = self.PATH_FORMAT % (field,'import')
-            impt.value = str(enable)
-            impt.field_properties["type"] = "BooleanField"
-            impt.save()
-            map = Setting()
-            map.setting = self.PATH_FORMAT % (field,'map_to')
-            map.value = map_to
-            map.field_properties["type"] = 'ChoiceField'
-            map.field_properties["required"] = False
-            map.field_properties["choices"] = 'validators.import_field_map_to'
-            map.save()
+            i = Setting()
+            i.setting = self.PATH_FORMAT % (field,'import')
+            i.value = str(enable)
+            i.field_properties["type"] = "BooleanField"
+            i.field_properties["required"] = False
+            i.save()
+            i = Setting()
+            i.setting = self.PATH_FORMAT % (field,'map_to')
+            i.value = map_to
+            i.field_properties["type"] = 'ChoiceField'
+            i.field_properties["required"] = False
+            i.field_properties["choices"] = 'validators.import_field_map_to'
+            i.save()
 
             if enable:
                 self.fields[field] = map_to

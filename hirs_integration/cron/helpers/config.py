@@ -90,6 +90,7 @@ def set_job(name, path, schedule, args, state):
     }
     field_properties_state = {
         "type": "BooleanField",
+        "required": False,
     }
 
     def save(setting,value,fp):
