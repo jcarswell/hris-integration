@@ -257,7 +257,7 @@ class Setting(models.Model):
     DEFAULT_FIELD = 'CharField'
     __BASE_PROPERTIES__ = {
         'type': DEFAULT_FIELD,
-        'required': True,
+        'required': False,
         'disabled': False,
     }
 
