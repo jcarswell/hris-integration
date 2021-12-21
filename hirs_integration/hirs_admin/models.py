@@ -728,6 +728,14 @@ class EmployeePhone(models.Model):
 
     def __str__(self):
         return f"{str(self.employee)} - {self.label} {self.number}"
+    
+    @property
+    def phone_label(self):
+        return self.label
+    
+    @phone_label.setter
+    def phone_label(self,value):
+        self.label = value
 
 
 class EmployeeAddress(models.Model):
@@ -745,6 +753,13 @@ class EmployeeAddress(models.Model):
     def __str__(self):
         return f"{str(self.employee)} - {self.label}"
 
+    @property
+    def address_label(self):
+        return self.label
+    
+    @address_label.setter
+    def address_label(self,value):
+        self.label = value
 
 class EmployeePending(models.Model):
     class Meta:
