@@ -49,6 +49,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "FTP Server address to pull from",
+                "required": True,
             },
         },
         SERVER_PROTOCAL: {
@@ -56,21 +57,23 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type":"ChoiceField",
                 "help_text":"Server connection protocol to use",
-                "choices": [('sftp','SFTP')]
+                "choices": [('sftp','SFTP')],
             },
         },
         SERVER_PORT: {
             "default_value": '22',
             "field_properties": {
                 "type": "IntegerField",
-                "help_text": "Server port"
+                "help_text": "Server port",
+                "required": True,
             },
         },
         SERVER_USER: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "help_text": "Login user to specified server"
+                "help_text": "Login user to specified server",
+                "required": True,
             },
         },
         SERVER_PASSWORD: {
@@ -79,7 +82,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Login password to specified server",
-                "required": False,
             },
         },
         SERVER_SSH_KEY: {
@@ -88,21 +90,22 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Base 64 encoded SSH key for the specified server",
-                "required": False,
             },
         },
         SERVER_PATH: {
             "default_value": '.',
             "field_properties": {
                 "type": "CharField",
-                "help_text": "Search path on the server (Non-Recursive)"
+                "help_text": "Search path on the server (Non-Recursive)",
+                "required": True,
             },
         },
         SERVER_FILE_EXP: {
             "default_value": '.*',
             "field_properties": {
                 "type": "RegexField",
-                "help_text": "Regular expresion search string (Max 768 characters)"
+                "help_text": "Regular expresion search string (Max 768 characters)",
+                "required": True,
             },
         },
     },
@@ -112,7 +115,8 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "max_length": 1,
-                "help_text": "field seperating character"
+                "help_text": "field seperating character",
+                "required": True,
             },
         },
         CSV_FAIL_NOTIF: {
@@ -127,7 +131,8 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Class to use to import row data from the CSV file",
-                "validators": ["validators.import_validator"]
+                "validators": ["validators.import_validator"],
+                "required": True,
             },
         },
         CSV_USE_EXP: {
@@ -135,7 +140,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Used the word expansion module during data import",
-                "required": False,
             },
         },
         CSV_FUZZ_PCENT: {
@@ -143,6 +147,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "IntegerField",
                 "help_text": "Fuzzy match required for matching aginst pending users",
+                "required": True,
             },
         },
         CSV_IMPORT_ALL_JOBS: {
@@ -150,7 +155,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Import Jobs regardless of if the employee would be imported",
-                "required": False,
             },
         },
         CSV_IMPORT_JOBS: {
@@ -158,7 +162,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically update or create missing jobs during import",
-                "required": False,
             },
         },
         CSV_IMPORT_BU: {
@@ -166,7 +169,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically update or create missing business units",
-                "required": False,
             },
         },
         CSV_IMPORT_LOC: {
@@ -174,7 +176,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically create or update missing locations",
-                "required": False,
             },
         },
     },
@@ -184,7 +185,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Location Name field to use during importing of locations",
             },
         },
@@ -193,7 +193,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Job name field to use during importing of jobs",
             },
         },
@@ -202,7 +201,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Business Unit ID that the Job is associated with the job",
             },
         },
@@ -211,7 +209,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Buisness Unit name field to use with the Business Unit ID",
             },
         },
@@ -220,7 +217,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Business Unit Parent ID",
             },
         },
@@ -229,7 +225,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "required": False,
                 "help_text": "Employee status field",
             },
         },
@@ -239,21 +234,24 @@ CONFIG_DEFAULTS = {
             "default_value": 'Active',
             "field_properties": {
                 "type": "CharField",
-                "help_text": "Active status value in the import file"
+                "help_text": "Active status value in the import file",
+                "required": True,
             },
         },
         EXPORT_TERM: {
             "default_value": 'Terminated',
             "field_properties": {
                 "type": "CharField",
-                "help_text": "Terminated status value in the import file"
+                "help_text": "Terminated status value in the import file",
+                "required": True,
             },
         },
         EXPORT_LEAVE: {
             "default_value": 'Leave',
             "field_properties": {
                 "type": "CharField",
-                "help_text": "On leave status value in the import file"
+                "help_text": "On leave status value in the import file",
+                "required": True,
             },
         },
     },

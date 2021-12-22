@@ -39,7 +39,6 @@ default_field_config = {
     "field_properties": {
         "type": "ChoiceField",
         "choices": "validators.employee_fields",
-        "required": False,
     },
 }
 
@@ -51,7 +50,8 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Class to use to export data for the Corepoint sync tool",
-                "validators": ["validators.import_validator"]
+                "validators": ["validators.import_validator"],
+                "required": True,
             },
         },
         CONFIG_PUB_KEY: {
@@ -59,7 +59,6 @@ CONFIG_DEFAULTS = {
             "hidden": True,
             "field_properties": {
                 "type": "CharField",
-                "required": False,
             },
         },
         CONFIG_TOKEN: {
@@ -68,23 +67,25 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "required": False,
-                "label": "API Token"
+                "label": "API Token",
+                "required": True,
             },
         },
         CONFIG_ID: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "required": False,
-                "label": "API ID"
+                "required": True,
+                "label": "API ID",
             },
         },
         CONFIG_URL: {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "required": False,
+                "required": True,
                 "label": "API Traget",
+                "help_text": 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
                 "initial": 'https://ENVIRON.corepointinc.com/CorePointSVC/CorePointServices.svc',
             },
         },
@@ -92,7 +93,7 @@ CONFIG_DEFAULTS = {
             "default_value": None,
             "field_properties": {
                 "type": "CharField",
-                "required": False,
+                "required": True,
                 "help_text": "Location of Corepoint syncronization executable",
                 "initial": 'c:\\corepoint\\',
             },
@@ -101,7 +102,7 @@ CONFIG_DEFAULTS = {
             "default_value": 'CorePointWebServiceConnector.exe',
             "field_properties": {
                 "type": "CharField",
-                "required": False,
+                "required": True,
                 "help_text": "Corepoint syncronization executable file name",
             },
         },
@@ -109,14 +110,16 @@ CONFIG_DEFAULTS = {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help_text": "The time the Corepoint Export last ran"
+                "help_text": "The time the Corepoint Export last ran",
+                "required": True,
             },
         },
         CONFIG_BOOL_EXPORT: {
             "default_value": 'True,False',
             "field_properties": {
                 "type": "CharField",
-                "help_text": "values to use for True and False during export specifed as <True Value>,<False Value>"
+                "help_text": "values to use for True and False during export specifed as <True Value>,<False Value>",
+                "required": True,
             },
         },            
     },
@@ -127,14 +130,13 @@ CONFIG_DEFAULTS = {
                 "type": "CharField",
                 "help_text": "Email domain for users",
                 "inital": "example.com",
-                "required": False
             },
         },
         EMPLOYEE_SUPER_DESIGNATIONS: {
             "default_value": '([sS]upervisor|[lL]ead|[Mm]anager|[dD]irector|[vV]Vice [Pp]resident|[Vv][Pp]|[Cc][Ee][Oo])',
             "field_properties": {
                 "type": "RegexField",
-                "help_text": "Regular expresion search string used to match Jobs to a Supervisor role"
+                "help_text": "Regular expresion search string used to match Jobs to a Supervisor role",
             },
         },
     },

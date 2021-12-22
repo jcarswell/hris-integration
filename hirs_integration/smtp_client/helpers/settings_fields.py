@@ -27,6 +27,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "SMTP server for sending emails",
+                "required": True,
             },
         },            
         SERVER_PORT: {
@@ -34,6 +35,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "IntegerField",
                 "help_text": "SMTP server port",
+                "required": True,
             },
         },
         SERVER_TLS: {
@@ -41,7 +43,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use StartTLS",
-                "required": False,
             },
         },
         SERVER_SSL: {
@@ -49,7 +50,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "label": "Use SSL",
-                "required": False,
             },
         },
         SERVER_USERNAME: {
@@ -57,7 +57,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "SMTP server username",
-                "required": False,
                 "label": "Server Username (Optional)",
             },
         },
@@ -67,7 +66,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "SMTP server password",
-                "required": False,
                 "label": "Server Password (Optional)",
             },
         },
@@ -76,7 +74,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Email address the emails should come from",
-                "required": False,
             },
         },
     },
@@ -86,7 +83,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Subject line prefix",
-                "required": False,
             },
         },
     },

@@ -81,13 +81,11 @@ class CsvSetting():
             i.setting = self.PATH_FORMAT % (field,'import')
             i.value = str(enable)
             i.field_properties["type"] = "BooleanField"
-            i.field_properties["required"] = False
             i.save()
             i = Setting()
             i.setting = self.PATH_FORMAT % (field,'map_to')
             i.value = map_to
             i.field_properties["type"] = 'ChoiceField'
-            i.field_properties["required"] = False
             i.field_properties["choices"] = 'validators.import_field_map_to'
             i.save()
 

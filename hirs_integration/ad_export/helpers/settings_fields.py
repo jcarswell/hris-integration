@@ -49,7 +49,6 @@ CONFIG_DEFAULTS = {
                 "type": "CharField",
                 "help_text": "AD Import User (Not Used)",
                 "disabled": True,
-                "required": False,
             },
         },
         CONFIF_AD_PASSWORD: {
@@ -59,7 +58,6 @@ CONFIG_DEFAULTS = {
                 "type": "CharField",
                 "help_text": "AD Import Password (Not Used)",
                 "disabled": True,
-                "required": False,
             },
         },
         CONFIG_UPN: {
@@ -76,7 +74,6 @@ CONFIG_DEFAULTS = {
                 "type": "CharField",
                 "help_text": "The domain name that your users use to login.",
                 "initial": 'you.mail.onmicrosoft.com',
-                "required": False,
             },
         },
         CONFIG_IMPORT_FORM: {
@@ -84,7 +81,8 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "CharField",
                 "help_text": "Class to use to export users to AD",
-                "validators": ["validators.import_validator"]
+                "validators": ["validators.import_validator"],
+                "required": True,
             },
         },
         CONFIG_ENABLE_MAILBOXES: {
@@ -92,7 +90,6 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Enable mailboxed for new users",
-                "required": False,
             },
         },
         CONFIG_MAILBOX_TYPE: {
@@ -107,7 +104,8 @@ CONFIG_DEFAULTS = {
             "default_value": '1999-01-01 00:00',
             "field_properties": {
                 "type": "DateTimeField",
-                "help_text": "The time the AD Export last ran"
+                "help_text": "The time the AD Export last ran",
+                "required": True,
             },
         },            
     },
@@ -117,14 +115,12 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Disable user accounts when they are on leave",
-                "required": False,
             },
         },
         EMPLOYEE_LEAVE_GROUP_ADD: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
                 "help_text": "Comma seperated list of groups names to add when a user goes on leave",
              },
         },
@@ -132,7 +128,6 @@ CONFIG_DEFAULTS = {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
                 "help_text": "Comma seperated list of groups names to remove when a user goes on leave",
              },
         },
@@ -142,35 +137,30 @@ CONFIG_DEFAULTS = {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_PHONE: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_FAX: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_STREET: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_PO: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
                 "label": "PO Box Number"
              },
         },
@@ -178,28 +168,24 @@ CONFIG_DEFAULTS = {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_STATE: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_ZIP: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
         DEFAULT_COUNTRY: {
             "default_value": None,
              "field_properties": {
                 "type": "CharField",
-                "required": False,
              },
         },
     }

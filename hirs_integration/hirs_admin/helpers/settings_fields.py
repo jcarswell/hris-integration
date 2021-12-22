@@ -1,5 +1,4 @@
 from pyad.adbase import ADBase
-from django.utils.translation import gettext_lazy as _t
 
 GROUP_CONFIG = 'global_settings'
 CONFIG_CAT = 'configuration'
@@ -12,9 +11,10 @@ CONFIG_DEFAULTS = {
             "default_value": ADBase().default_domain,
             "field_properties": {
                 "type":"CharField",
-                "help_text": "Base DN Search for the GUI"
+                "help_text": "Base DN Search for the GUI",
+                "required": True,
+                "validators": ["validators.DnValidator"],
                 },
-            "validators": ["validators.DnValidator"],
         }
     }
 }

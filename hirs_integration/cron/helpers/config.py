@@ -77,20 +77,20 @@ def set_job(name, path, schedule, args, state):
     query_path = GROUP_JOBS + Setting.FIELD_SEP + name + Setting.FIELD_SEP + '%s'
     field_properties_schedule = {
         "type": "CharField",
-        "validators": ["validators.cron_validator"]
+        "validators": ["validators.cron_validator"],
+        "required": True,
     }
     field_properties_path = {
         "type": "CharField",
         "help": "Path to executable or module to excute",
+        "required": True,
     }
     field_properties_args = {
         "type": "CharField",
         "help": "Flags or arguments to pass to the executable",
-        "required": False            
     }
     field_properties_state = {
         "type": "BooleanField",
-        "required": False,
     }
 
     def save(setting,value,fp):
