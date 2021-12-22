@@ -155,6 +155,8 @@ class FieldConversion:
         if not hasattr(self,'value'):
             return ""
         try:
-            return eval(f"self.{self.value}")()
+            return eval(f"self.{self.value.__class__.__name__}")()
         except NameError:
+            return str(self.value)
+        except AttributeError:
             return str(self.value)
