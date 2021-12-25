@@ -28,7 +28,7 @@ def cron_validator(value):
     
     cron = value.split()
     if len(cron) != 5:
-        raise ValidationError(f"Cron schedule should be 6 segments. got {len(cron)}")
+        raise ValidationError(f"Cron schedule should be 5 segments. got {len(cron)}")
     
     # cron[0] == minute
     char_validate(list(cron[0]))
