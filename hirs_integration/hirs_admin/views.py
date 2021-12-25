@@ -326,7 +326,7 @@ class Settings(TemplateResponseMixin, LoggedInView):
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"got post with data: {request.POST}")
-        errors = []
+        errors = {}
         for html_id,val in request.POST.items():
             if html_id != '':
                 try:
@@ -341,18 +341,20 @@ class Settings(TemplateResponseMixin, LoggedInView):
                         setting.save()
                 except ValueError:
                     logger.debug(f"Item {html_id} is not a valid setting ID")
-                    errors.append(html_id)
+                    errors[html_id] = None
                 except TypeError:
                     logger.debug(f"Caughht TypeError setting up field for {html_id}")
                 except ValidationError as e:
                     logger.debug(f"Caught validationError - {iter(e)}")
                     if hasattr(e,'error_list'):
-                        errors.extend(html_id)
+                        errors[html_id] = str(e)
 
-        if errors == []:
+        if errors == {}:
            return JsonResponse({"status":"success"})
         else:
-            return JsonResponse({"status":"error","feilds":errors})
+            return JsonResponse({"status":"error",
+                                 "feilds":list(errors.keys()),
+                                 "errors":list(errors.values())})
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
