@@ -11,7 +11,6 @@ from pyad.adquery import ADQuery
 from pyad.aduser import ADUser
 from base64 import b64encode
 from hirs_admin.models import set_username
-from ad_export.excpetions import ADResultsError,UserDoesNotExist
 from smtp_client.smtp import Smtp
 from distutils.util import strtobool
 from time import time
@@ -20,6 +19,7 @@ from django.conf import settings
 from pywintypes import com_error
 
 from .helpers import config
+from .exceptions import ADResultsError,UserDoesNotExist
 
 logger = logging.getLogger('ad_export.ad_export')
 

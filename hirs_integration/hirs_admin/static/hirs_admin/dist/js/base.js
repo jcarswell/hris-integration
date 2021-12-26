@@ -40,4 +40,5 @@ function set_nav() {
 
 $(function() {
   set_nav();
+  $('input[type=password]').attr('autocomplete','false')
 });
