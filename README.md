@@ -1,5 +1,5 @@
-# HRIS Syncronization System
-HRIS Synconization System is developed to act as a go between for hirs
+# HIRS Syncronization System
+HIRS Synconization System is developed to act as a go between for hirs
 system that only dumps employee data to a csv file hosted on a sftp site.
 This system once configued will fetch the latest files from the sftp 
 server and and import them using the configured csv form. it will then
@@ -33,7 +33,7 @@ settings.
 11. Enable Cron in the settings
 
 ## Copyright
-HRIS Syncronization System is licenesed under GNU GLP v3
+HIRS Syncronization System is licenesed under GNU GLP v3
 copyright 2021 West Country Hosting
 
 ## Overriding export forms

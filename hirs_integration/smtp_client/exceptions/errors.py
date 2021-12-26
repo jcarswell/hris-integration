@@ -1,15 +1,13 @@
-from common.exceptions import HrisIntegrationBaseError
-
-class SmtpClientBaseError(HrisIntegrationBaseError):
+class BaseException(Exception):
     pass
 
 
-class ConfigError(SmtpClientBaseError):
+class ConfigError(BaseException):
     pass
 
 
-class SmtpServerError(SmtpClientBaseError):
+class SmtpServerError(BaseException):
     pass
 
-class SmtpToInvalid(SmtpClientBaseError):
+class SmtpToInvalid(BaseException):
     pass

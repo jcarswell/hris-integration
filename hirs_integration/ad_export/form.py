@@ -13,7 +13,7 @@ from django.conf import settings
 from time import time
 from pywintypes import com_error
 
-from .exceptions import ADResultsError
+from .excpetions import ADResultsError
 from .helpers import config
 from .helpers.ad_interface import AD
 

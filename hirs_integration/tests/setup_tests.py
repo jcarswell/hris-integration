@@ -218,7 +218,7 @@ def send_email():
 if __name__ == "__main__":
     import os
     if not hasattr(os.environ,'DJANGO_SETTINGS_MODULE'):
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hris_integration.settings')
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hirs_integration.settings')
         import django
         django.setup()
 

@@ -9,13 +9,13 @@ import os
 from pathlib import Path
 
 sys.path.append(Path(__file__).resolve.parent.parrent)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'hris_integration.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'hirs_integration.settings'
 
 from django.conf import settings
 
 class AppServerSvc (win32serviceutil.ServiceFramework):
-    _svc_name_ = "hris_integration_cron"
-    _svc_display_name_ = "HRIS Integration Cron runner"
+    _svc_name_ = "hirs_integration_cron"
+    _svc_display_name_ = "HIRS Integration Cron runner"
 
     def __init__(self,args):
         win32serviceutil.ServiceFramework.__init__(self,args)

@@ -1,26 +1,24 @@
-from common.exceptions import HrisIntegrationBaseError
-
-class AdExportBaseError(HrisIntegrationBaseError):
+class BaseException(Exception):
     pass
 
 
-class ADResultsError(AdExportBaseError):
+class ADResultsError(BaseException):
     """The specified job already exists"""
     def __init__(self, *args, row_count:int =None) -> None:
         self.row_count = row_count
         super().__init__(*args)
 
 
-class UserDoesNotExist(AdExportBaseError):
+class UserDoesNotExist(BaseException):
     """The Request user doesn't exist"""
     pass
 
 
-class ConfigError(AdExportBaseError):
+class ConfigError(BaseException):
     """Raised when there is an issue with the configuration"""
     pass
 
 
-class ADCreateError(AdExportBaseError):
+class ADCreateError(BaseException):
     """Raised when creating and AD Object Fails"""
     pass

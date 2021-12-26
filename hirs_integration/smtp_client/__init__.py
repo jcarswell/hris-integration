@@ -4,5 +4,5 @@ from .exceptions import SmtpServerError,SmtpToInvalid,ConfigError
 __all__ = ('SmtpClientConfig','setup','SmtpServerError','SmtpToInvalid')
 
 def setup():
-    """No setup task required for this module"""
-    pass
+    from .helpers import config
+    config.configuration_fixures()

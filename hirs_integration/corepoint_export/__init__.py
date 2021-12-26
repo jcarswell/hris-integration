@@ -2,7 +2,9 @@ from .exceptions import ConfigError
 __all__ = ("setup","run","ConfigError")
 
 def setup():
+    from .helpers import config
     from cron.helpers.job_manager import Job
+    config.configuration_fixures()
     cj = Job('corepoint_export')
     cj.new('corepoint_export.run','0 4 * * *')
 

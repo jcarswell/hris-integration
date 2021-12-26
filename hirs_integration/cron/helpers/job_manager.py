@@ -4,7 +4,7 @@ import logging
 
 from .data_structures import CronJob
 from . import config
-from cron.exceptions import AlreadyExists,ModuleOrMethodInvalid
+from cron.excpetions import AlreadyExists,ModuleOrMethodInvalid
 
 logger = logging.getLogger("cron.job_manager")
 

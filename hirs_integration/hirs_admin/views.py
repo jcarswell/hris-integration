@@ -9,13 +9,10 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
 from django.contrib.auth.views import redirect_to_login
 from django.utils.safestring import mark_safe
-from django.core.exceptions import ValidationError
 from django.urls import resolve
 from django.forms.widgets import Select
-from copy import deepcopy
 
-from .helpers import settings_view,config
-from .fields import SettingFieldGenerator
+from .helpers import settings_view
 from . import models
 
 logger = logging.getLogger('hirs_admin.view')
@@ -186,12 +183,10 @@ class FormView(TemplateResponseMixin, LoggedInView):
             save_data = self._form.save()
         else:
             logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
-            ers = []
-            for e in self._form._errors.values():
-                ers.append("<br>".join(e))
+            errors = self._form._errors.keys()
             return JsonResponse({'status':'error',
-                                 'fields':list(self._form._errors.keys()),
-                                 'errors':ers})
+                                 'fields':errors,
+                                 'msg':"Please correct the highlighted fields"})
 
         return JsonResponse({'status':'success','id':save_data.pk})
 
@@ -228,7 +223,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         except Exception as e:
             logger.exception(f'lazy catch of {e}')
             return HttpResponseBadRequest(str(e))
-
+            
 
 class Employee(TemplateResponseMixin, LoggedInView):
     #http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']
@@ -245,7 +240,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
             emp_id = kwargs['id']
         except KeyError:
             emp_id = None
-
+ 
         logger.debug(f"Employee ID: {emp_id}")
 
         if emp_id == None:
@@ -307,13 +302,14 @@ class Employee(TemplateResponseMixin, LoggedInView):
         if errors == []:
             return JsonResponse({"status":"success","fields":errors})
         else:            
-            return JsonResponse({"status":"error","fields":errors,"errors":"Error saving fields, please review the highlited fields."})
+            return JsonResponse({"status":"error","fields":errors,"message":"Error saving fields"})
 
 
 class Settings(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Settings'
     template_name = 'hirs_admin/settings.html'
+
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -329,39 +325,22 @@ class Settings(TemplateResponseMixin, LoggedInView):
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"got post with data: {request.POST}")
-        errors = {}
-        for html_id,val in request.POST.items():
-            if html_id != '':
-                try:
-                    setting = config.setting_parse(html_id=html_id)
-                    base_field,base_value = SettingFieldGenerator(setting)
-                    logger.debug(f"Checking {html_id}")
-                    if base_value.value != str(val):
-                        base_field.to_python(val)
-                        base_field.run_validators(val)
-                        base_value(val)
-                        logger.debug(f"Field updated and validated {base_value}")
-                        setting.value = str(base_value.value)
-                        setting.save()
-                except ValueError:
-                    logger.debug(f"Item {html_id} is not a valid setting ID")
-                    errors[html_id] = None
-                except TypeError:
-                    logger.debug(f"Caughht TypeError setting up field for {html_id}")
-                except ValidationError as e:
-                    logger.debug(f"Caught validationError - {iter(e)}")
-                    if hasattr(e,'error_list'):
-                        errors[html_id] = e
+        errors = []
+        for pk,val in request.POST.items():
+            try:
+                pk = int(pk)
+            except ValueError:
+                logger.debug(f"Item {pk} is not a valid setting ID")
+                errors.append(pk)
+            else:
+                setting = models.Setting.o2.get(pk=pk)
+                setting.value = val
+                setting.save()
 
-        if errors == {}:
+        if errors == []:
            return JsonResponse({"status":"success"})
         else:
-            ers = []
-            for e in errors.values():
-                ers.append("<br>".join(e))
-            return JsonResponse({"status":"error",
-                                 "fields":list(errors.keys()),
-                                 "errors":ers})
+            return JsonResponse({"status":"error","feilds":errors})
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
@@ -438,7 +417,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 errors.append(f"failed to find employee {id}")
             else:
                 CsvImport(json.loads(pending_emp,csv.row_data))
-
+        
         if errors:
             return JsonResponse({"status":"error","feilds":errors})
         else:

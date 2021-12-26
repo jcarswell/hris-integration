@@ -1,8 +1,7 @@
-from .apps import HrisAdminConfig
-from .exceptions import RenderError
+from .apps import HirsAdminConfig
 
-__all__ = ('HrisAdminConfig','setup','RenderError')
+__all__ = ('HirsAdminConfig','setup')
 
 def setup():
-    """No setup tasks required for this module"""
-    pass
+    from .helpers import config
+    config.configuration_fixures()

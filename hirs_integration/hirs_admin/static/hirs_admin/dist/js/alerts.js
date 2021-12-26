@@ -1,35 +1,19 @@
-function doneProcess(ret_data,focus) {
-  $('.is-invalid',focus).removeClass("is-invalid");
-  $('.alert').alert('close');
-  createAlert();
+function doneProcess(ret_data) {
   if (ret_data["status"] != "success") {
-    $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-    $('#alert-inner').html(ret_data['errors'].join('<br>'));
+    $('.alert').text(ret_data["message"]);
+    $('.alert').alert();
     $('.alert').addClass("alert-danger");
-    ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
-    $('#alert-container').removeClass('d-none')
+    ret_data["fields"].forEach(i => {$("input[name="+i+"]").addClass('is-invalid');})
+
   } else {
-    $('button:submit',focus).removeClass('btn-primary').removeClass('btn-danger').addClass('btn-success');
-    $('#alert-container').addClass("d-none");
+    $('.alert').text("Success");
+    $('.alert').alert();
+    $('.alert').addClass("alert-sucess");
+    $('.is-invalid').removeClass("is-invalid");
   }
 }
-function errorProcess(jqXHR,status,error,focus) {
-  $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-  $('#alert-container').removeClass('d-none');
-  $(".alert").addClass('alert-danger');
-  $("#alert-inner").html("<storng>"+status+":</strong> "+error);
+function errorProcess(jqXHR,status,error) {
+  $('.alert').text("A Server error occured: " + status);
+  $('.alert').alert();
+  $('.alert').addClass("alert-danger");
 }
-function createAlert() {
-  var alertBody = `  <div class="alert" role="alert">
-  <div id="alert-inner"></div>
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>`
-  $('#alert-container').html(alertBody);
-}
-
-$('.alert').on('closed.bs.alert',function() {
-  $('#alert-container').addClass('d-none');
-  createAlert();
-})

@@ -1,10 +1,6 @@
 {% extends "hirs_admin/base.html" %}
 {% load i18n static %}
 
-{% block extra_style %}
-<link rel="stylesheet" href="{% static 'hirs_admin/dist/css/base.css' %}">
-{% endblock %}
-
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
@@ -17,14 +13,13 @@
 {% endblock %}
 
 {% block content %}
-<div id="alert-container" class="row d-none"></div>
 <div class="container">
   {% block feild_set %}
   <form id="form_list" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
     {% csrf_token %}
     {{ form.as_form }}
     <div class="form-row">
-      <button type="submit" name="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+      <button type="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
     </div>
   </form>
   {% endblock %}
@@ -38,19 +33,10 @@
 var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
-  form = $(this);
-  data = $(this).serializeArray();
+  data = $(this).serializeArray()
   $("#form_list input:disabled").each(function(i,e) {
     data.push({name:e.name,value:e.value});
   })
-  var b = 'submit';
-  for(i=0;i<data.length;i++) {
-    if (data[i].name == 'submit' || data[i].name == 'submit-new') {
-      b = data[i].name;
-      data.pop(i);
-      break;
-    }
-  }
 
   $.ajax({
     method: "POST",
@@ -58,16 +44,13 @@ $("#form_list").submit(function(e) {
     data: data
   })
   .done(function(data) {
-    doneProcess(data,form);
+    doneProcess(data);
     if (data["status"] == "success") {
-      if (data["id"] !== undefined) {
-        if (b == 'submit') {
-          location.replace(get_basepath() + data["id"] + '/');
-        } else if (b == 'submit-new') {
-          $(this).reset();
-          location.reload(true);
-        }
-      } else {location.replace(get_basepath());}
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-success')
+      if (data["id"] !== undefined) {location.replace(get_basepath() + data["id"] + '/');}
+      else {location.replace(get_basepath());}
+    } else {
+      $('form[id=form_list] button:submit').removeClass('btn-primary').addClass('btn-danger');
     }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
@@ -92,8 +75,6 @@ $(function() {
     if (id !== undefined) {
       id.disabled = false;
       id.readOnly = false;
-      //$('<input type="submit" name="submit-new" class="btn btn-primary" style="margin: 4pt 0 0 auto;" value="Submit & New"/>').insertBefore($('input[name=submit]'));
-      //$('button[name=submit]').attr('style','margin: 4pt 0 0 4pt;');
     }
   }
   const csrftoken = getCookie('csrftoken')

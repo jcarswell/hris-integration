@@ -1,8 +1,6 @@
-from common.exceptions import HrisIntegrationBaseError
-
-class CorepointExportBaseError(HrisIntegrationBaseError):
+class BaseException(Exception):
     pass
 
 
-class ConfigError(CorepointExportBaseError):
+class ConfigError(BaseException):
     pass
