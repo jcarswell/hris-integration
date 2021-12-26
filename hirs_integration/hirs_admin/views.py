@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
 from django.urls import resolve
 from django.forms.widgets import Select
+from copy import deepcopy
 
 from .helpers import settings_view,config
 from .fields import SettingFieldGenerator
@@ -333,11 +334,12 @@ class Settings(TemplateResponseMixin, LoggedInView):
                     setting = config.setting_parse(html_id=html_id)
                     base_field,base_value = SettingFieldGenerator(setting)
                     logger.debug(f"Checking {html_id}")
-                    if val != base_value.value:
+                    if base_value.value != str(val):
+                        base_field.to_python(val)
                         base_field.run_validators(val)
                         base_value(val)
                         logger.debug(f"Field updated and validated {base_value}")
-                        setting.value = str(val)
+                        setting.value = str(base_value.value)
                         setting.save()
                 except ValueError:
                     logger.debug(f"Item {html_id} is not a valid setting ID")
@@ -347,14 +349,17 @@ class Settings(TemplateResponseMixin, LoggedInView):
                 except ValidationError as e:
                     logger.debug(f"Caught validationError - {iter(e)}")
                     if hasattr(e,'error_list'):
-                        errors[html_id] = str(e)
+                        errors[html_id] = e
 
         if errors == {}:
            return JsonResponse({"status":"success"})
         else:
+            ers = []
+            for e in errors.values():
+                ers.append("<br>".join(e))
             return JsonResponse({"status":"error",
                                  "fields":list(errors.keys()),
-                                 "errors":list(errors.values())})
+                                 "errors":ers})
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
