@@ -8,8 +8,7 @@
 <div>
 {% endblock %}
 {% block content %}
-<div class="alert">
-</div>
+<div id="alert-container" class="row d-none"></div>
 <div class="container">
   <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {%if employee.middlename %}{{ employee.middlename}}{% endif %}
    {{ employee.surname }} {% if employee.suffix %}{{ employee.suffix }}{% endif %}</h2>
@@ -144,17 +143,16 @@ function validCheck() {
 }
 $(function() {
   $('#'+employee.location).attr("default", true);
-  itemsOverride = convertSerializedArrayToHash($("#override-form").serializeArray());
   $("#employee-form input[type=file]")[0].onchange = validCheck;
   const csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
     headers: { "X-CSRFToken": csrftoken }
   });
-  $(".alert").addClass("d-none");
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
-  data = $(this).serializeArray()
+  form = $(this);
+  data = $(this).serializeArray();
   $("#override-form input:disabled").each(function(i,e) {
     data.push({name:e.name,value:e.value});
   })
@@ -167,39 +165,30 @@ $("#override-form").submit(function(e) {
     headers: { "X-CSRFToken": getCookie('csrftoken') }
   })
   .done(function(r) {
-    doneProcess(r);
-    if (r["status"] == "success") {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success');
-    } else {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger');
-      $('.alert').removeClass("d-none");
-      $('.alert').text(r["message"]);
-      $('.alert').alert();
-      $('.alert').addClass("alert-danger");
-      r["fields"].forEach(i => {$("input[name="+i+"]").addClass('is-invalid');})
-      console.debug(r)
+    doneProcess(r,form);
     }
   })
   .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 $("#employee-form").submit(function(e) {
   e.preventDefault();
+  form = $(this);
   if (validCheck() === false){
-      e.stopPropagation()
-      return false
+      e.stopPropagation();
+      return false;
   }
   
   const fd = new FromData();
   file = $(this).querySelector('input[type=file]').files[0]
   fd.append('form','employee')
-  fd.append('photo',file)    
+  fd.append('photo',file);
 
   $.ajax({
     method: "POST",
     url: location.href,
     data: fd.serialize()
   })
-  .done(function(data) {doneProcess(data);})
+  .done(function(data) {doneProcess(data,form);})
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 -->
