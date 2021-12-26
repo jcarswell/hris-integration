@@ -2,7 +2,6 @@ import pyodbc
 import logging
 
 from django.db import utils
-from typing import Set
 
 from .config import CONFIG_CAT,BASE_DN,get_config
 from .adquery import AD

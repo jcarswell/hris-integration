@@ -1,21 +1,23 @@
-class BaseException(Exception):
+from common.exceptions import HrisIntegrationBaseError
+
+class FtpImportBaseError(HrisIntegrationBaseError):
     pass
 
 
-class CSVParsingException(BaseException):
+class CSVParsingException(FtpImportBaseError):
     """ Raised when there is an issue with parsing the CSV File """
     pass
 
 
-class ConfigurationError(BaseException):
+class ConfigurationError(FtpImportBaseError):
     """ Raised when the configuration provided is invalid """
     pass
 
 
-class SFTPIOError(BaseException):
+class SFTPIOError(FtpImportBaseError):
     """ Rasied when their issues accessing files from the server """
 
 
-class ObjectCreationError(BaseException):
+class ObjectCreationError(FtpImportBaseError):
     """ Raised when there is an issue creating an object """
     pass

@@ -13,7 +13,7 @@ from django.conf import settings
 from time import time
 from pywintypes import com_error
 
-from .excpetions import ADResultsError
+from .exceptions import ADResultsError
 from .helpers import config
 from .helpers.ad_interface import AD
 
@@ -31,48 +31,52 @@ class BaseExport:
 
     def run(self):
         for employee in self.employees:
-            user = None
-            if self._ad.user_exists(employee):
-                try:
-                    user = self.get_user(employee)
-                    logger.debug(f"Got AD user object for {str(employee)}")
-                    self._ad.move(user,employee)
-                except ADResultsError as e:
-                    if e.row_count:
-                        self.errors.append(f"{str(employee)} is in conflict with {e.row_count} AD user objects")
-                        logger.warning(f"Employee {str(employee)} is in conflict with existing AD Users")
+            try:
+                user = None
+                if self._ad.user_exists(employee):
+                    try:
+                        user = self.get_user(employee)
+                        logger.debug(f"Got AD user object for {str(employee)}")
+                        self._ad.move(user,employee)
+                    except ADResultsError as e:
+                        if e.row_count:
+                            self.errors.append(f"{str(employee)} is in conflict with {e.row_count} AD user objects")
+                            logger.warning(f"Employee {str(employee)} is in conflict with existing AD Users")
+                            user = 0
+                        else:
+                            pass
+                if user == None and employee.status: # user must be None not 0 or False
+                    employee = self.new_user_pre(employee)
+                    try:
+                        user = self._ad.create_user(employee)
+                        self.new_user_post(employee,user)
+                        self.new_users.append(str(employee))
+                    except Exception as e:
+                        self.errors.append(f"Failed to create user {str(employee)} - {str(e)}")
+                        logger.exception(f"Error creating user {str(employee)}")
                         user = 0
-                    else:
-                        pass
-            if user == None: # user must be None not 0 or False
-                employee = self.new_user_pre(employee)
-                try:
-                    user = self._ad.create_user(employee)
-                    self.new_user_post(employee,user)
-                    self.new_users.append(str(employee))
-                except Exception as e:
-                    self.errors.append(f"Failed to create user {str(employee)} - {str(e)}")
-                    logger.exception(f"Error creating user {str(employee)}")
-                    user = 0
-            if user:
-                try:
-                    self.update_user(employee,user)
-                    self.update_user_extra(employee,user)
-                    user._flush() #ensure that updates are committed
-                    self.update_groups(employee,user)
-                    if employee.merge:
-                        logger.debug(f"purging pending employee record for {employee}")
-                        employee.purge_pending()
-                except com_error as e:
-                    logger.warn(f'Caught Error updating user {str(e)}. Trying to backoff for 60s')
-                    sleep(60)
-                    self.update_user(employee,user)
-                    self.update_user_extra(employee,user)
-                    user._flush() #ensure that updates are committed
-                except Exception as e:
-                    logger.exception(f"Caught {str(e)} while updating employee {str(employee)}")
-                    self.errors.append(f"Failed to update {str(employee)} - Error {str(e)}")
-                    user.flush()
+                if user:
+                    try:
+                        self.update_user(employee,user)
+                        self.update_user_extra(employee,user)
+                        user._flush() #ensure that updates are committed
+                        self.update_groups(employee,user)
+                        if employee.merge:
+                            logger.debug(f"purging pending employee record for {employee}")
+                            employee.purge_pending()
+                    except com_error as e:
+                        logger.warn(f'Caught Error updating user {str(e)}. Trying to backoff for 60s')
+                        sleep(60)
+                        self.update_user(employee,user)
+                        self.update_user_extra(employee,user)
+                        user._flush() #ensure that updates are committed
+                    except Exception as e:
+                        logger.exception(f"Caught {str(e)} while updating employee {str(employee)}")
+                        self.errors.append(f"Failed to update {str(employee)} - Error {str(e)}")
+                        user.flush()
+            except Exception as e:
+                # Try to capture edge case where pyad throws an unexpected error
+                logger.error(f"Caught unexpexted error processing {employee}. \n\tError: {e}")
 
         if self.new_users:
             msg = "The following new users have been add:" + ('\n- ').join(self.new_users)
@@ -101,9 +105,8 @@ class BaseExport:
 
     def new_user_post(self,employee:config.EmployeeManager,user:ADUser) -> None:
         """To be implemented in a sub-class. Perform and modifcation to the user after creation"""
-        if employee.pending:
-            employee.employee.guid=str(user.guid)
-            employee.employee.save()
+        employee.employee.guid=str(user.guid)
+        employee.employee.save()
 
     def update_user(self,employee:config.EmployeeManager,user:ADUser) -> None:
         attribs = {

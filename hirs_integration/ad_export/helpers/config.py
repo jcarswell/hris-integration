@@ -1,6 +1,7 @@
 import logging
-from typing import Union
 
+from typing import Union,Any
+from common.functions import ConfigurationManagerBase
 from django.db.models import Q
 from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
@@ -9,114 +10,25 @@ from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
 from datetime import datetime
 from pyad import ADGroup
 
+from .settings_fields import * # Yes I hate this, deal with it!
+
 #CONST REFERANCES
 STAT_LEA = Employee.STAT_LEA
 STAT_TERM = Employee.STAT_TERM
 STAT_ACT = Employee.STAT_ACT
 
-GROUP_CONFIG = 'ad_export'
-CONFIG_CAT = 'configuration'
-EMPLOYEE_CAT = 'employee_configurations'
-DEFAULTS_CAT = 'user_defaults'
-CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
-EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
-EMPLOYEE_LEAVE_GROUP_ADD = 'leave_groups_add'
-EMPLOYEE_LEAVE_GROUP_DEL = 'leave_groups_remove'
-DEFAULT_ORG = 'orginization'
-DEFAULT_PHONE = 'office_phone'
-DEFAULT_FAX = 'fax_number'
-DEFAULT_STREET = 'street_address'
-DEFAULT_PO = 'po_box'
-DEFAULT_CITY = 'city'
-DEFAULT_STATE = 'province_or_state'
-DEFAULT_ZIP = 'zip_or_postal_code'
-DEFAULT_COUNTRY = 'country'
-CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
-CONFIG_LAST_SYNC = 'last_sycronization_run'
-CONFIG_AD_USER = 'ad_export_user'
-CONFIF_AD_PASSWORD = 'ad_export_password'
-CONFIG_UPN = 'ad_upn_suffix'
-CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
-CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
-CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
-CONFIG_IMPORT_FORM = 'export_model_form'
-
-CONFIG_DEFAULTS = {
-    CONFIG_CAT: {
-        CONFIG_NEW_NOTIFICATION:'',
-        CONFIG_AD_USER: '',
-        CONFIF_AD_PASSWORD: ['',True],
-        CONFIG_UPN: '',
-        CONFIG_ROUTE_ADDRESS: 'you.mail.onmicrosoft.com',
-        CONFIG_IMPORT_FORM: 'ad_export.form',
-        CONFIG_ENABLE_MAILBOXES: 'False',
-        CONFIG_MAILBOX_TYPE: 'local',
-        CONFIG_LAST_SYNC:'1999-01-01 00:00'
-    },
-    EMPLOYEE_CAT: {
-        EMPLOYEE_DISABLE_LEAVE: 'False',
-        EMPLOYEE_LEAVE_GROUP_ADD: '',
-        EMPLOYEE_LEAVE_GROUP_DEL: ''
-    },
-    DEFAULTS_CAT: {
-        DEFAULT_ORG: '',
-        DEFAULT_PHONE: '',
-        DEFAULT_FAX: '',
-        DEFAULT_STREET: '',
-        DEFAULT_PO: '',
-        DEFAULT_CITY: '',
-        DEFAULT_STATE: '',
-        DEFAULT_ZIP: '',
-        DEFAULT_COUNTRY: ''
-    }
-}
 
 logger = logging.getLogger('ad_export.config')
 
-def configuration_fixures():
-    def add_fixture(catagory,item,value):
-        PATH = GROUP_CONFIG + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+class Config(ConfigurationManagerBase):
+    root_group = GROUP_CONFIG
+    catagory_list = CATAGORY_SETTINGS
+    fixtures = CONFIG_DEFAULTS
+    Setting = Setting
 
-        hidden = False
-        
-        if type(value) == list and value[0] in [True,False]:
-            hidden=value[0]
-            value = value[1]
-        elif type(value) == list and value[1] in [True,False]:
-            hidden=value[1]
-            value = value[0]
-
-        obj,new = Setting.o2.get_or_create(setting=PATH % (catagory,item))
-        if new:
-            obj.setting = PATH % (catagory,item)
-            obj.hidden = hidden
-            obj.value = value
-            obj.save()
-        
-        return new
-
-    for key,val in CONFIG_DEFAULTS.items():
-        if type(val) == dict:
-            for item,data in val.items():
-                add_fixture(key,item,data)
-
-def get_config(catagory:str ,item:str) -> str:
-    if not catagory in CATAGORY_SETTINGS:
-        return ValueError(f"Invalid Catagory requested valid options are: {CATAGORY_SETTINGS}")
-
-    q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-    if item in CONFIG_DEFAULTS[catagory] and len(q) == 0:
-        configuration_fixures()
-        q = Setting.o2.get_by_path(GROUP_CONFIG,catagory,item)
-        if len(q) == 0:
-            logger.fatal("Failed to install fixture data")
-            raise SystemError(f"Installation of fixture data failed.")
-    elif len(q) == 0:
-        logger.error(f"Setting {GROUP_CONFIG}/{catagory}/{item} was requested but does not exist")
-        raise ValueError(f"Unable to find requested item {item}")
-
-    return q[0].value
-
+def get_config(catagory:str ,item:str) -> Any:
+    """Now depricated use Config instead to manage the value"""
+    return Config()(catagory,item)
 
 class EmployeeManager:
     def __init__(self,emp_object:Union[Employee,EmployeePending]) -> None:
@@ -172,6 +84,9 @@ class EmployeeManager:
 
         if self.__emp_pend.password:
             self.__qs_emp.password = self.__emp_pend.password
+        
+        if self.__emp_pend.guid:
+            self.__qs_emp.guid = self.__emp_pend.guid
 
         self.__qs_over.save()
 
@@ -351,9 +266,7 @@ class EmployeeManager:
 
     @property
     def guid(self) -> str:
-        if hasattr(self,'__qs_emp_pend'):
-            return self.__emp_pend.guid
-        elif hasattr(self.__qs_emp,'guid'):
+        if hasattr(self.__qs_emp,'guid'):
            return self.__qs_emp.guid
         else:
             return None

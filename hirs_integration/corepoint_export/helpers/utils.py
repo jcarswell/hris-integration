@@ -1,9 +1,10 @@
 from . import config
 
 class CSVSafe:
-    def __init__(self,input) -> str:
+    def parse(self,input) -> str:
         try:
             getattr(self,type(input).__name__)(input)
+            return self.__str__()
         except AttributeError:
             raise TypeError(f"{type(input)} is not valid for output")
 
@@ -16,9 +17,9 @@ class CSVSafe:
     def bool(self,input:bool):
         fmt = config.get_config(config.CAT_CONFIG,config.CONFIG_BOOL_EXPORT).split(',',2)
         if input:
-            self.value = fmt[1]
+            self.value = fmt[0]
         else:
-            self.value = fmt[2]
+            self.value = fmt[1]
 
     def bytes(self,input:bytes):
         self.str(input.decode('utf-8'))

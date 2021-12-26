@@ -61,7 +61,6 @@ class CsvImport():
 
         if len(new_fields) > 0:
             #Add the new fields to the configuration and re re-run parse_headers 
-            #TODO: Added some smart logic to try and parse feilds automagically
             conf = config.CsvSetting()
             conf.add(*new_fields)
             self.import_fields = conf.fields

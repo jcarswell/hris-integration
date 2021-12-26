@@ -1,10 +1,12 @@
 import logging
 import time
-from django.core.exceptions import ValidationError
+import json
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from datetime import datetime
 from cryptography.fernet import Fernet
+from copy import deepcopy
 from django import conf
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
@@ -213,9 +215,11 @@ class FieldEncryption:
             return self.key.encrypt(data.encode('utf-8')).decode('utf-8')
         except Exception as e:
             logger.critical("An Error occured encrypting the data provided")
-            raise ValueError from e
+            raise ValueError(e) from e
 
     def decrypt(self,data:bytes) -> str:
+        if data in (None,""):
+            return ""
         if not isinstance(data,bytes):
             data = data.encode('utf-8')
 
@@ -223,7 +227,7 @@ class FieldEncryption:
             return self.key.decrypt(data).decode('utf-8')
         except Exception as e:
             logger.critical("An Error occured decypting the data provided")
-            raise ValueError from e
+            raise ValueError(e) from e
 
 #######################
 #####            ######
@@ -246,11 +250,20 @@ class SettingsManager(models.Manager):
 
 class Setting(models.Model):
     """Application Settings"""
-    FIELD_SEP = '/'
     class Meta:
         db_table = 'setting'
-    setting = models.CharField(max_length=128,unique=True)
+
+    FIELD_SEP = '/'
+    DEFAULT_FIELD = 'CharField'
+    __BASE_PROPERTIES__ = {
+        'type': DEFAULT_FIELD,
+        'required': False,
+        'disabled': False,
+    }
+
+    setting = models.CharField(max_length=768,unique=True)
     _value = models.TextField(null=True,blank=True)
+    _field_properties = models.TextField(null=True,blank=True)
     hidden = models.BooleanField(default=False)
     
     o2 = SettingsManager()
@@ -268,7 +281,7 @@ class Setting(models.Model):
         if value == None:
             value = ''
         if not isinstance(value,str):
-            raise ValueError(f"Expected a str got {type(value)}")
+            raise ValueError(f"Expected a str got {value.__class__.__name__}")
         if self.hidden:
             self._value = FieldEncryption().encrypt(value)
         else:
@@ -277,14 +290,40 @@ class Setting(models.Model):
     def __str__(self):
         return f"{self.setting} - {self._value}"
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        try:
+            self.field_properties = json.loads(self._field_properties)
+        except json.decoder.JSONDecodeError as e:
+            if self._field_properties not in (None, ""):
+                # Continue the error if we are failing to decode actual data
+                raise e
+            self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
+            logger.debug(f"self.setting doesn't have field properties set yet")
+        except TypeError:
+            self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
+            logger.debug(f"self.setting doesn't have field properties set yet")
+
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         """Ensure the the value is encrypted if the feild is set as hidden"""
+        field_types = ('CharField','ChoiceField','DateField','BooleanField',
+                       'DecimalField','FloatField',
+                       'DateTimeField','RegexField','IntegerField')
+
         for char in instance.setting:
             if char not in ascii_letters + digits + instance.FIELD_SEP + '_-':
                 instance.setting.replace(char,'_')
+ 
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
             raise ValueError("setting does not contain proper format, should be group/catagory/item")
+
+        if instance.field_properties['type'] not in field_types:
+            raise ValueError(f"Field type must be one of {field_types}")
+        
+        if (not instance._field_properties or 
+                (json.loads(instance._field_properties) != instance.field_properties)):
+            instance._field_properties = json.dumps(instance.field_properties)
 
     @staticmethod
     def _as_text(text:str) -> str:
@@ -383,6 +422,7 @@ class Employee(models.Model):
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
     _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
+    guid = models.CharField(max_length=40,null=True,blank=True)
 
     def __eq__(self,other) -> bool:
         if not isinstance(other,Employee) or self.emp_id != other.pk:
@@ -688,6 +728,14 @@ class EmployeePhone(models.Model):
 
     def __str__(self):
         return f"{str(self.employee)} - {self.label} {self.number}"
+    
+    @property
+    def phone_label(self):
+        return self.label
+    
+    @phone_label.setter
+    def phone_label(self,value):
+        self.label = value
 
 
 class EmployeeAddress(models.Model):
@@ -705,6 +753,13 @@ class EmployeeAddress(models.Model):
     def __str__(self):
         return f"{str(self.employee)} - {self.label}"
 
+    @property
+    def address_label(self):
+        return self.label
+    
+    @address_label.setter
+    def address_label(self,value):
+        self.label = value
 
 class EmployeePending(models.Model):
     class Meta:

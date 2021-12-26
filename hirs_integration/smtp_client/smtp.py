@@ -3,6 +3,8 @@ import logging
 
 from distutils.util import strtobool
 from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import List, Union, AnyStr
 
 from .helpers import config
@@ -74,6 +76,43 @@ class Smtp:
         del self.__conn
         logger.debug("Server connection closed. Until next time.")
 
+    def mime_build(self, text:AnyStr, html:AnyStr, subject:AnyStr, to:Union[AnyStr,List[AnyStr]] =None) -> MIMEMultipart:
+        msg = MIMEMultipart('alternative')
+        msg['From'] = self.sender
+        if to:
+            if isinstance(to,list):
+                to = ", ".join(to)
+            msg['To'] = to
+        msg.attach(MIMEText(text, 'plain'))
+        msg.attach(MIMEText(html, 'html'))
+
+    def send_html(self,to:Union[AnyStr,List],msg:MIMEMultipart):
+        if isinstance(to,str):
+            to = to.split(',')
+        if not isinstance(to,list):
+            raise ValueError(f"'to' should be a string or list, got {type(to)}")
+        if not isinstance(msg,MIMEMultipart):
+            raise ValueError(f"expexted MIMEMultipart for msg got {type(msg)}")
+
+        self.connect()
+        if msg['To'] in None:
+            msg['To'] = to
+        try:
+            logger.debug(f"Trying to send email to {to}")
+            self.__conn.sendmail(self.sender,to,msg)
+        except smtplib.SMTPSenderRefused as e:
+            logger.exception('Sender does not have premission to send emails')
+            raise ConfigError("Sender does not have permission on the server") from e
+        except smtplib.SMTPRecipientsRefused as e:
+            errors = []
+            for u in to:
+                errors.append(f"Code: {e.recipients[u][0]}, Message: {e.recipients[u][1]}")
+            e_str = '\n\t'.join(errors)
+            logger.exception(f"Send email failed with the following errors: \n\t{e_str}")
+            raise SmtpToInvalid(f"Recievied the following errors: \n\t{e_str}")
+        
+        self.close()
+
     def send(self,to:Union[AnyStr,List],msg:str,subject:str):
         """Send an email message to the target recepient(s)
 
@@ -88,9 +127,10 @@ class Smtp:
             SmtpToInvalid: one or more requested target email address(es) rejected by the server
             SmtpServerError: SMTP Configuration is invalid
         """
+
         if isinstance(to,str):
             to = to.split(',')
-        elif not isinstance(to,list):
+        if not isinstance(to,list):
             raise ValueError(f"'to' should be a string or list, got {type(to)}")
         email = EmailMessage()
         email.set_content(msg)

@@ -1,3 +1,5 @@
+from cron.validators import cron_validator,ValidationError
+
 class CronJob:
     """A Dict like object that is setup spcifically to handle
     the schdule for a cron job. CronJob take one argument of
@@ -50,6 +52,11 @@ class CronJob:
 
     def setup(self,cron_schedule:str =None, **kwargs):
         if cron_schedule != None:
+            try:
+                cron_validator(cron_schedule)
+            except ValidationError as e:
+                raise ValidationError(str(e))
+
             sched = cron_schedule.split()
             if len(sched) != 5:
                 raise ValueError(f"Expected 5 segments got {len(sched)}")
@@ -69,8 +76,7 @@ class CronJob:
         self.month = self._to_list(self._MONTH or '*',list(range(1,13)))
         self.day_of_week = self._to_list(self._DAY_OF_WEEK or '*',list(range(7)))
 
-    @staticmethod    
-    def _to_list(val:str,default:list) -> list:
+    def _to_list(self,val:str,default:list) -> list:
         if val == "*":
             return default
 
@@ -83,8 +89,11 @@ class CronJob:
             return ret
 
         elif len(val.split(',')) > 1:
+            ret = []
+            for v in val.split(','):
+                ret.append(self._to_list(v))
             return val.split(',')
-        
+
         else:
             return [int(val)]
 
@@ -113,7 +122,7 @@ class CronJob:
             return getattr(self,__map[key])
         else:
             return KeyError
-    
+
     def __setitem__(self,key,value):
         if key in self._CRON_MAP.items():
             setattr(self,self._CRON_MAP[key],value)
@@ -126,5 +135,5 @@ class CronJob:
                     '_MINUTE','_HOUR','_DAY','_MONTH','_DAY_OF_WEEK']:
             if getattr(self,key,None) != getattr(o,key,None):
                 return False
-            
+
         return True

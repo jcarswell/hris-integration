@@ -27,15 +27,18 @@ function get_id() {
 
 function set_nav() {
   var loc = get_basepath();
-  $('nav li a').each(function() {
-    $this = $(this)[0];
-    ref = $this.getAttribute('href');
-    if (ref !== null && ref.indexOf(loc) !== -1) {
-      $this.setAttribute('class',$this.className + ' active');
-    }
-  });
+  if (loc !== '/') {
+    $('nav li a').each(function() {
+      $this = $(this)[0];
+      ref = $this.getAttribute('href');
+      if (ref !== null && ref.indexOf(loc) !== -1) {
+        $this.setAttribute('class',$this.className + ' active');
+      }
+    });
+  }
 }
 
 $(function() {
   set_nav();
+  $('input[type=password]').attr('autocomplete','false')
 });

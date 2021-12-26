@@ -145,11 +145,11 @@ class FTPClient:
             to = config.get_config(config.CAT_CSV,config.CSV_FAIL_NOTIF).split(',')
             if to:
                 s = Smtp()
-                s.send(to,Stats().as_html,"FTP Import Job")
+                msg = s.mime_build(Stats().as_text,Stats().as_html,subject="FTP Import Job",to=to)
+                s.send_html(to,msg)
         except SmtpToInvalid as e:
             logger.warning(str(e))
         except SmtpServerError:
             logger.error("Please review the SMTP server configuration")
         except ConfigError:
             logger.error("Please double check the configured SMTP Credentials")
-        

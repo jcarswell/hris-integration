@@ -1,41 +1,46 @@
 {% extends "hirs_admin/base.html" %}
 {% load static i18n%}
 
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'hirs_admin/dist/css/base.css' %}">
+{% endblock %}
+
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
   {% block toolbar %}{% endblock %}
 <div>
 {% endblock %}
+
 {% block content %}
+<div id="alert-container" class="row d-none"></div>
 <div class="container">
   <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {%if employee.middlename %}{{ employee.middlename}}{% endif %}
    {{ employee.surname }} {% if employee.suffix %}{{ employee.suffix }}{% endif %}</h2>
   <div class="row">
     <p class='col-sm'><strong>Status</strong><br>
     {% if employee.status == employee.STAT_LEA %}
-    On Leave
+    <span class="text-warning">On Leave</span>
     {% elif employee.status == employee.STAT_TERM %}
-    Terminated
+    <span class="text-danger">Terminated</span>
     {% else %}
-    Active
+    <span class="text-success">Active</span>
     {% endif %}</p>
+    <p class='col-sm'><strong>Given Name</strong><br>
+    {{ employee.givenname }}</p>
+    <p class='col-sm'><strong>Surname</strong><br>
+    {{ employee.surname }}</p>
+  </div>
+  <div class="row">
+    <p class='col-sm'><strong>Start Date</strong><br>
+    {{ employee.start_date }}</p>
     <p class='col-sm'><strong>Position</strong><br>
     {{ employee.primary_job.name }}</p>
     <p class='col-sm'><strong>Manager</strong><br>
     {{ employee.manager }}</p>
   </div>
-  <div class="row">
-    <p class='col-sm'><strong>Start Date</strong><br>
-    {{ employee.start_date }}</p>
-    <p class='col-sm'><strong>Username</strong><br>
-    {{ employee.username }}</p>
-    <p class='col-sm'><strong>Email Alias</strong><br>
-    {{ employee.email_alias }}</p>
-  </div>
   <hr style="border-top:2px solid #bbb;display:None;">
   <form style="display:None;" id="employee-form" enctype="multipart/form-data">
-    {% csrf_token %}
     <h4>Photo</h4>
     {% if employee.photo %}
     <img class="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{{ employee.photo }}">
@@ -52,12 +57,11 @@
   </form>
   <hr style="border-top:2px solid #bbb;">
   <form id="override-form">
-    {% csrf_token %}
     <h4>Overrides</h4>
     <div class="form-row">
       <div class="form-group col-md-4">
         <lable for="firstname">First Name</lable>
-        <input type="text" class="form-control" name="fistname" value="{{overrides.firstname}}" placeholder="{{employee.givenname}}">
+        <input type="text" class="form-control" name="firstname" value="{{overrides.firstname}}" placeholder="{{employee.givenname}}">
       </div>
       <div class="form-group col-md-4">
         <lable for="lastname">Last Name</lable>
@@ -144,7 +148,6 @@ function validCheck() {
 }
 $(function() {
   $('#'+employee.location).attr("default", true);
-  itemsOverride = convertSerializedArrayToHash($("#override-form").serializeArray());
   $("#employee-form input[type=file]")[0].onchange = validCheck;
   const csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
@@ -153,41 +156,44 @@ $(function() {
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
-  var data = hashDiff(itemsOverride,convertSerializedArrayToHash($(this).serializeArray()))
-  data['form'] = 'override'
+  form = $(this);
+  data = $(this).serializeArray();
+  $("#override-form input:disabled").each(function(i,e) {
+    data.push({name:e.name,value:e.value});
+  })
+  data.push({name:'form',value:'override'});
   
   $.ajax({
     method: "POST",
     url: location.href,
-    data: data
+    data: data,
+    headers: { "X-CSRFToken": getCookie('csrftoken') }
   })
-  .done(function(data) {
-    doneProcess(data);
-    if (data["status"] == "success") {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-success')
-    } else {
-      $('form[id=override-form] button:submit').removeClass('btn-primary').addClass('btn-danger')
+  .done(function(r) {
+    doneProcess(r,form);
+    }
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
+  .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 $("#employee-form").submit(function(e) {
   e.preventDefault();
+  form = $(this);
   if (validCheck() === false){
-      e.stopPropagation()
-      return false
+      e.stopPropagation();
+      return false;
   }
   
   const fd = new FromData();
   file = $(this).querySelector('input[type=file]').files[0]
   fd.append('form','employee')
-  fd.append('photo',file)    
+  fd.append('photo',file);
 
   $.ajax({
     method: "POST",
     url: location.href,
     data: fd.serialize()
   })
-  .done(function(data) {doneProcess(data);})
+  .done(function(data) {doneProcess(data,form);})
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
 });
 -->
