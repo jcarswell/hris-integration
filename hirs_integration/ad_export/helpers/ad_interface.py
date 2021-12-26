@@ -4,7 +4,7 @@ from pyad import ADContainer,ADGroup,ADQuery,ADUser,InvalidAttribute,win32Except
 from pywintypes import com_error
 
 from . import config
-from ad_export.excpetions import ADResultsError,UserDoesNotExist,ADCreateError
+from ad_export.exceptions import ADResultsError,UserDoesNotExist,ADCreateError
 
 logger = logging.getLogger('ad_export.ADInterface')
 
