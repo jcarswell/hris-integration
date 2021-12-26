@@ -112,6 +112,18 @@ class FieldConversion:
         if value:
             self.field(value)
     
+    def __eq__(self,value) -> bool:
+        if isinstance(value,FieldConversion):
+            return (self.value == value.value and 
+                    self.type == value.type and
+                    self.field == value.field)
+        elif isinstance(value,str):
+            v = FieldConversion(self.type,value)
+            print(f"{v.value} == {self.value}")
+            return self.value == v.value
+        
+        return False
+
     def __call__(self, value: str) -> Any:
         self.field(value)
 
