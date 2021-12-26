@@ -353,7 +353,7 @@ class Settings(TemplateResponseMixin, LoggedInView):
            return JsonResponse({"status":"success"})
         else:
             return JsonResponse({"status":"error",
-                                 "feilds":list(errors.keys()),
+                                 "fields":list(errors.keys()),
                                  "errors":list(errors.values())})
 
     def put(self, request, *args, **kwargs):
