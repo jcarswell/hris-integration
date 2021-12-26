@@ -186,10 +186,12 @@ class FormView(TemplateResponseMixin, LoggedInView):
             save_data = self._form.save()
         else:
             logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
-            errors = self._form._errors.keys()
+            ers = []
+            for e in self._form._errors.values():
+                ers.append("<br>".join(e))
             return JsonResponse({'status':'error',
-                                 'fields':errors,
-                                 'msg':"Please correct the highlighted fields"})
+                                 'fields':list(self._form._errors.keys()),
+                                 'errors':ers})
 
         return JsonResponse({'status':'success','id':save_data.pk})
 
@@ -305,7 +307,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         if errors == []:
             return JsonResponse({"status":"success","fields":errors})
         else:            
-            return JsonResponse({"status":"error","fields":errors,"message":"Error saving fields"})
+            return JsonResponse({"status":"error","fields":errors,"errors":"Error saving fields, please review the highlited fields."})
 
 
 class Settings(TemplateResponseMixin, LoggedInView):
