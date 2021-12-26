@@ -6,14 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="alert-container" class="row d-none">
-  <div class="alert" role="alert">
-    <div id="alert-inner"></div>
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-</div>
+<div id="alert-container" class="row d-none"></div>
 <div class="row" style="padding:0 1.5rem">
   <div data-bs-spy="scroll" data-bs-target="#page-nav" data-bs-offset="0" tabindex="0" class="container col-md-10 order-md-2">
     {{ settings.as_html }}
@@ -35,7 +28,6 @@ $(function() {
     headers: { "X-CSRFToken": csrftoken }
   });
 });
-$('#alert-container').on('close.bs.alert', function(){$('#alert-container').addClass('d-none');})
 $('form').each(function(i,v) {
   $(this).submit(function(e) {
     form = $(this)
@@ -47,32 +39,15 @@ $('form').each(function(i,v) {
     $("input[type=checkbox]:not(:checked)",this).each(function(i,e) {
       data.push({name:e.name,value:"off"});
     })
-     
-    $('.alert').alert('close');
-    $('#alert-container').addClass("d-none");
-    $('.alert').removeClass("alert-danger");
-    $('.alert').removeClass("alert-warning");
 
     $.ajax({
       method: "POST",
       url: location.pathname,
       data: data,
     })
-    .done(function(data) {
-      doneProcess(data);
-      if (data["status"] == "success") {
-        $('button:submit',form).removeClass('btn-primary').addClass('btn-success');
-      } else {
-        $('button:submit',form).removeClass('btn-primary').addClass('btn-danger');
-      }
-    })
+    .done(function(data) {doneProcess(data,form);})
     .fail(function(jqXHR,status,error) {
-      errorProcess(jqXHR,status,error);
-      $('button:submit',form).removeClass('btn-primary').addClass('btn-danger');
-      $('#alert-container').removeClass('d-none');
-      $(".alert").addClass('alert-danger');
-      $("#alert-inner").innerHTML("<storng>"+status+":</strong> "+error);
-      $(".alert").alert();
+      errorProcess(jqXHR,status,error,form);
     });
   })
 });
