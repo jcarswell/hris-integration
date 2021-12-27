@@ -1,6 +1,10 @@
 {% extends "hirs_admin/base.html" %}
 {% load static i18n%}
 
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'hirs_admin/dist/css/base.css' %}">
+{% endblock %}
+
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
@@ -8,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+<div id="alert-container" class="row d-none"></div>
 <div class="container">
   {% if page_content == False %}
   <a>There's nothing to do for now. Please check back tomorrow.</a>
