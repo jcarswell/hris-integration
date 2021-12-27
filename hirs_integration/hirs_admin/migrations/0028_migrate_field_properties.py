@@ -1,7 +1,6 @@
 import logging
 
 from django.db import migrations, models
-from django.utils.translation import gettext_lazy as _t
 from common.functions import configuration_fixtures
 
 logger = logging.getLogger('hirs_admin.Migrations')
@@ -33,10 +32,10 @@ def forward_func(apps, schema_editor):
                 field.field_properties["validators"] = ["validators.cron_validator"]
             elif field.item == 'path':
                 field.field_properties["type"] = "CharField"
-                field.field_properties["help"] = _t("Path to executable or module to excute"),
+                field.field_properties["help"] = "Path to executable or module to excute",
             elif field.item == 'options':
                 field.field_properties["type"] = "CharField"
-                field.field_properties["help"] = _t("Flags or arguments to pass to the executable"),
+                field.field_properties["help"] = "Flags or arguments to pass to the executable",
             elif field.item == 'status':
                 field.field_properties["type"] = "BooleanField"
             else:
