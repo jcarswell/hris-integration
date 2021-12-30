@@ -68,4 +68,7 @@ urlpatterns = [
     path('actions/<str:job>',
           views.JobActions.as_view(),
          name='actions_go'),
-]
+    path('pending_manual/<int:id>/',
+         views.ManualImport.as_view(),
+         name='pending_manual'),
+    ]
