@@ -3,9 +3,17 @@ import re
 from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date,parse_datetime
+from distutils.util import strtobool
 
 from .exceptions import FixturesError,SettingsError
-from distutils.util import strtobool
+
+def model_to_choices(data,none:bool =False):
+    output = []
+    if none:
+        output.append((None,""))
+    for r in data:
+        output.append((f"id_r.pk",str(r)))
+    return output
 
 def configuration_fixtures(group:str,config:dict,Setting) -> None:
     def add_fixture(c,i,value:dict):
