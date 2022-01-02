@@ -13,6 +13,7 @@ from .helpers import adtools
 logger = logging.getLogger('hirs_admin.forms')
 
 class Form(forms.ModelForm):
+    list_fields = None
     def as_form(self):
         output = []
         hidden_fields = []
@@ -51,7 +52,7 @@ class Form(forms.ModelForm):
 
 class GroupMapping(Form):
     name = _t("Group Mappings to Jobs")
-    
+    list_fields = ["dn"]
     class Meta:
         model = models.GroupMapping
         fields = '__all__'
@@ -67,7 +68,6 @@ class GroupMapping(Form):
         classes = {
             'dn':'selectpicker',
         }
-
 
 class JobRole(Form):
     name = _t("Job Roles")
@@ -163,6 +163,7 @@ class EmployeePhone(forms.ModelForm):
 
 
 class EmployeePending(Form):
+    list_fields = ['firstname','lastname','state']
     class Meta:
         model = models.EmployeePending
         fields = '__all__'
