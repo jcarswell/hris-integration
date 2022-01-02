@@ -31,8 +31,10 @@
       {% block content_header %}
       <section class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         {% block page_title %}
-        <h3>{{ page.title|default:"" }}</h3>
-        <small>{{ page.description|default:"" }}</small>
+        <div class="ml-3 flex-wrap d-flex flex-md-nowrap">
+          <h3>{{ page.title|default:"" }}</h3>
+          <small class="m-auto pl-3">{{ page.description|default:"" }}</small>
+        </div>
         {% endblock %}
         {% block page_actions %}{% endblock %}
       </section>
