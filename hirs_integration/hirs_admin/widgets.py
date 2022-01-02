@@ -16,15 +16,15 @@ class Hidden(widgets.Input):
 class SelectPicker(widgets.Select):
     template_name = 'hirs_admin/widgets/selectpicker.html'
 
-    def __init__(self,attrs):
-        super().__init__(attrs)
+    def __init__(self,attrs=None,choices=()):
+        super().__init__(attrs,choices)
         self.attrs['data-live-search'] = 'true'
         self.attrs['data-style'] = 'bg-white'
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name,value,attrs)
 
-        if 'class' not in attrs:
+        if 'class' not in self.attrs:
             context['widget']['attrs']['class'] = "selectpicker"
         else:
             context['widget']['attrs']['class'] = " ".join(attrs['class'].split(' ') + ['selectpicker'])
@@ -45,7 +45,7 @@ class CheckboxInput(widgets.CheckboxInput):
         context = super().get_context(name,value,attrs)
 
         logger.debug(f"{name} - {attrs}")
-        if 'class' in attrs:
+        if 'class' in self.attrs:
             classes = attrs['class'].split(' ')
             add_class = True
             for x in classes:
