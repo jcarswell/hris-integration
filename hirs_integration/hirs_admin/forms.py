@@ -1,7 +1,6 @@
 import logging
 
 from django import forms
-from django.db.models import manager
 from django.forms.widgets import Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
@@ -14,13 +13,14 @@ logger = logging.getLogger('hirs_admin.forms')
 
 class Form(forms.ModelForm):
     list_fields = None
+
     def as_form(self):
         output = []
         hidden_fields = []
 
         logger.debug(f"Building {self.__class__.__name__} as html form")
 
-        for name,_ in self.fields.items():
+        for name in self.fields.keys():
             classes = ["form-control"]
             bf = self[name]
             if bf.is_hidden:
@@ -166,9 +166,11 @@ class EmployeePending(Form):
     list_fields = ['firstname','lastname','state']
     class Meta:
         model = models.EmployeePending
-        fields = '__all__'
+        fields = ['firstname','lastname','suffix','designation','state','leave',
+                   'type','primary_job','jobs','manager','location','start_date',
+                   'employee']
         exclude = ('created_on','updated_on','_username','_password','_email_alias')
-        disabled = ('guid')
+        disabled = ('guid','employee')
         labels = {
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
@@ -185,30 +187,15 @@ class EmployeePending(Form):
             'employee': _t('HRIS Matched Employee'),
             'guid': _t('AD GUID'),
         }
-        classes = {
-            'primary_job': ['selectpicker'],
-            'jobs': ['selectpicker'],
-            'location': ['selectpicker'],
-            'employee': ['selectpicker'],
-            'manager': ['selectpicker'],
-            'state': ['selectpicker'],
-            'leave': ['selectpicker'],
-        }
         widgets = {
-            'state': Select(choices=[(True,'True'),(False,'False')]),
-            'leave': Select(choices=[(True,'True'),(False,'False')]),
+            'state': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'leave': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'primary_job': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'jobs': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'location': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'employee': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['primary_job'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        self.fields['jobs'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        self.fields['location'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        self.fields['employee'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
-        self.fields['state'].widget.attrs.update({'data-style':'bg-white'})
-        self.fields['leave'].widget.attrs.update({'data-style':'bg-white'})
-
 
 class ManualImportForm(forms.Form):
     emp_id = forms.IntegerField(label="Employee ID",
@@ -261,7 +248,7 @@ class ManualImportForm(forms.Form):
         output = []
         hidden_fields = []
 
-        for name,_ in self.fields.items():
+        for name in self.fields.keys():
             classes = ["form-control"]
             bf = self[name]
             if bf.is_hidden:
