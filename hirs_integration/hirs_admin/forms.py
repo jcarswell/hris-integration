@@ -217,15 +217,21 @@ class ManualImportForm(forms.Form):
                                 max_length=96,required=True,
                                 help_text="Provide actual Given name, first name defined on pending object will be preserved")
     middlename = forms.CharField(label="Middle Name",
-                                 max_length=96,required=False)
+                                 max_length=96,
+                                 required=False)
     surname = forms.CharField(label="Surname",
                               max_length=96,required=True,
                               help_text="Provide actual surname, last name defined on pending object will be preserved")
+    suffix = forms.CharField(label="Suffix",
+                             max_length=20,
+                             required=False)
     state = forms.BooleanField(label="State",
                                widget=widgets.CheckboxInput(attrs={"class":"form-control"}),
+                               required=False,
                                initial=True)
     leave = forms.BooleanField(label="On Leave",
                                widget=widgets.CheckboxInput(attrs={"class":"form-control"}),
+                               required=False,
                                initial=False)
     primary_job = forms.ChoiceField(label="Primary Job",
                                     widget=widgets.SelectPicker(attrs={"class":"form-control"}),
@@ -243,11 +249,11 @@ class ManualImportForm(forms.Form):
                                  widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                  required=False,
                                  choices=model_to_choices(models.Employee.objects.all(),True))
-    start_data = forms.DateField(label="Start Date",
-                                 required=True)
+    start_date = forms.DateField(label="Start Date",
+                                 required=False)
     type = forms.CharField(label="Employee Type",
                            max_length=64,required=False)
-    field_order = ['emp_id','givenname','middlename','surname',
+    field_order = ['emp_id','givenname','middlename','surname','suffix',
                    'primary_job','jobs','manager','location',
                    'manager','type','start_data']
 
