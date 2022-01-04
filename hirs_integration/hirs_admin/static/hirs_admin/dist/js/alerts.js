@@ -4,7 +4,11 @@ function doneProcess(ret_data,focus) {
   createAlert();
   if (ret_data["status"] != "success") {
     $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-    $('#alert-inner').html(ret_data['errors'].join('<br>'));
+    if (typeof ret_data['errors'] === 'string') {
+      $('#alert-inner').html(ret_data['errors']);
+    } else {
+      $('#alert-inner').html(ret_data['errors'].join('<br>'));
+    }
     $('.alert').addClass("alert-danger");
     ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
     $('#alert-container').removeClass('d-none')
