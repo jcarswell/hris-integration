@@ -4,13 +4,15 @@ function doneProcess(ret_data,focus) {
   createAlert();
   if (ret_data["status"] != "success") {
     $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-    if (typeof ret_data['errors'] === 'string') {
-      $('#alert-inner').html(ret_data['errors']);
-    } else {
+    if (ret_data.fields != null) {
+      ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
+    }
+    if (Array.isArray(ret_data['errors'])) {
       $('#alert-inner').html(ret_data['errors'].join('<br>'));
+    } else if (typeof ret_data.errors === "string") {
+      $('#alert-inner').html(ret_data['errors']);
     }
     $('.alert').addClass("alert-danger");
-    ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
     $('#alert-container').removeClass('d-none')
   } else {
     $('button:submit',focus).removeClass('btn-primary').removeClass('btn-danger').addClass('btn-success');
