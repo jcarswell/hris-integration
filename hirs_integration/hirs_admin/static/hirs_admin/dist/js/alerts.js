@@ -4,7 +4,7 @@ function doneProcess(ret_data,focus) {
   createAlert();
   if (ret_data["status"] != "success") {
     $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-    if (ret_data.fields != null) {
+    if (Array.isArray(ret_data.fields)) {
       ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
     }
     if (Array.isArray(ret_data['errors'])) {
