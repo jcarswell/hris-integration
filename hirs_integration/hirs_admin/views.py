@@ -1,24 +1,57 @@
 import json
 import logging
 
-from django.http import HttpResponse,HttpResponseBadRequest,HttpResponseServerError,JsonResponse
-from django.shortcuts import render
+from django.http import HttpResponseBadRequest,HttpResponseServerError,JsonResponse,HttpResponse
 from django.views.decorators.csrf import csrf_protect
+from django.views.defaults import permission_denied
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateResponseMixin, View, ContextMixin
 from django.contrib.auth.views import redirect_to_login
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
-from django.urls import resolve
-from django.forms.widgets import Select
-from copy import deepcopy
+from django.urls import reverse
+from django.template import loader
+from common.functions import model_to_choices, pk_to_name, name_to_pk
 
 from .helpers import settings_view,config
 from .fields import SettingFieldGenerator
 from . import models
+from .widgets import SelectPicker
+from .forms import ManualImportForm
 
 logger = logging.getLogger('hirs_admin.view')
+
+def handler404(request,exception:str = None):
+    if exception == None:
+        exception = ""
+    return Error(request,404,exception)
+
+def handler403(request,exception:str = None):
+    if exception == None:
+        exception = ""
+    return Error(request,403,exception)
+
+def handler400(request,exception:str = None):
+    if exception == None:
+        exception = ""
+    return Error(request,400,exception)
+
+def handler500(request,exception:str = None):
+    if exception == None:
+        exception = ""
+    return Error(request,500,exception)
+
+def Error(request,code:int,detail:str,template:str =None):
+    base_template = "hirs_admin/error.html"
+    if code == "303":
+        return permission_denied(request,detail)
+    if template:
+        t = loader.get_template(template)
+    else:
+        t = loader.get_template(base_template)
+        
+    return HttpResponse(t.render({"title":f"{code}! Error","err_code":code,"err_detail":detail},request),status=code,reason=detail)
 
 class LoggedInView(ContextMixin, View):
     page_title = 'HRIS Sync'
@@ -348,6 +381,7 @@ class Settings(TemplateResponseMixin, LoggedInView):
                     errors[html_id] = None
                 except TypeError:
                     logger.debug(f"Caughht TypeError setting up field for {html_id}")
+                    errors[html_id] = None
                 except ValidationError as e:
                     logger.debug(f"Caught validationError - {iter(e)}")
                     if hasattr(e,'error_list'):
@@ -377,73 +411,201 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        data = models.CsvPending.objects.all()
         context = self.get_context(**kwargs)
-        if len(data) == 0:
-            context['page_content'] = False
-            return self.render_to_response(context)
+        context['csv_import_form'] = self.render_csv_form()
+        context['manual_import_form'] = self.render_manual_form()
+        
+        return self.render_to_response(context)
+
+    def render_csv_form(self) -> str:
+        data = models.CsvPending.objects.all()
+        
+        output = []
+        if len(data) != 0:
+            field_emp = SelectPicker(choices=model_to_choices(models.EmployeePending.objects.all(),True).append(('new','-- New Employee --')))
+
+            output.append(f'<div class="form-row row-header">')
+            output.append(f'<div class="form-group col-md-8">')
+            output.append(f'<p><strong>HRIS Employee Object</strong></p>')
+            output.append(f'</div>')
+            output.append(f'<div class="form-group col-md-4">')
+            output.append(f'<p><strong>Target Pending Employee</strong></p>')
+            output.append(f'</div>')
+            output.append(f'</div>')
+
+            for row in data:
+                output.append(f'<div class="form-row">')
+                output.append(f'<div class="form-group col-md-8">')
+                output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
+                output.append(f'</div>')
+                output.append(f'<div class="form-group col-md-4">')
+                output.append(field_emp.render("row.emp_id",None))
+                output.append(f'</div>')
+                output.append(f'</div>')
+            
+            return mark_safe('\n'.join(output))
 
         else:
-            context['page_content'] = self.render_form()
-            return self.render_to_response(context)
+            return False
 
-    def render_form(self):
-        def model_to_choices(**data):
-            output = []
-            for r in data:
-                output.append((r.pk,str(r)))
-            return output
-
-        data = models.CsvPending.objects.all()
-        field_emp = Select(attrs={'class':'selectpicker form-control',
-                                  'data-style':'bg-white',
-                                  'data-live-search':'true'},
-                           choices=model_to_choices(models.EmployeePending.objects.all()))
+    def render_manual_form(self) -> str:
+        data = models.EmployeePending.objects.all()
         output = []
-        #Header row
-        output.append(f'<div class="form-row">')
-        output.append(f'<div class="form-group col-md-8>')
-        output.append(f'<h4>HRIS Employee Object</h4>')
-        output.append(f'</div>')
-        output.append(f'<div class="form-group col-md-4>')
-        output.append(f'<h4>Target Pending Employee</h4>')
-        output.append(f'</div>')
-        output.append(f'</div>')
 
-        for row in data:
-            output.append(f'<div class="form-row">')
-            output.append(f'<div class="form-group col-md-8>')
-            output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
+        if len(data) != 0:
+            field_emp = SelectPicker(choices=model_to_choices(models.Employee.objects.all(),True))
+
+            output.append(f'<div class="form-row row-header">')
+            output.append(f'<div class="form-group col-md-5">')
+            output.append(f'<p><strong>Pending Employee</strong></p>')
             output.append(f'</div>')
-            output.append(f'<div class="form-group col-md-4>')
-            output.append(field_emp.render("row.emp_id",None))
+            output.append(f'<div class="form-group col-md-5">')
+            output.append(f'<p><strong>Target Employee</strong></p>')
+            output.append(f'</div>')
+            output.append(f'<div class="form-group col-md-2">')
+            output.append(f'<p><strong>Manual Import</strong></p>')
             output.append(f'</div>')
             output.append(f'</div>')
+            
+            for row in data:
+                employee = None
+                if row.employee != None:
+                    employee = pk_to_name(row.employee.pk)
+                output.append(f'<div class="form-row">')
+                output.append(f'<div class="form-group col-md-5">')
+                output.append(f'<p><strong>{row.firstname} {row.lastname}</strong></p>')
+                output.append(f'</div>')
+                output.append(f'<div class="form-group col-md-5">')
+                output.append(field_emp.render(f"id_{row.pk}",employee))
+                output.append(f'</div>')
+                output.append(f'<div class="form-group col-md-2">')
+                output.append('<a href="{}"><ion-icon name="create"></ion-icon></a>'.format(reverse('pending_manual',args=[row.pk])))
+                output.append(f'</div>')
+                output.append(f'</div>')
+
+            return mark_safe('\n'.join(output))
+
+        else:
+            return False
+
 
     def put(self, request, *args, **kwargs):
         self.post(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            from .helpers.csv_import import CsvImport
-        except ImportError:
-            return HttpResponseServerError("System Missing ftp_import module. Please contact the system administartor")
+        errors = {}
+        
+        if "form" not in request.POST:
+            return handler500("POST Data missing form attribute")
 
-        errors = []
-        for id,value in request.POST.items():
+        logger.debug(f"Processing form {request.POST['form']}")
+        if request.POST['form'] == "manual_import_form":
+            for pending_id,employee_id in request.POST.items():
+                logger.debug(f"Processing row {pending_id},{employee_id}")
+                if pending_id[:2] == 'id' and employee_id[:2] == 'id':
+                    try:
+                        pending_emp = models.EmployeePending.objects.get(pk=name_to_pk(pending_id))
+                        pending_emp.employee = models.Employee.objects.get(pk=name_to_pk(employee_id))
+                        pending_emp.save()
+                    except Exception as e:
+                        errors[pending_id] = str(e)
+
+        elif request.POST['form'] == "csv_import_form":
             try:
-                csv = models.CsvPending.objects.get(emp_id=int(id))
-                pending_emp = models.EmployeePending.objects.get(pk=value)
-            except models.CsvPending.DoesNotExist:
-                errors.append(f"failed to find employee {id}")
-            else:
-                CsvImport(json.loads(pending_emp,csv.row_data))
+                from .helpers.csv_import import CsvImport
+            except ImportError:
+                return handler500("System Missing ftp_import module. Please contact the system administartor")
+
+            for id,value in request.POST.items():
+                try:
+                    csv = models.CsvPending.objects.get(emp_id=int(id[3:]))
+                    pending_emp = models.EmployeePending.objects.get(pk=value)
+                    row_data = json.loads(csv.row_data)
+                    CsvImport(pending_emp,**row_data)
+                except models.CsvPending.DoesNotExist:
+                    errors[id] = f"failed to find employee {id[3:]}"
+        else:
+            return JsonResponse({"status":"error","feilds":None,"errors":f"{request.POST['form']} is not supported"})
+
 
         if errors:
-            return JsonResponse({"status":"error","feilds":errors})
+            return JsonResponse({"status":"error","feilds":list(errors.keys()),"errors":list(errors.values())})
         else:
             return JsonResponse({"status":"success"})
 
+
+class ManualImport(TemplateResponseMixin, LoggedInView):
+    page_title = "Manual Employee Import"
+    template_name = 'hirs_admin/base_edit.html'
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        if 'id' not in kwargs.keys():
+            raise KeyError("ID is a required attribute")
+        try:
+            self.pending_employee = models.EmployeePending.objects.get(pk=int(kwargs["id"]))
+        except models.EmployeePending.DoesNotExist:
+            raise ValueError("Pending Employee Doesn't exist")
+
+        form_data = {
+            'givenname': self.pending_employee.firstname,
+            'surname': self.pending_employee.lastname,
+            'state': self.pending_employee.state,
+            'leave': self.pending_employee.leave,
+            'start_date': self.pending_employee.created_on,
+            'primary_job': pk_to_name(self.pending_employee.primary_job.pk),
+            'type': self.pending_employee.type,
+            'manager': pk_to_name(self.pending_employee.manager.pk),
+            'suffix': self.pending_employee.suffix,
+            'jobs': [pk_to_name(x.pk) for x in self.pending_employee.jobs.iterator()]
+            }
+        self._form = ManualImportForm(initial=form_data)
+       
+
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+
+        context = self.get_context(form_delete=False,**kwargs)
+        context["form"] = self._form
+
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            Employee = models.Employee.objects.get(pk=request.POST['emp_id'])
+        except models.Employee.DoesNotExist:
+            Employee = None
+        
+        if Employee != None:
+            return JsonResponse({
+                "status":"error",
+                "fields":['emp_id'],
+                "errors":["Employee ID already extist. Please use import form on previous page"],
+                })
+        self._form.data = request.POST
+        self._form.is_bound = True
+        self._form.full_clean()
+        if not self._form.is_valid():
+            errs = []
+            for e in self._form._errors.values():
+                errs.append("<br>".join(e))
+            return JsonResponse({'status':'error',
+                                 'fields':list(self._form._errors.keys()),
+                                 'errors':errs,
+                                })
+        #try:
+        self._form.save(self.pending_employee)
+        return JsonResponse({"status":"sucess"})
+        #except Exception as e:
+        #    return JsonResponse({
+        #        "status":"error",
+        #        "fields":[],
+        #        "errors": str(e),
+        #    })
 
 class JobActions(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
