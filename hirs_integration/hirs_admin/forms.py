@@ -4,7 +4,7 @@ from django import forms
 from django.forms.widgets import Select
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _t
-from common.functions import model_to_choices
+from common.functions import model_to_choices,name_to_pk
 
 from . import models,widgets
 from .helpers import adtools
@@ -223,11 +223,10 @@ class ManualImportForm(forms.Form):
     primary_job = forms.ChoiceField(label="Primary Job",
                                     widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                     required=True,
-                                    choices=model_to_choices(models.JobRole.objects.all()))
+                                    choices=model_to_choices(models.JobRole.objects.all(),True))
     jobs = forms.MultipleChoiceField(label="Additional Jobs",
                                      required=False,
-                                     choices=model_to_choices(models.JobRole.objects.all()),
-                                     help_text="Leave blank to use jobs set on pending employee object.")
+                                     choices=model_to_choices(models.JobRole.objects.all()))
     location = forms.ChoiceField(label="Location",
                                  widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                  required=True,
@@ -271,28 +270,46 @@ class ManualImportForm(forms.Form):
         return self.as_form()
 
     def save(self,pending_employee:models.EmployeePending):
-        if not self.has_changes():
-            return True
 
         employee = models.Employee()
         for field in self.data.keys():
-            if hasattr(employee,field):
-                setattr(employee,field,self.data[field] or self.initial[field])
+            try:
+                if hasattr(employee,field) and not field in ('manager','jobs','primary_jobs','state','leave'):
+                    logger.debug(f"{field}:{self.data[field]}")
+                    if self.data[field] != '':
+                        setattr(employee,field,self.data[field])
+                    elif field in self.initial and self.initial[field] != '':
+                        setattr(employee,field,self.data[field])
+                elif field in ('state','leave'):
+                    setattr(employee,field,bool(self.data[field]))
+                elif self.data[field] != '':
+                    if field == 'manager':
+                        m = models.Employee.objects.get(pk=name_to_pk(self.data[field]))
+                        employee.manager = m
+                    elif field == 'primary_job':
+                        j = models.JobRole.objects.get(pk=name_to_pk(self.data[field]))
+                        employee.manager = j
+                elif field == 'jobs' and self.data[field] != []:
+                    employee.jobs = [name_to_pk(x) for x in self.data[field]]
+            except ValueError as e:
+                self.add_error(field,str(e))
+            except (models.Employee.DoesNotExist,models.JobRole.DoesNotExist):
+                self.add_error(field,f"Referance object for {field} does not exist. Please refresh and try again")
+            except KeyError:
+                self.add_error(field,f"{field} - an internal error occured")
 
         employee.guid = pending_employee.guid
-        employee.username = pending_employee.username
-        employee.email_alias = pending_employee.email_alias
         employee.password = pending_employee.password
-        if self.data["jobs"] == []:
-            for j in pending_employee.jobs:
-                employee.jobs.add(j)
-        
+
         employee.save()
-        employee_overrides = models.EmployeeOverrides(employee=employee)
+        employee_overrides = models.EmployeeOverrides.objects.get(employee=employee)
         if pending_employee.firstname != self.data['givenname']:
             employee_overrides.firstname = pending_employee.firstname
         if pending_employee.lastname != self.data['surname']:
             employee_overrides.lastname = pending_employee.lastname
         if pending_employee.designation != None:
             employee_overrides.designations = pending_employee.designation
-            
+
+        employee_overrides.save()
+        pending_employee.employee = employee
+        pending_employee.save()
