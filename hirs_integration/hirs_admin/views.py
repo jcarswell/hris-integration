@@ -107,7 +107,7 @@ class ListView(TemplateResponseMixin, LoggedInView):
             request.GET.pop('form')
 
         self._model = self.form._meta.model
-        self.fields = self.form.base_fields.keys()
+        self.fields = self.form.list_fields or self.form.base_fields.keys()
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
