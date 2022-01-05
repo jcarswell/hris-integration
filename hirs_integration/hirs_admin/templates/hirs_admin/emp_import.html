@@ -14,16 +14,30 @@
 {% block content %}
 <div id="alert-container" class="row d-none"></div>
 <div class="container">
-  {% if page_content == False %}
+  {% if csv_import_form == False and manual_import_form == False %}
   <a>There's nothing to do for now. Please check back tomorrow.</a>
   {% else %}
-  <form id="form_list"{% if form_url %} action="{{ form_url }}"{% endif %}>
+  {% if csv_import_form != False %}
+  <h3>Pending CSV Import Data</h3>
+  <form class="form-95" id="csv_import_form"{% if form_url %} action="{{ form_url }}"{% endif %}>
     {% csrf_token %}
-    {{ page_content }}
+    {{ csv_import_form }}
     <div class="form-row">
       <button type="submit" class="btn btn-success" style="margin: 4pt 0 0 auto;">Go <i class="fas fa-arrow-circle-right"></i></button>
     </div>
   </form>
+  {% if manual_import_form != False %}<hr style="border-top:2px solid #bbb">{% endif %}
+  {% endif %}
+  {% if manual_import_form != False %}
+  <h3>Pending Employees Manual Import</h3>
+  <form class="form-95" id="manual_import_form"{% if form_url %} action="{{ form_url }}"{% endif %}>
+    {% csrf_token %}
+    {{ manual_import_form }}
+    <div class="form-row">
+      <button type="submit" class="btn btn-success" style="margin: 4pt 0 0 auto;">Go <i class="fas fa-arrow-circle-right"></i></button>
+    </div>
+  </form>
+  {% endif %}
   {% endif %}
 <div>
 {% endblock %}
@@ -32,23 +46,26 @@
 <script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
 <script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
 <script>
-$("#form_list").submit(function(e) {
-  e.preventDefault();
-  data = $(this).serializeArray()
-  if (id !== undefined) {data.push({name:id.name,value:id.value});}
-
-  $.ajax({
-    method: "POST",
-    url: location.href,
-    data: data
-  })
-  .done(function(data) {
-    doneProcess(data);
-    if (data['status'] === 'success') {
-      location.reload();
-    }
-  })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+$('form').each(function(i,v) {
+  $(this).submit(function(e) {
+    e.preventDefault();
+    data = $(this).serializeArray()
+    data.push({name:"form",value:$(this)[0].id});
+    console.debug("POSTing form: " + $(this)[0].id)
+    
+    $.ajax({
+      method: "POST",
+      url: location.href,
+      data: data
+    })
+    .done(function(data) {
+      doneProcess(data);
+      if (data['status'] === 'success') {
+        location.reload();
+      }
+    })
+    .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+  });
 });
 $(function() {
   const csrftoken = getCookie('csrftoken')
