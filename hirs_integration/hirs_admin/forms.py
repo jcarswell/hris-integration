@@ -57,13 +57,24 @@ class GroupMapping(Form):
         model = models.GroupMapping
         fields = '__all__'
         widgets = {
-            'dn': Select(choices=adtools.get_adgroups(),attrs={'data-live-search':'true','data-style':'bg-white'}),
+            'dn': widgets.SelectPicker(choices=adtools.get_adgroups(),attrs={'data-live-search':'true','data-style':'bg-white'}),
+            'all': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'jobs_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'bu_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'loc_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'jobs': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
+            'bu': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
+            'loc': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
         }
         labels = {
             'dn': _t("AD Group"),
+            'all': _t("All Employees"),
             'jobs': _t("Jobs"),
+            'jobs_not': _t("Not"),
             'bu': _t("Business Units"),
-            'loc': _t("Locations")
+            'bu_not': _t("Not"),
+            'loc': _t("Locations"),
+            'loc_not': _t("Not"),
         }
         classes = {
             'dn':'selectpicker',
