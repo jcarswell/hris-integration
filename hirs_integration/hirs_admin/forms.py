@@ -191,7 +191,7 @@ class EmployeePending(Form):
             'state': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'leave': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'primary_job': widgets.SelectPicker(attrs={"class":"form-control"}),
-            'jobs': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'jobs': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
             'location': widgets.SelectPicker(attrs={"class":"form-control"}),
             'employee': widgets.SelectPicker(attrs={"class":"form-control"}),
             'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
