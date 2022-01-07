@@ -3,7 +3,6 @@ import logging
 import signal
 
 from multiprocessing import Process
-from distutils.util import strtobool
 
 from .helpers import job_manager,config
 
@@ -15,7 +14,7 @@ class Runner:
         self._jobs = job_manager.get_jobs()
 
     def __init__(self):
-        if not strtobool(config.get_config(config.CONFIG_CAT,config.CONFIG_ENABLED)):
+        if not config.Config()(config.CONFIG_CAT,config.CONFIG_ENABLED):
             logger.info("Cron is currently disabled")
             return
 
