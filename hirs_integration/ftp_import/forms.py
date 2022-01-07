@@ -48,13 +48,14 @@ class BaseImport():
     """
 
     def __init__(self,field_config:List[Dict], **kwargs) -> None:
+        self.config = config.Config()
         self.kwargs = kwargs
         self.field_config = field_config
-        self.expand = strtobool(config.get_config(config.CAT_CSV,config.CSV_USE_EXP))
-        self.import_jobs = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_JOBS))
-        self.import_bu = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_BU))
-        self.import_jobs_all = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS))
-        self.import_loc = strtobool(config.get_config(config.CAT_CSV,config.CSV_IMPORT_LOC))
+        self.expand = self.config(config.CAT_CSV,config.CSV_USE_EXP)
+        self.import_jobs = self.config(config.CAT_CSV,config.CSV_IMPORT_JOBS)
+        self.import_bu = self.config(config.CAT_CSV,config.CSV_IMPORT_BU)
+        self.import_jobs_all = self.config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS)
+        self.import_loc = self.config(config.CAT_CSV,config.CSV_IMPORT_LOC)
         logger.debug(f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} - bu: {self.import_bu} - location: {self.import_loc}")
         Stats.rows_processed += 1
 
@@ -105,7 +106,7 @@ class BaseImport():
         Returns Tuple[(EmployeePending,None),Multiple]
         """
 
-        fuzz_pcent = int(config.get_config(config.CAT_CSV,config.CSV_FUZZ_PCENT))
+        fuzz_pcent = self.config(config.CAT_CSV,config.CSV_FUZZ_PCENT)
 
         potentials = []
         for emp in EmployeePending.objects.all():
@@ -132,10 +133,10 @@ class BaseImport():
             return None,False
 
     def _set_status(self):
-        self.status_field = config.get_config(config.CAT_FIELD,config.FIELD_STATUS)
-        status_term = config.get_config(config.CAT_EXPORT,config.EXPORT_TERM)
-        status_act = config.get_config(config.CAT_EXPORT,config.EXPORT_ACTIVE)
-        status_leave = config.get_config(config.CAT_EXPORT,config.EXPORT_LEAVE)
+        self.status_field = self.config(config.CAT_FIELD,config.FIELD_STATUS)
+        status_term = self.config(config.CAT_EXPORT,config.EXPORT_TERM)
+        status_act = self.config(config.CAT_EXPORT,config.EXPORT_ACTIVE)
+        status_leave = self.config(config.CAT_EXPORT,config.EXPORT_LEAVE)
 
         if not self.status_field:
             self.status_field = self.get_field_name('status')
@@ -208,7 +209,7 @@ class BaseImport():
         if not isinstance(id,int):
             raise ValueError(f"Expexted int got type {type(id)}")
 
-        loc_desc = config.get_config(config.CAT_FIELD,config.FIELD_LOC_NAME)
+        loc_desc = self.config(config.CAT_FIELD,config.FIELD_LOC_NAME)
         changed = False
 
         location,new = Location.objects.get_or_create(pk=id)
@@ -262,8 +263,8 @@ class BaseImport():
         if not isinstance(id,int):
             raise ValueError(f"Expexted int got type {type(id)}")
 
-        job_desc = config.get_config(config.CAT_FIELD,config.FIELD_JD_NAME)
-        job_bu = config.get_config(config.CAT_FIELD,config.FIELD_JD_BU)
+        job_desc = self.config(config.CAT_FIELD,config.FIELD_JD_NAME)
+        job_bu = self.config(config.CAT_FIELD,config.FIELD_JD_BU)
         changed = False
         
         job,new = JobRole.objects.get_or_create(pk=id)
@@ -333,8 +334,8 @@ class BaseImport():
         if not isinstance(id,int):
             raise ValueError(f"Expexted int got type {type(id)}")
 
-        bu_desc = config.get_config(config.CAT_FIELD,config.FIELD_BU_NAME)
-        bu_parent = config.get_config(config.CAT_FIELD,config.FIELD_BU_PARENT)
+        bu_desc = self.config(config.CAT_FIELD,config.FIELD_BU_NAME)
+        bu_parent = self.config(config.CAT_FIELD,config.FIELD_BU_PARENT)
 
         bu,new = BusinessUnit.objects.get_or_create(pk=id)
         changed = False
