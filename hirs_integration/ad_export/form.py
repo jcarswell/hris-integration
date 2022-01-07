@@ -177,8 +177,7 @@ class ADUserExport(BaseExport):
         super().__init__(full=full)
         self.mailboxes = []
 
-    @staticmethod
-    def add_mailbox(username,email_alias):
+    def add_mailbox(self,username,email_alias):
         type = self.config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
         if type.lower() == 'local':
             return f"Enable-Mailbox {username}"
