@@ -8,7 +8,6 @@ from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit,
                                CsvPending, EmployeeOverrides)
 from django.db.utils import IntegrityError
 from django.db.models import Q
-from distutils.util import strtobool
 
 from .helpers import config
 from .helpers.text_utils import fuzz_name
