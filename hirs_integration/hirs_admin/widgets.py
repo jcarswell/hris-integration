@@ -48,11 +48,12 @@ class SelectPickerMulti(widgets.SelectMultiple,WidgetClassBase):
     template_name = 'hirs_admin/widgets/selectpicker.html'
     base_classes = ['selectpicker']
     
-    def __init__(self,attrs=None,choices=(),max_opts=None):
+    def __init__(self,attrs=None,choices=(),max_opts=None,select_box=True):
         super().__init__(attrs,choices)        
         self.attrs['data-live-search'] = 'true'
         self.attrs['data-style'] = 'bg-white'
         self.attrs['max_opts'] = max_opts or 0
+        self.attrs['data-actions-box'] = str(select_box).lower()
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name,value,attrs)
