@@ -184,9 +184,20 @@ class EmployeeManager:
     def add_groups(self) -> list[str]:
         output = self._leave_groups_add()
 
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)|
-                                            Q(bu=self.__qs_emp.primary_job.bu.pk)|
-                                            Q(loc=self.__qs_over.location.pk))
+        #Positive group lookups
+        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)&Q(jobs_not=False)|
+                                            Q(bu=self.__qs_emp.primary_job.bu.pk)&Q(bu_not=False)|
+                                            Q(loc=self.__qs_over.location.pk)&Q(loc_not=False)|
+                                            Q(all=True))
+
+        for group in gmaps:
+            if group.dn not in output:
+                output.append(group.dn)
+
+        #Negitive group lookups
+        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk,_negated=True)&Q(jobs_not=True)|
+                                            Q(bu=self.__qs_emp.primary_job.bu.pk,_negated=True)&Q(bu_not=True)|
+                                            Q(loc=self.__qs_over.location.pk,_negated=True)&Q(loc_not=True))
 
         for group in gmaps:
             if group.dn not in output:
@@ -207,7 +218,25 @@ class EmployeeManager:
 
     @property
     def remove_groups(self) -> list[str]:
-        return self._leave_groups_del()
+        output = self._leave_groups_del()
+
+        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)&Q(jobs_not=True)|
+                                            Q(bu=self.__qs_emp.primary_job.bu.pk)&Q(bu_not=True)|
+                                            Q(loc=self.__qs_over.location.pk)&Q(loc_not=True))
+
+        for group in gmaps:
+            if group.dn not in output:
+                output.append(group.dn)
+
+        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk,_negated=True)&Q(jobs_not=False)|
+                                            Q(bu=self.__qs_emp.primary_job.bu.pk,_negated=True)&Q(bu_not=False)|
+                                            Q(loc=self.__qs_over.location.pk,_negated=True)&Q(loc_not=False))
+
+        for group in gmaps:
+            if group.dn not in output:
+                output.append(group.dn)
+
+        return output
 
     @staticmethod
     def parse_group(groups:str):
