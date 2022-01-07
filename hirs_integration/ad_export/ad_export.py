@@ -3,7 +3,6 @@ import subprocess
 import os
 
 from typing import Union
-from pyad import pyadexceptions
 from pyad.adbase import set_defaults
 from pyad.adcontainer import ADContainer
 from pyad.adgroup import ADGroup
@@ -12,9 +11,8 @@ from pyad.aduser import ADUser
 from base64 import b64encode
 from hirs_admin.models import set_username
 from smtp_client.smtp import Smtp
-from distutils.util import strtobool
 from time import time
-from jinja2 import Environment,PackageLoader,select_autoescape
+from jinja2 import Environment,PackageLoader
 from django.conf import settings
 from pywintypes import com_error
 
@@ -27,6 +25,7 @@ class Export:
     reprocess = False
     
     def __init__(self,full=False) -> None:
+        self.config = config.Config()
         self._delta = not full
         self.connect_ad()
         logger.debug(f"Getting Employees - Delta is {self._delta}")
@@ -34,8 +33,8 @@ class Export:
         
     def connect_ad(self):
         return #Current bug in the impmentation that throws and error when the user id and password are set
-        user = config.get_config(config.CONFIG_CAT, config.CONFIG_AD_USER)
-        passwd = config.get_config(config.CONFIG_CAT, config.CONFIF_AD_PASSWORD)
+        user = self.config(config.CONFIG_CAT, config.CONFIG_AD_USER)
+        passwd = self.config(config.CONFIG_CAT, config.CONFIF_AD_PASSWORD)
 
         if user:
             set_defaults(username=user,password=passwd)
@@ -108,7 +107,7 @@ class Export:
                 config.commit_employee(user.id)
                 self.mailboxes.append(self.enable_mailbox(user.username,user.email_alias))
             s = Smtp()
-            s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")        
+            s.send(self.config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")        
 
         if self.mailboxes:
             self.setup_mailboxes(self.mailboxes)
@@ -131,19 +130,19 @@ class Export:
         logger.debug(f"Creating user")
         user = ou.create_user(f"{employee.firstname} {employee.lastname}",
                                     employee.password,
-                                    config.get_config(config.CONFIG_CAT,config.CONFIG_UPN),
+                                    self.config(config.CONFIG_CAT,config.CONFIG_UPN),
                                     employee.status,
                                     optional_attributes={
                                         'employeeNumber': str(employee.id),
-                                        'company': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
-                                        'homePhone': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
-                                        'facsimileTelephoneNumber': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_FAX),
-                                        'streetAddress': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STREET),
-                                        'postOfficeBox': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_PO),
-                                        'l': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_CITY),
-                                        'st': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_STATE),
-                                        'postalCode': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
-                                        'c': config.get_config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
+                                        'company': self.config(config.DEFAULTS_CAT,config.DEFAULT_ORG),
+                                        'homePhone': self.config(config.DEFAULTS_CAT,config.DEFAULT_PHONE),
+                                        'facsimileTelephoneNumber': self.config(config.DEFAULTS_CAT,config.DEFAULT_FAX),
+                                        'streetAddress': self.config(config.DEFAULTS_CAT,config.DEFAULT_STREET),
+                                        'postOfficeBox': self.config(config.DEFAULTS_CAT,config.DEFAULT_PO),
+                                        'l': self.config(config.DEFAULTS_CAT,config.DEFAULT_CITY),
+                                        'st': self.config(config.DEFAULTS_CAT,config.DEFAULT_STATE),
+                                        'postalCode': self.config(config.DEFAULTS_CAT,config.DEFAULT_ZIP),
+                                        'c': self.config(config.DEFAULTS_CAT,config.DEFAULT_COUNTRY)
                                         })
 
         user.force_pwd_change_on_login()
@@ -240,7 +239,7 @@ class Export:
         return True
 
     def update_user(self,employee:config.EmployeeManager, user:ADUser):
-        upn = f'{employee.email_alias}@{config.get_config(config.CONFIG_CAT,config.CONFIG_UPN)}'
+        upn = f'{employee.email_alias}@{self.config(config.CONFIG_CAT,config.CONFIG_UPN)}'
         attribs = {
             'givenName': employee.firstname,
             'sn': employee.lastname,
@@ -352,10 +351,9 @@ class Export:
                 employee_source.employee.save()
                 return True
 
-    @staticmethod
-    def enable_mailbox(username,email_alias):
-        route_address = config.get_config(config.CONFIG_CAT,config.CONFIG_ROUTE_ADDRESS)
-        type = config.get_config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
+    def enable_mailbox(self,username,email_alias):
+        route_address = self.config(config.CONFIG_CAT,config.CONFIG_ROUTE_ADDRESS)
+        type = self.config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
         if type.lower() == 'local':
             return f"Enable-Mailbox {username}"
         elif type.lower() == 'remote':
@@ -364,9 +362,8 @@ class Export:
             logger.warning(f"mailbox type {type} is not suppoted use either remote or local")
             return ''
 
-    @staticmethod
-    def setup_mailboxes(mailboxes):
-        if not strtobool(config.get_config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES)):
+    def setup_mailboxes(self,mailboxes):
+        if not self.config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES):
             return
 
         logger.debug('Setting up Jinja 2 Environment')
