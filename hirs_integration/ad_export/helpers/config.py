@@ -3,7 +3,6 @@ import logging
 from typing import Union,Any
 from common.functions import ConfigurationManagerBase
 from django.db.models import Q
-from distutils.util import strtobool
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,
                                EmployeePending,Location,GroupMapping)
@@ -34,6 +33,8 @@ class EmployeeManager:
     def __init__(self,emp_object:Union[Employee,EmployeePending]) -> None:
         if not isinstance(emp_object,(Employee,EmployeePending)):
             raise ValueError(f"expexted Employee or EmployeePending Object got {type(emp_object)}")
+
+        self.config = Config()
 
         self.__qs_emp = emp_object
         self.merge = False
@@ -84,7 +85,7 @@ class EmployeeManager:
 
         if self.__emp_pend.password:
             self.__qs_emp.password = self.__emp_pend.password
-        
+
         if self.__emp_pend.guid:
             self.__qs_emp.guid = self.__emp_pend.guid
 
@@ -149,7 +150,7 @@ class EmployeeManager:
         loc = self.__qs_over.location
         val = Location.objects.get(loc)
         return val.name
-    
+
     @property
     def email_alias(self) -> str:
         return self.__qs_emp.email_alias
@@ -164,7 +165,7 @@ class EmployeeManager:
 
     @property
     def status(self) -> bool:
-        if strtobool(get_config(EMPLOYEE_CAT,EMPLOYEE_DISABLE_LEAVE)):
+        if self.config(EMPLOYEE_CAT,EMPLOYEE_DISABLE_LEAVE):
             if self.__qs_emp.status != STAT_ACT:
                 return False
         elif self.__qs_emp.status == STAT_TERM:
@@ -257,19 +258,19 @@ class EmployeeManager:
                     output.append(g.dn)
                 except Exception:
                     #not sure what the exception will be
-                    logger.warning(f"{group} doesn't appear to be valid") 
+                    logger.warning(f"{group} doesn't appear to be valid")
 
         return output
 
     @property
     def upn(self) -> str:
-        return f'{self.email_alias}@{get_config(CONFIG_CAT,CONFIG_UPN)}'
+        return f'{self.email_alias}@{self.config(CONFIG_CAT,CONFIG_UPN)}'
 
     def _leave_groups_add(self) -> list:
         output = []
 
         if self.__qs_emp.status == "Leave":
-            output = output + self.parse_group(get_config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD))
+            output = output + self.parse_group(self.config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD))
 
         elif self.__qs_emp.status == "Active":
             output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL)
@@ -345,11 +346,10 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
                 logger.error(f"Failed to get Employee {str(employee)}")
 
     if delta:
-        lastsync = get_config(CONFIG_CAT,CONFIG_LAST_SYNC)
+        lastsync = Config()(CONFIG_CAT,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
-        ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
-        emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
-        emp_pend = EmployeePending.objects.filter(updated_on__gt=datetime(*ls_datetime))
+        emps = Employee.objects.filter(updated_on__gt=lastsync)
+        emp_pend = EmployeePending.objects.filter(updated_on__gt=lastsync)
     else:
         emps = Employee.objects.all()
         emp_pend = EmployeePending.objects.all()
@@ -374,7 +374,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
 
 def base_dn() -> str:
     from hirs_admin.helpers import config
-    return config.get_config(config.CONFIG_CAT,config.BASE_DN)
+    return config.Config()(config.CONFIG_CAT,config.BASE_DN)
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
     users = Employee.objects.filter(_username__startswith=username)
@@ -388,6 +388,7 @@ def fuzzy_employee(username:str) -> list[EmployeeManager]:
     return output
 
 def set_last_run():
-    ls = Setting.o2.get_by_path(GROUP_CONFIG,CONFIG_CAT,CONFIG_LAST_SYNC)[0]
-    ls.value = str(datetime.utcnow()).split('.')[0]
-    ls.save()
+    cfg = Config()
+    cfg.get(CONFIG_CAT,CONFIG_LAST_SYNC)
+    cfg.value = datetime.utcnow()
+    cfg.save()
