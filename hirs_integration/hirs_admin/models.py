@@ -405,7 +405,7 @@ class Employee(models.Model):
 
     emp_id = models.IntegerField(primary_key=True)
     created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
-    updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
+    updated_on = models.DateTimeField(null=False, blank=False, default=datetime.utcnow)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     givenname = models.CharField(max_length=96, null=False, blank=False)
     middlename = models.CharField(max_length=96, null=True, blank=True)
@@ -770,7 +770,7 @@ class EmployeePending(models.Model):
     STAT_LEA = Employee.STAT_LEA
 
     created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
-    updated_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
+    updated_on = models.DateTimeField(null=False, blank=False, default=datetime.utcnow)
     manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL)
     firstname = models.CharField(max_length=96, null=False, blank=False)
     lastname = models.CharField(max_length=96, null=False, blank=False)
