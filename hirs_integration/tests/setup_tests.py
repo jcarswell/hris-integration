@@ -138,8 +138,6 @@ def setup_ad_export():
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
-            config.CONFIG_AD_USER: 'importadmin',
-            config.CONFIF_AD_PASSWORD: 'quiuj5Aegh$ief3iXee1d',
             config.CONFIG_UPN: 'wch.net',
             config.CONFIG_ROUTE_ADDRESS: 'thecarswells-ca.mail.onmicrosoft.com',
             config.CONFIG_ENABLE_MAILBOXES: 'True',
