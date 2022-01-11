@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('emp_id', models.IntegerField(primary_key=True, serialize=False)),
                 ('created_on', models.DateField(default=datetime.datetime.utcnow)),
-                ('updated_on', models.DateField(default=datetime.datetime.utcnow)),
+                ('updated_on', models.DateTimeField(default=datetime.datetime.utcnow)),
                 ('givenname', models.CharField(max_length=96)),
                 ('middlename', models.CharField(max_length=96)),
                 ('surname', models.CharField(max_length=96)),

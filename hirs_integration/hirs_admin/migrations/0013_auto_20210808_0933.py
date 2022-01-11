@@ -113,7 +113,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='employeepending',
             name='updated_on',
-            field=models.DateField(default=datetime.datetime.utcnow),
+            field=models.DateTimeField(default=datetime.datetime.utcnow),
         ),
         migrations.AlterField(
             model_name='employeeaddress',
