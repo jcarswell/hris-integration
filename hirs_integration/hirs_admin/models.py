@@ -4,7 +4,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from datetime import datetime
+from django.utils import timezone
 from cryptography.fernet import Fernet
 from copy import deepcopy
 from django import conf
@@ -299,10 +299,10 @@ class Setting(models.Model):
                 # Continue the error if we are failing to decode actual data
                 raise e
             self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
-            logger.debug(f"self.setting doesn't have field properties set yet")
+            logger.debug(f"{self.setting} doesn't have field properties set yet")
         except TypeError:
             self.field_properties = deepcopy(self.__BASE_PROPERTIES__)
-            logger.debug(f"self.setting doesn't have field properties set yet")
+            logger.debug(f"{self.setting} doesn't have field properties set yet")
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
@@ -404,14 +404,14 @@ class Employee(models.Model):
     STAT_LEA = 'leave'
 
     emp_id = models.IntegerField(primary_key=True)
-    created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
-    updated_on = models.DateTimeField(null=False, blank=False, default=datetime.utcnow)
+    created_on = models.DateField(null=False, blank=False, default=timezone.now)
+    updated_on = models.DateTimeField(null=False, blank=False, default=timezone.now)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     givenname = models.CharField(max_length=96, null=False, blank=False)
     middlename = models.CharField(max_length=96, null=True, blank=True)
     surname = models.CharField(max_length=96, null=False, blank=False)
     suffix = models.CharField(max_length=20, null=True, blank=True)
-    start_date = models.DateField(default=datetime.utcnow)
+    start_date = models.DateField(default=timezone.now)
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
     type = models.CharField(max_length=64,null=True,blank=True)
@@ -425,7 +425,10 @@ class Employee(models.Model):
     guid = models.CharField(max_length=40,null=True,blank=True)
 
     def __eq__(self,other) -> bool:
-        if not isinstance(other,Employee) or self.emp_id != other.pk:
+        if not isinstance(other,Employee):
+            return False
+
+        if int(self.emp_id) != int(other.pk):
             return False
 
         for field in ['givenname','middlename','surname','suffix','start_date','state','leave',
@@ -616,7 +619,8 @@ class Employee(models.Model):
                 set_upn(instance, f"{instance._username}{round(time.time())}")
 
             if prev_instance != instance:
-                instance.updated_on = datetime.utcnow()
+                logger.debug(f"{instance} has been updated")
+                instance.updated_on = timezone.now()
 
         if instance._username is None:
             set_username(instance)
@@ -648,6 +652,8 @@ class EmployeeOverrides(models.Model):
 
     def __eq__(self, other) -> bool:
         if not isinstance(other,EmployeeOverrides):
+            return False
+        if int(self.pk) != int(other.pk):
             return False
 
         for field in ['employee','_firstname','_lastname','nickname','_location']:
@@ -713,7 +719,7 @@ class EmployeeOverrides(models.Model):
             if instance._firstname or instance._lastname:
                 set_username(instance)
                 set_upn(instance)
-            instance.employee.updated_on = datetime.utcnow()
+            instance.employee.updated_on = timezone.now()
 
 
 #Employee Override Model Signal Connects
@@ -769,14 +775,14 @@ class EmployeePending(models.Model):
     STAT_ACT = Employee.STAT_ACT
     STAT_LEA = Employee.STAT_LEA
 
-    created_on = models.DateField(null=False, blank=False, default=datetime.utcnow)
-    updated_on = models.DateTimeField(null=False, blank=False, default=datetime.utcnow)
+    created_on = models.DateField(null=False, blank=False, default=timezone.now)
+    updated_on = models.DateTimeField(null=False, blank=False, default=timezone.now)
     manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL)
     firstname = models.CharField(max_length=96, null=False, blank=False)
     lastname = models.CharField(max_length=96, null=False, blank=False)
     suffix = models.CharField(max_length=20, null=True, blank=True)
     designation = models.CharField(max_length=128, null=True, blank=True)
-    start_date = models.DateField(default=datetime.utcnow)
+    start_date = models.DateField(default=timezone.now)
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
     type = models.CharField(max_length=64,null=True,blank=True)
@@ -792,7 +798,10 @@ class EmployeePending(models.Model):
     guid = models.CharField(max_length=40,null=True,blank=True)
     
     def __eq__(self,other) -> bool:
-        if not isinstance(other,EmployeePending) or self.pk != other.pk:
+        if not isinstance(other,EmployeePending):
+            return False
+
+        if int(self.pk) != int(other.pk):
             return False
 
         for field in ['firstname','lastname','suffix','start_date','state','leave',
@@ -936,7 +945,7 @@ class EmployeePending(models.Model):
                 set_upn(instance, f"{instance._username}{round(time.time())}")
 
             if prev_instance != instance:
-                instance.updated_on = datetime.utcnow()
+                instance.updated_on = timezone.now()
 
         if instance._username is None:
             set_username(instance)
