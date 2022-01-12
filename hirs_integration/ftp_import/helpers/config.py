@@ -1,6 +1,7 @@
 import logging
 
 from distutils.util import strtobool
+from copy import deepcopy
 from typing import Any
 from warnings import warn
 from hirs_admin.models import Setting
@@ -29,7 +30,7 @@ class CsvSetting():
         fields = {}
         for row in Setting.o2.get_by_path(GROUP_MAP):
             if row.catagory not in fields:
-                fields[row.catagory] = IMPORT_DEFAULTS
+                fields[row.catagory] = deepcopy(IMPORT_DEFAULTS)
             if row.item in FIELD_ITEMS:
                 fields[row.catagory][row.item] = row.value
 
