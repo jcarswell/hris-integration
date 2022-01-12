@@ -219,7 +219,9 @@ def send_email_html(dest:str = None):
     if dest is None:
         dest = input(f"Send Test Email to: ")
     s = smtp.Smtp()
-    msg = s.mime_build("Hello World Text","<h3>Hello World <i>HTML</i></h3>","Test Email",dest)
+    msg = s.mime_build("Test email sent from setup_tests.send_email()",
+                       "<p>Test email sent from setup_tests<i>.send_email()</i></p>",
+                       "HRIS Sync Test Email",dest)
     s.send_html(dest,msg)
 
 if __name__ == "__main__":
