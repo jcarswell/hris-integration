@@ -136,9 +136,8 @@ class FieldConversion:
                     self.field == value.field)
         elif isinstance(value,str):
             v = FieldConversion(self.type,value)
-            print(f"{v.value} == {self.value}")
             return self.value == v.value
-        
+
         return False
 
     def __call__(self, value: str) -> Any:
