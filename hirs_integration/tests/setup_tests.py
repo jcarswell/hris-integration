@@ -207,11 +207,20 @@ def run_setup():
     import_employees()
     setup_hirs_admin_after()
 
-def send_email():
+def send_email(dest:str = None):
     from smtp_client import smtp
-    dest = input(f"Send Test Email to: ")
+    if dest is None:
+        dest = input(f"Send Test Email to: ")
     s = smtp.Smtp()
     s.send(dest,"Test email sent from setup_tests.send_email()","HRIS Sync Test Email")
+
+def send_email_html(dest:str = None):
+    from smtp_client import smtp
+    if dest is None:
+        dest = input(f"Send Test Email to: ")
+    s = smtp.Smtp()
+    msg = s.mime_build("Hello World Text","<h3>Hello World <i>HTML</i></h3>","Test Email",dest)
+    s.send_html(dest,msg)
 
 if __name__ == "__main__":
     import os
