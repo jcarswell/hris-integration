@@ -138,8 +138,6 @@ def setup_ad_export():
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
-            config.CONFIG_AD_USER: 'importadmin',
-            config.CONFIF_AD_PASSWORD: 'quiuj5Aegh$ief3iXee1d',
             config.CONFIG_UPN: 'wch.net',
             config.CONFIG_ROUTE_ADDRESS: 'thecarswells-ca.mail.onmicrosoft.com',
             config.CONFIG_ENABLE_MAILBOXES: 'True',
@@ -209,11 +207,22 @@ def run_setup():
     import_employees()
     setup_hirs_admin_after()
 
-def send_email():
+def send_email(dest:str = None):
     from smtp_client import smtp
-    dest = input(f"Send Test Email to: ")
+    if dest is None:
+        dest = input(f"Send Test Email to: ")
     s = smtp.Smtp()
     s.send(dest,"Test email sent from setup_tests.send_email()","HRIS Sync Test Email")
+
+def send_email_html(dest:str = None):
+    from smtp_client import smtp
+    if dest is None:
+        dest = input(f"Send Test Email to: ")
+    s = smtp.Smtp()
+    msg = s.mime_build("Test email sent from setup_tests.send_email()",
+                       "<p>Test email sent from setup_tests<i>.send_email()</i></p>",
+                       "HRIS Sync Test Email",dest)
+    s.send_html(dest,msg)
 
 if __name__ == "__main__":
     import os

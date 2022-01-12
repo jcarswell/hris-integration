@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'hirs_admin',
     'cron',
     'ftp_import',
-    'corepoint_export'
+    'ad_export',
+    'corepoint_export',
 ]
 
 MIDDLEWARE = [

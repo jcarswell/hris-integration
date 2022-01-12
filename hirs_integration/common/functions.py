@@ -3,9 +3,26 @@ import re
 from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date,parse_datetime
+from distutils.util import strtobool
 
 from .exceptions import FixturesError,SettingsError
-from distutils.util import strtobool
+
+def pk_to_name(pk:int) -> str:
+    if not isinstance(pk,int):
+        raise TypeError(f"Expected int got \"{pk.__class__.__name__}\"")
+
+    return f"id_{pk}"
+
+def name_to_pk(name:str) -> int:
+    return int(name[3:])
+
+def model_to_choices(data,none:bool =False):
+    output = []
+    if none:
+        output.append((None,""))
+    for r in data:
+        output.append((pk_to_name(r.pk),str(r)))
+    return output
 
 def configuration_fixtures(group:str,config:dict,Setting) -> None:
     def add_fixture(c,i,value:dict):
@@ -119,9 +136,8 @@ class FieldConversion:
                     self.field == value.field)
         elif isinstance(value,str):
             v = FieldConversion(self.type,value)
-            print(f"{v.value} == {self.value}")
             return self.value == v.value
-        
+
         return False
 
     def __call__(self, value: str) -> Any:

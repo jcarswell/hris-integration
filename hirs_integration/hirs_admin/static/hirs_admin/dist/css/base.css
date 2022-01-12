@@ -27,3 +27,12 @@
     font-size: 1.6em;
     cursor: pointer;
 }
+.row-header {
+    border-bottom: solid #bbb;
+    height: 35px;
+    margin-bottom: 15px;
+}
+.form-95 {
+    width: 95%;
+    margin: 0 auto;
+}

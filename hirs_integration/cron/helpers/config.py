@@ -2,7 +2,6 @@ import logging
 
 from typing import Any
 from hirs_admin.models import Setting
-from distutils.util import strtobool
 from common.functions import ConfigurationManagerBase,FieldConversion
 
 from .data_structures import CronJob

@@ -35,7 +35,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def email(self):
-        return f"{self.email_alias}@{get_config(CAT_EMPLOYEE,EMPLOYEE_EMAIL_DOMAIN)}"
+        return f"{self.email_alias}@{self.config(CAT_EMPLOYEE,EMPLOYEE_EMAIL_DOMAIN)}"
 
     @property
     def bu_id(self):
@@ -43,7 +43,7 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def is_supervisor(self):
-        search = re.compile(get_config(CAT_EMPLOYEE,EMPLOYEE_SUPER_DESIGNATIONS))
+        search = re.compile(self.config(CAT_EMPLOYEE,EMPLOYEE_SUPER_DESIGNATIONS))
         if search.search(self.title):
             return True
         else:
@@ -52,6 +52,7 @@ class CPEmployeeManager(EmployeeManager):
     @property
     def employeetype(self):
         return self.employee.type
+
 
 class MapSettings(dict):
     def __init__(self,) -> None:
@@ -79,13 +80,12 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     output = []
     
     if delta:
-        lastsync = get_config(CAT_CONFIG,CONFIG_LAST_SYNC)
+        lastsync = Config()(CAT_CONFIG,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
-        ls_datetime = tuple([int(x) for x in lastsync[:10].split('-')])+tuple([int(x) for x in lastsync[11:].split(':')])
-        emps = Employee.objects.filter(updated_on__gt=datetime(*ls_datetime))
+        emps = Employee.objects.filter(updated_on__gt=lastsync)
     else:
         emps = Employee.objects.all()
-        
+
     for employee in emps:
         # if terminated(Exclude Terminated) is False and status = Terminated == True 
         #   or
@@ -99,6 +99,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     return output
 
 def set_last_run():
-    ls = Setting.o2.get_by_path(GROUP_CONFIG,CAT_CONFIG,CONFIG_LAST_SYNC)[0]
-    ls.value = str(datetime.utcnow()).split('.')[0]
-    ls.save()
+    cfg = Config()
+    cfg.get(CAT_CONFIG,CONFIG_LAST_SYNC)
+    cfg.value = datetime.utcnow()
+    cfg.save()

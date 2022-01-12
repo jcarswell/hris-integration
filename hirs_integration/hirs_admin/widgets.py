@@ -4,6 +4,23 @@ from django.forms import widgets
 
 logger = logging.getLogger("Widgets")
 
+class WidgetClassBase:
+    base_classes = None
+
+    def update_classes(self,attrs:dict =None) -> str:
+        if (attrs == None or 
+            ('class' not in attrs) or
+            ('class' in attrs) and attrs['class'] == ""):
+            classes = self.base_classes or []
+        elif 'class' in attrs:
+            classes = attrs['class'].split(" ")
+            for cls in self.base_classes:
+                if cls not in classes:
+                    classes.append(cls)
+
+        return " ".join(classes)
+
+
 class Hidden(widgets.Input):
     template_name = 'hirs_admin/widgets/hidden.html'
     input_type = 'password'
@@ -13,49 +30,41 @@ class Hidden(widgets.Input):
         self.attrs["data-toggle"] = "password"
 
 
-class SelectPicker(widgets.Select):
+class SelectPicker(widgets.Select,WidgetClassBase):
     template_name = 'hirs_admin/widgets/selectpicker.html'
+    base_classes = ['selectpicker']
 
-    def __init__(self,attrs):
-        super().__init__(attrs)
+    def __init__(self,attrs=None,choices=()):
+        super().__init__(attrs,choices)
         self.attrs['data-live-search'] = 'true'
         self.attrs['data-style'] = 'bg-white'
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name,value,attrs)
+        context['widget']['attrs']['class'] = self.update_classes(attrs)
+        return context
 
-        if 'class' not in attrs:
-            context['widget']['attrs']['class'] = "selectpicker"
-        else:
-            context['widget']['attrs']['class'] = " ".join(attrs['class'].split(' ') + ['selectpicker'])
+class SelectPickerMulti(widgets.SelectMultiple,WidgetClassBase):
+    template_name = 'hirs_admin/widgets/selectpicker.html'
+    base_classes = ['selectpicker']
+    
+    def __init__(self,attrs=None,choices=(),max_opts=None,select_box=True):
+        super().__init__(attrs,choices)        
+        self.attrs['data-live-search'] = 'true'
+        self.attrs['data-style'] = 'bg-white'
+        self.attrs['max_opts'] = max_opts or 0
+        self.attrs['data-actions-box'] = str(select_box).lower()
 
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name,value,attrs)
+        context['widget']['attrs']['class'] = self.update_classes(attrs)
         return context
 
 
-class SelectPickerMulti(widgets.SelectMultiple):
-    template_name = 'hirs_admin/widgets/selectpicker-multi.html'
+class CheckboxInput(widgets.CheckboxInput,WidgetClassBase):
+    base_classes = ["input-md"]
 
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context["widget"]["max_opts"] = self.max_opts or 0
-
-
-class CheckboxInput(widgets.CheckboxInput):
     def get_context(self, name, value, attrs):
         context = super().get_context(name,value,attrs)
-
-        logger.debug(f"{name} - {attrs}")
-        if 'class' in attrs:
-            classes = attrs['class'].split(' ')
-            add_class = True
-            for x in classes:
-                if x[:5] == "input":
-                    add_class = False
-            if add_class:
-                classes.append('input-md')
-                context['widget']['attrs']['class'] = " ".join(classes)
-            logger.debug(f"{context}")
-        else:
-            context['widget']['attrs']['class'] = "input-md"
-
+        context['widget']['attrs']['class'] = self.update_classes(attrs)
         return context

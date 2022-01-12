@@ -1,0 +1,7 @@
+{% extends "hirs_admin/base.html" %}
+{% load static i18n %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>Huston, we encountered an error</h1>
+<p><strong>{{err_code}}</strong><br>{{err_detail}}</p>
+{% endblock %}

@@ -8,7 +8,6 @@ from base64 import b64encode
 from smtp_client.smtp import Smtp
 from smtp_client import SmtpToInvalid,SmtpServerError,ConfigError
 from jinja2 import Environment,PackageLoader
-from distutils.util import strtobool
 from django.conf import settings
 from time import time
 from pywintypes import com_error
@@ -22,6 +21,7 @@ logger = logging.getLogger('as_export.form')
 class BaseExport:
     
     def __init__(self,full=False) -> None:
+        self.config = config.Config()
         self._delta = not full
         logger.debug(f"Getting Employees - Delta is {self._delta}")
         self.employees = config.get_employees(self._delta)
@@ -83,7 +83,7 @@ class BaseExport:
 
             try:
                 s = Smtp()
-                s.send(config.get_config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")
+                s.send(self.config(config.CONFIG_CAT,config.CONFIG_NEW_NOTIFICATION),msg,"New Employees Added")
             except ConfigError as e:
                 logger.warn(f"Failed to send message: Error {str(e)}")
             except SmtpServerError as e:
@@ -177,13 +177,12 @@ class ADUserExport(BaseExport):
         super().__init__(full=full)
         self.mailboxes = []
 
-    @staticmethod
-    def add_mailbox(username,email_alias):
-        type = config.get_config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
+    def add_mailbox(self,username,email_alias):
+        type = self.config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
         if type.lower() == 'local':
             return f"Enable-Mailbox {username}"
         elif type.lower() == 'remote':
-            route_address = config.get_config(config.CONFIG_CAT,config.CONFIG_ROUTE_ADDRESS)
+            route_address = self.config(config.CONFIG_CAT,config.CONFIG_ROUTE_ADDRESS)
             return f"Enable-RemoteMailbox {username} -RemoteRoutingAddress {email_alias}@{route_address}"
         else:
             logger.warning(f"mailbox type {type} is not suppoted use either remote or local")
@@ -212,9 +211,8 @@ class ADUserExport(BaseExport):
             self.setup_mailboxes(self.mailboxes)
             self.mailboxes = None
 
-    @staticmethod
-    def setup_mailboxes(mailboxes):
-        if not strtobool(config.get_config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES)):
+    def setup_mailboxes(self,mailboxes):
+        if not self.config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES):
             logger.info("Mailbox import is disabled")
             return
 

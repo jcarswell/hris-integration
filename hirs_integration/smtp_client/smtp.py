@@ -1,7 +1,6 @@
 import smtplib
 import logging
 
-from distutils.util import strtobool
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -22,23 +21,24 @@ class Smtp:
     """
 
     def __init__(self):
-        config_data = config.get_config_cat(config.CAT_CONFIG)
+        self.config = config.Config()
+        config_data = self.config.get_catagory(config.CAT_CONFIG)
 
-        prefix = config.get_config(config.CAT_EMAIL,config.EMAIL_PREFIX) or None
+        prefix = self.config(config.CAT_EMAIL,config.EMAIL_PREFIX) or None
         if prefix and prefix[-1] != ' ':
             prefix += ' '
         elif not prefix:
             prefix = ''
         self.prefix = prefix
 
-        if strtobool(config_data[config.SERVER_SSL]):
+        if config_data[config.SERVER_SSL]:
             self.smtp_class = smtplib.SMTP_SSL
         else:
             self.smtp_class = smtplib.SMTP
 
         self.server = config_data[config.SERVER_SERVER]
         self.port = config_data[config.SERVER_PORT] or 0
-        self.tls = strtobool(config_data[config.SERVER_TLS])
+        self.tls = config_data[config.SERVER_TLS]
         self.username = config_data[config.SERVER_USERNAME] or None
         if self.username:
             self.password = config_data[config.SERVER_PASSWORD]
@@ -76,15 +76,25 @@ class Smtp:
         del self.__conn
         logger.debug("Server connection closed. Until next time.")
 
-    def mime_build(self, text:AnyStr, html:AnyStr, subject:AnyStr, to:Union[AnyStr,List[AnyStr]] =None) -> MIMEMultipart:
+    def mime_build(self, text:AnyStr =None, html:AnyStr =None, subject:AnyStr =None, to:Union[AnyStr,List[AnyStr]] =None) -> MIMEMultipart:
+        if text is None and html is None:
+            raise ValueError("both html and text may not be None")
+
         msg = MIMEMultipart('alternative')
         msg['From'] = self.sender
+        msg['Subject'] = self.prefix + subject or "A Message for you"
+
         if to:
             if isinstance(to,list):
                 to = ", ".join(to)
             msg['To'] = to
-        msg.attach(MIMEText(text, 'plain'))
-        msg.attach(MIMEText(html, 'html'))
+
+        if text is not None:
+            msg.attach(MIMEText(text, 'plain'))
+        if html is not None:
+            msg.attach(MIMEText(html, 'html'))
+
+        return msg
 
     def send_html(self,to:Union[AnyStr,List],msg:MIMEMultipart):
         if isinstance(to,str):
@@ -95,11 +105,11 @@ class Smtp:
             raise ValueError(f"expexted MIMEMultipart for msg got {type(msg)}")
 
         self.connect()
-        if msg['To'] in None:
+        if msg['To'] is None:
             msg['To'] = to
         try:
             logger.debug(f"Trying to send email to {to}")
-            self.__conn.sendmail(self.sender,to,msg)
+            self.__conn.sendmail(self.sender,to,msg.as_string())
         except smtplib.SMTPSenderRefused as e:
             logger.exception('Sender does not have premission to send emails')
             raise ConfigError("Sender does not have permission on the server") from e
@@ -110,7 +120,7 @@ class Smtp:
             e_str = '\n\t'.join(errors)
             logger.exception(f"Send email failed with the following errors: \n\t{e_str}")
             raise SmtpToInvalid(f"Recievied the following errors: \n\t{e_str}")
-        
+
         self.close()
 
     def send(self,to:Union[AnyStr,List],msg:str,subject:str):
@@ -137,7 +147,7 @@ class Smtp:
         email['Subject'] = self.prefix + subject
         email['To'] = to
         email['From'] = self.sender
-        
+
         self.connect()
         try:
             logger.debug(f"Trying to send email to {to}")
@@ -152,5 +162,5 @@ class Smtp:
             e_str = '\n\t'.join(errors)
             logger.exception(f"Send email failed with the following errors \n\t{e_str}")
             raise SmtpToInvalid(f"Recievied the following errors \n\t{e_str}")
-        
+
         self.close()
