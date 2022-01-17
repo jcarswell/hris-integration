@@ -28,7 +28,7 @@ def model_to_choices(data,none:bool =False):
     try:
         for r in data:
             output.append((pk_to_name(r.pk),str(r)))
-    except ProgrammingError:
+    except (ProgrammingError,AttributeError):
             warn("Databases not initialized")
             output = [('Not Loaded','System not initalized')]
     return output
