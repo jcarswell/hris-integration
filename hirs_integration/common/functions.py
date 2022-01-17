@@ -1,11 +1,16 @@
 import re
+import logging
 
 from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date,parse_datetime
 from distutils.util import strtobool
+from django.db.utils import ProgrammingError
+from warnings import warn
 
 from .exceptions import FixturesError,SettingsError
+
+logger = logging.getLogger('common functions')
 
 def pk_to_name(pk:int) -> str:
     if not isinstance(pk,int):
@@ -20,8 +25,12 @@ def model_to_choices(data,none:bool =False):
     output = []
     if none:
         output.append((None,""))
-    for r in data:
-        output.append((pk_to_name(r.pk),str(r)))
+    try:
+        for r in data:
+            output.append((pk_to_name(r.pk),str(r)))
+    except ProgrammingError:
+            warn("Databases not initialized")
+            output = [('Not Loaded','System not initalized')]
     return output
 
 def configuration_fixtures(group:str,config:dict,Setting) -> None:
