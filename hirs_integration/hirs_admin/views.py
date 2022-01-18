@@ -419,10 +419,16 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
 
     def render_csv_form(self) -> str:
         data = models.CsvPending.objects.all()
-        
+        choices = model_to_choices(models.EmployeePending.objects.all(),True)
         output = []
+
+        if not isinstance(choices,list):
+            return False
+        else:
+            choices.append(('new','-- New Employee --'))
+
         if len(data) != 0:
-            field_emp = SelectPicker(choices=model_to_choices(models.EmployeePending.objects.all(),True).append(('new','-- New Employee --')))
+            field_emp = SelectPicker(choices=choices)
 
             output.append(f'<div class="form-row row-header">')
             output.append(f'<div class="form-group col-md-8">')
@@ -451,8 +457,9 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
     def render_manual_form(self) -> str:
         data = models.EmployeePending.objects.all()
         output = []
+        choices = model_to_choices(models.Employee.objects.all(),True)
 
-        if len(data) != 0:
+        if len(data) != 0 and isinstance(choices,list) and len(choices) >= 1:
             field_emp = SelectPicker(choices=model_to_choices(models.Employee.objects.all(),True))
 
             output.append(f'<div class="form-row row-header">')
