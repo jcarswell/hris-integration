@@ -445,7 +445,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
                 output.append(f'</div>')
                 output.append(f'<div class="form-group col-md-4">')
-                output.append(field_emp.render("row.emp_id",None))
+                output.append(field_emp.render(pk_to_name(row.emp_id),None))
                 output.append(f'</div>')
                 output.append(f'</div>')
             
@@ -483,7 +483,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 output.append(f'<p><strong>{row.firstname} {row.lastname}</strong></p>')
                 output.append(f'</div>')
                 output.append(f'<div class="form-group col-md-5">')
-                output.append(field_emp.render(f"id_{row.pk}",employee))
+                output.append(field_emp.render(pk_to_name(row.pk),employee))
                 output.append(f'</div>')
                 output.append(f'<div class="form-group col-md-2">')
                 output.append('<a href="{}"><ion-icon name="create"></ion-icon></a>'.format(reverse('pending_manual',args=[row.pk])))
@@ -523,14 +523,19 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
             except ImportError:
                 return handler500("System Missing ftp_import module. Please contact the system administartor")
 
-            for id,value in request.POST.items():
-                try:
-                    csv = models.CsvPending.objects.get(emp_id=int(id[3:]))
-                    pending_emp = models.EmployeePending.objects.get(pk=value)
-                    row_data = json.loads(csv.row_data)
-                    CsvImport(pending_emp,**row_data)
-                except models.CsvPending.DoesNotExist:
-                    errors[id] = f"failed to find employee {id[3:]}"
+            for csv_id,pending_id in request.POST.items():
+                logger.debug(f"Processing row {csv_id},{pending_id}")
+                if csv_id[:2] == 'id' and pending_id[:2] == 'id':
+                    try:
+                        csv = models.CsvPending.objects.get(emp_id=name_to_pk(csv_id))
+                        pending_emp = models.EmployeePending.objects.get(pk=name_to_pk(pending_id))
+                        row_data = json.loads(csv.row_data)
+                        CsvImport(pending_emp,**row_data)
+                    except models.CsvPending.DoesNotExist:
+                        errors[id] = f"Failed to find employee {id[3:]}"
+                    except json.decoder.JSONDecodeError as e:
+                        errors[id] = f"Reading of row data failed. Please contact the system adminstartor"
+                        logger.error(f"JSON Decode fail for CsvPending row '{csv}' error:\n {e}")
         else:
             return JsonResponse({"status":"error","feilds":None,"errors":f"{request.POST['form']} is not supported"})
 
