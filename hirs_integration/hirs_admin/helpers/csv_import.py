@@ -25,10 +25,10 @@ class CsvImport(EmployeeForm):
         fields = get_fields()
         
         output = []
-        for k,v in kwargs.items():
-            if k in fields:
-                output.append = fields[k]
-                output[-1]['field'] = k
+        for field in kwargs.keys():
+            if field in fields:
+                output.append(fields[field])
+                output[-1]['field'] = field
         
         return output
 
