@@ -525,10 +525,13 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
 
             for csv_id,pending_id in request.POST.items():
                 logger.debug(f"Processing row {csv_id},{pending_id}")
-                if csv_id[:2] == 'id' and pending_id[:2] == 'id':
+                if csv_id[:2] == 'id' and (pending_id[:2] == 'id' or pending_id == 'new'):
                     try:
                         csv = models.CsvPending.objects.get(emp_id=name_to_pk(csv_id))
-                        pending_emp = models.EmployeePending.objects.get(pk=name_to_pk(pending_id))
+                        if pending_id == 'new':
+                            pending_emp = None
+                        else:
+                            pending_emp = models.EmployeePending.objects.get(pk=name_to_pk(pending_id))
                         row_data = json.loads(csv.row_data)
                         CsvImport(pending_emp,**row_data)
                     except models.CsvPending.DoesNotExist:
@@ -536,6 +539,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                     except json.decoder.JSONDecodeError as e:
                         errors[id] = f"Reading of row data failed. Please contact the system adminstartor"
                         logger.error(f"JSON Decode fail for CsvPending row '{csv}' error:\n {e}")
+
         else:
             return JsonResponse({"status":"error","feilds":None,"errors":f"{request.POST['form']} is not supported"})
 
