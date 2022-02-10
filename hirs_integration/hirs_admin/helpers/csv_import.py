@@ -17,9 +17,10 @@ class CsvImport(EmployeeForm):
         fields = self.get_fields(**kwargs)
         super().__init__(fields,**kwargs)
         self.save_user = True
-        self.csv_pending = CsvPending.objects.get(self.employee_id)
+        self.csv_pending = CsvPending.objects.get(emp_id=self.employee_id)
         Stats.pending_users.pop()
         self.pending_employee = employee
+        self.save()
 
     def get_fields(self,**kwargs):
         fields = get_fields()
@@ -36,14 +37,11 @@ class CsvImport(EmployeeForm):
         if self.save_user:
             try:
                 self.save_employee()
+                Stats.rows_imported += 1
             except IntegrityError as e:
                 logger.exception(f"Failed to save employee {self.employee_id}")
                 return False,"Failed to save Employee object"
 
-            try:
-                self.save_overrides()
-            except IntegrityError as e:
-                logger.exception(f"Failed to save employee overrides for {self.employee_id}")
             try:
                 self.save_address()
             except IntegrityError as e:
@@ -70,9 +68,11 @@ class CsvImport(EmployeeForm):
                     except Employee.DoesNotExist:
                         logger.warning(f"Manager {value} doesn't exist yet")
                         Stats.warnings.append(f"Manager {value} doesn't exist yet")
+                    except ValueError:
+                        logger.warning(f"Manager is not set")
 
                 elif map_val == 'primary_job':
-                    if self.jobs_check(int_or_str(value)):
+                    if isinstance(self.jobs_check(int_or_str(value)),int):
                         self.employee.primary_job = JobRole.objects.get(pk=int_or_str(value))
                     else:
                         logger.warning(f"Job {value} doesn't exist yet")
@@ -81,7 +81,16 @@ class CsvImport(EmployeeForm):
                     if self.location_check(int_or_str(value)):
                         self.employee.location = Location.objects.get(pk=int_or_str(value))
                 else:
-                    setattr(self.employee,self.get_map_to(key),value)
+                    try:
+                        setattr(self.employee,self.get_map_to(key),value)
+                    except IntegrityError:
+                        Stats.warnings.append(f'Failed to update {map_val} with {value} for {self.employee_id}')
+                        logger.error(f'Failed to update {map_val} with {value} for {self.employee_id}')
 
         self.employee.save()
-        self.pending_employee.employee = self.employee
+        if self.pending_employee != None:
+            self.pending_employee.employee = self.employee
+            self.pending_employee.save()
+
+    def __del__(self):
+        logger.debug(str(Stats()))
