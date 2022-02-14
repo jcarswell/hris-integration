@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Union
 from string import ascii_letters,digits
 from fuzzywuzzy import fuzz
+from django.utils.timezone import make_aware,is_aware
 
 def int_or_str(val:str) -> Union[int,str]:
     """
@@ -102,3 +104,13 @@ def fuzz_name(csv_fname:str,csv_lname:str,emp_fname:str,emp_lname:str,match_pcen
         return True,int(round(match_pcent,0))
     else:
         return False,int(round(match_pcent,0))
+
+def parse_date(date_str:str) -> datetime:
+    from .config import CAT_CSV,CSV_DATE_FMT,Config
+    setting = Config()
+    setting.get(CAT_CSV,CSV_DATE_FMT)
+    dt = datetime.strptime(date_str,setting.value)
+    if not is_aware(dt):
+        dt = make_aware(dt)
+
+    return dt

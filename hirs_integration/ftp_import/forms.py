@@ -1,8 +1,9 @@
+import datetime
 import logging
 import json
 
 from typing import AnyStr, Dict, List
-from datetime import datetime
+from django.utils import timezone
 from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit, 
                                WordList, Employee, EmployeeAddress, EmployeePhone,
                                CsvPending, EmployeeOverrides)
@@ -10,8 +11,7 @@ from django.db.utils import IntegrityError
 from django.db.models import Q
 
 from .helpers import config
-from .helpers.text_utils import fuzz_name
-from .helpers.text_utils import int_or_str,clean_phone
+from .helpers.text_utils import int_or_str,clean_phone,fuzz_name,parse_date
 from .helpers.stats import Stats
 
 __all__ = ('form')
@@ -237,10 +237,10 @@ class BaseImport():
 
         if not new and changed:
             for u in Employee.objects.filter(location=location):
-                u.updated_on = datetime.utcnow()
+                u.updated_on = timezone.now()
                 u.save()
             for u in EmployeeOverrides.objects.filter(_location=location):
-                u.employee.updated_on = datetime.utcnow()
+                u.employee.updated_on = timezone.now()
                 u.save()
 
     def update_location(self,id:int) -> Location:
@@ -306,7 +306,7 @@ class BaseImport():
         
         if not new and changed:
             for u in Employee.objects.filter(primary_job=job):
-                u.updated_on = datetime.utcnow()
+                u.updated_on = timezone.now()
                 u.save()
 
         return job
@@ -369,7 +369,7 @@ class BaseImport():
         if not new and changed:
             for job in JobRole.objects.filter(bu=bu):
                 for u in Employee.objects.filter(primary_job=job):
-                    u.updated_on = datetime.utcnow()
+                    u.updated_on = timezone.now()
                     u.save()
 
         return bu
@@ -488,6 +488,12 @@ class EmployeeForm(BaseImport):
                             self.employee.location = location
                             changed = True
                 else:
+                    if hasattr(self.employee,map_val):
+                        if isinstance(getattr(self.employee,map_val),(datetime.datetime,datetime.date)):
+                            try:
+                                value = parse_date(value)
+                            except ValueError as e:
+                                logger.error(f"Failed to parse date time value for {key} - {str(e)}")
                     if getattr(self.employee,map_val) != value:
                         setattr(self.employee,map_val,value)
                         changed = True
@@ -516,6 +522,9 @@ class EmployeeForm(BaseImport):
                     if self.location_check(int_or_str(value)):
                         self.employee.location = Location.objects.get(pk=int_or_str(value))
                 else:
+                    if hasattr(self.employee,map_val):
+                        if isinstance(getattr(self.employee,map_val),(datetime.datetime,datetime.date)):
+                            value = parse_date(value)
                     try:
                         setattr(self.employee,map_val,value)
                     except IntegrityError:
