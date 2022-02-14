@@ -31,6 +31,7 @@ CSV_IMPORT_ALL_JOBS = "import_all_jobs"
 CSV_IMPORT_JOBS = "import_new_jobs"
 CSV_IMPORT_BU = "import_business_units"
 CSV_IMPORT_LOC = "import_locations"
+CSV_DATE_FMT = 'date_format'
 FIELD_LOC_NAME = 'location_name_field'
 FIELD_JD_NAME = 'job_description_name_field'
 FIELD_JD_BU = 'job_description_business_unit_field'
@@ -176,6 +177,14 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Automatically create or update missing locations",
+            },
+        },
+        CSV_DATE_FMT: {
+            "default_value": "%Y-%m-%d",
+            "field_properties": {
+                "type": "CharField",
+                "help_text": "Formatting for date fields to be imported. formating can be found at https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes",
+                "required": True,
             },
         },
     },
