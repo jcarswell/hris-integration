@@ -32,14 +32,13 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
 <script>
 var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
   form = $(this);
-  data = $(this).serializeArray();
+  data = serialize_form(form);
   $("#form_list input:disabled").each(function(i,e) {
     data.push({name:e.name,value:e.value});
   })
@@ -71,36 +70,6 @@ $("#form_list").submit(function(e) {
     }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
-});
-function do_delete() {
-  $.ajax({
-    method: "delete",
-    url: location.href,
-    })
-  .done(function(data){
-    location.replace(get_basepath());
-  })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
-}
-function is_new() {
-  if (isNaN(get_id())) {return undefined;}
-  else if (get_id() > 0) {return false;}
-  else {return true;}
-}
-$(function() {
-  if (is_new()) {
-    if (id !== undefined) {
-      id.disabled = false;
-      id.readOnly = false;
-      //$('<input type="submit" name="submit-new" class="btn btn-primary" style="margin: 4pt 0 0 auto;" value="Submit & New"/>').insertBefore($('input[name=submit]'));
-      //$('button[name=submit]').attr('style','margin: 4pt 0 0 4pt;');
-    }
-  }
-  const csrftoken = getCookie('csrftoken')
-  $.ajaxSetup({
-    headers: { "X-CSRFToken": csrftoken }
-  });
-  $('#btn_back')[0].href = get_basepath()
 });
 </script>
 {% endblock %}
