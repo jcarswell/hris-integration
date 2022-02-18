@@ -208,6 +208,21 @@ class EmployeePending(Form):
             'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
         }
 
+
+class EmailTemplate(Form):
+    list_fields = ['template_name']
+    
+    class Meta:
+        model = models.EmailTemplates
+        fields = ['template_name','email_subject','email_body']
+        disable = ('template_name')
+        labels = {
+            'template_name': _t('Template Name'),
+            'email_subject': _t('Subject'),
+            'email_body': _t('Body'),
+        }
+
+
 class ManualImportForm(forms.Form):
     emp_id = forms.IntegerField(label="Employee ID",
                                 min_value=1,required=True)
