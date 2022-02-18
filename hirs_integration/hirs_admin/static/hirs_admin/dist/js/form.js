@@ -49,15 +49,30 @@ function do_delete() {
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
 }
-function serialize_form(form,data) {
-  // Ensure that both disable rows and un-checked checkboxes are prased correctly
-  $("#form_list input:disabled",form).each(function(i,e) {
-    data.push({name:e.name,value:e.value});
+function serialize_form(f) {
+  d=$(f).serializeArray();
+  $("input:disabled",f).each(function(i,e) {
+    d.push({name:e.name,value:e.value});
   })
-  $("input[type=checkbox]:not(:checked)",this).each(function(i,e) {
-    data.push({name:e.name,value:"off"});
+  $("input[type=checkbox]:not(:checked)",f).each(function(i,e) {
+    d.push({name:e.name,value:"off"});
   })
-  return data
+  return d;
+}
+function getCookie(c_name)
+{
+    if (document.cookie.length > 0)
+    {
+        c_start = document.cookie.indexOf(c_name + "=");
+        if (c_start != -1)
+        {
+            c_start = c_start + c_name.length + 1;
+            c_end = document.cookie.indexOf(";", c_start);
+            if (c_end == -1) c_end = document.cookie.length;
+            return unescape(document.cookie.substring(c_start,c_end));
+        }
+    }
+    return "";
 }
 $('.alert').on('closed.bs.alert',function() {
   $('#alert-container').addClass('d-none');
