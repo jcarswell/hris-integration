@@ -41,6 +41,7 @@
   </div>
   <hr style="border-top:2px solid #bbb;display:None;">
   <form style="display:None;" id="employee-form" enctype="multipart/form-data">
+    {% csrf_token %}
     <h4>Photo</h4>
     {% if employee.photo %}
     <img class="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{{ employee.photo }}">
@@ -57,6 +58,7 @@
   </form>
   <hr style="border-top:2px solid #bbb;">
   <form id="override-form">
+    {% csrf_token %}
     <h4>Overrides</h4>
     <div class="form-row">
       <div class="form-group col-md-4">
@@ -133,12 +135,9 @@
 </div>
 {% endblock %}
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/serializer.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
 <script>
 <!--
-var itemsOverride;
 function validCheck() {
   var photo = $("#employee-form input[type=file]")[0]
   if (photo.files > 0) {
@@ -149,30 +148,19 @@ function validCheck() {
 $(function() {
   $('#'+employee.location).attr("default", true);
   $("#employee-form input[type=file]")[0].onchange = validCheck;
-  const csrftoken = getCookie('csrftoken')
-  $.ajaxSetup({
-    headers: { "X-CSRFToken": csrftoken }
-  });
 });
 $("#override-form").submit(function(e) {
   e.preventDefault();
   form = $(this);
-  data = $(this).serializeArray();
-  $("#override-form input:disabled").each(function(i,e) {
-    data.push({name:e.name,value:e.value});
-  })
+  data = serialize_form(form);
   data.push({name:'form',value:'override'});
   
   $.ajax({
     method: "POST",
     url: location.href,
     data: data,
-    headers: { "X-CSRFToken": getCookie('csrftoken') }
   })
-  .done(function(r) {
-    doneProcess(r,form);
-    }
-  })
+  .done(function(r) {doneProcess(r,form);})
   .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 $("#employee-form").submit(function(e) {
