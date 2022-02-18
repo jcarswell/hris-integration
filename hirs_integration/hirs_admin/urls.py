@@ -71,4 +71,11 @@ urlpatterns = [
     path('pending_manual/<int:id>/',
          views.ManualImport.as_view(),
          name='pending_manual'),
+   path('settings/email_templates/',
+         views.ListView.as_view(form=forms.EmailTemplate),
+         name='email_template'),
+    path('settings/email_templates/<int:id>/',
+         views.FormView.as_view(form=forms.EmailTemplate,
+                                template_name='hirs_admin/tinymce_edit.html'),
+         name='email_template_edit'),
     ]
