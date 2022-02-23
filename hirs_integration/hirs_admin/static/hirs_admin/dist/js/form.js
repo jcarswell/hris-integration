@@ -78,6 +78,9 @@ $('.alert').on('closed.bs.alert',function() {
   $('#alert-container').addClass('d-none');
   createAlert();
 })
+var snew = false;
+function s(e) {return undefined;}
+function s_new(e) {snew = true;}
 var id = $('#form_list input[type=number]')[0]
 $(function() {
   if (is_new()) {
