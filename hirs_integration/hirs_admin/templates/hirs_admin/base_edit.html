@@ -69,7 +69,7 @@ $("#form_list").submit(function(e) {
       } else {location.replace(get_basepath());}
     }
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e);});
 });
 </script>
 {% endblock %}
