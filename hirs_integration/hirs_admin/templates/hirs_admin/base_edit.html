@@ -24,7 +24,7 @@
     {% csrf_token %}
     {{ form.as_form }}
     <div class="form-row">
-      <button type="submit" name="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+      <button type="submit" name="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;" onclick="s()"><strong>Submit</strong></button>
     </div>
   </form>
   {% endblock %}
