@@ -2,17 +2,79 @@
 {% load i18n static %}
 
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
 <script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
 <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
 tinymce.init({
-  selector: 'textarea'
-})
+  selector: 'textarea',
+  min_height: 375,
+  height: 400,
+  plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars',
+  toolbar: 'undo redo | fontselect fontsizeselect formatselect | bold italic forecolor | alignleft aligncenter alignright | outdent indent | bullist numlist | image media variable',
+  setup: function(editor) {
+    editor.ui.registry.addMenuButton('variable', {
+      text: 'Insert variable',
+      fetch: function(callback) {
+        var items = [{
+          type: 'nestedmenuitem',
+          text: 'Employee Info',
+          getSubmenuItems: function() {
+            return [
+              {
+                type: 'menuitem',
+                text: 'First Name',
+                onAction: function() {
+                  editor.insertContent('{{ firstname }}');
+                }
+              },
+              {
+                type: 'menuitem',
+                text: 'Last Name',
+                onAction: function() {
+                  editor.insertContent('{{ lastname }}');
+                }
+              },
+              {
+                type: 'menuitem',
+                text: 'Email Address',
+                onAction: function() {
+                  editor.insertContent('{{ email }}');
+                }
+              },
+              {
+                type: 'menuitem',
+                text: 'Password Expiry Date',
+                onAction: function() {
+                  editor.insertContent('{{ pwdexpiredate }}')
+                }
+              },
+              {
+                type: 'menuitem',
+                text: 'Days Till Password Expiry',
+                onAction: function() {
+                  editor.insertContent('{{ pwdexpiredays }}')
+                }
+              }
+            ];
+          }
+        }];
+        callback(items);
+      }
+    });
+  }
+});
+function s(e)
+{
+  console.log(e)
+  $('textarea',e).each(function(i,v) {
+    $(this).html(tinymce.editors[i].getContent());
+  })
+}
+
 $("#form_list").submit(function(e) {
+  form = $("#form_list");
   e.preventDefault();
-  form = $(this);
-  data = serialize_form(form,$(this).serializeArray();)
+  data = serialize_form(e);
   var b = 'submit';
   for(i=0;i<data.length;i++) {
     if (data[i].name == 'submit' || data[i].name == 'submit-new') {
@@ -28,7 +90,7 @@ $("#form_list").submit(function(e) {
     data: data
   })
   .done(function(data) {
-    doneProcess(data,form);
+    doneProcess(data,e);
     if (data["status"] == "success") {
       if (data["id"] !== undefined) {
         if (b == 'submit') {
@@ -40,7 +102,7 @@ $("#form_list").submit(function(e) {
       } else {location.replace(get_basepath());}
     }
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e);});
 });
 </script>
 {% endblock %}
