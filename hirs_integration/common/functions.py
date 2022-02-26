@@ -4,6 +4,7 @@ import logging
 from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_date,parse_datetime
+from django.utils.timezone import make_aware
 from distutils.util import strtobool
 from django.db.utils import ProgrammingError
 from warnings import warn
@@ -180,7 +181,7 @@ class FieldConversion:
         self.value = parse_date(value)
 
     def DateTimeField(self,value):
-        self.value = parse_datetime(value)
+        self.value = make_aware(parse_datetime(value))
 
     def Pattern(self):
         return str(self.value.pattern)
