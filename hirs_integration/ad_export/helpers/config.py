@@ -3,7 +3,7 @@ import logging
 from typing import Union,Any
 from common.functions import ConfigurationManagerBase
 from django.db.models import Q
-from django.utils.timezone import make_aware,now
+from django.utils.timezone import now
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,
                                EmployeePending,Location,GroupMapping)
@@ -346,7 +346,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
                 logger.error(f"Failed to get Employee {str(employee)}")
 
     if delta:
-        lastsync = make_aware(Config()(CONFIG_CAT,CONFIG_LAST_SYNC))
+        lastsync = Config()(CONFIG_CAT,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
         emps = Employee.objects.filter(updated_on__gt=lastsync)
         emp_pend = EmployeePending.objects.filter(updated_on__gt=lastsync)
