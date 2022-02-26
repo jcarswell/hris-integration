@@ -3,10 +3,10 @@ import logging
 from typing import Union,Any
 from common.functions import ConfigurationManagerBase
 from django.db.models import Q
+from django.utils.timezone import make_aware,now
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,
                                EmployeePending,Location,GroupMapping)
-from datetime import datetime
 from pyad import ADGroup
 
 from .settings_fields import * # Yes I hate this, deal with it!
@@ -346,7 +346,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
                 logger.error(f"Failed to get Employee {str(employee)}")
 
     if delta:
-        lastsync = Config()(CONFIG_CAT,CONFIG_LAST_SYNC)
+        lastsync = make_aware(Config()(CONFIG_CAT,CONFIG_LAST_SYNC))
         logger.debug(f"Last sync date {lastsync}")
         emps = Employee.objects.filter(updated_on__gt=lastsync)
         emp_pend = EmployeePending.objects.filter(updated_on__gt=lastsync)
@@ -390,5 +390,5 @@ def fuzzy_employee(username:str) -> list[EmployeeManager]:
 def set_last_run():
     cfg = Config()
     cfg.get(CONFIG_CAT,CONFIG_LAST_SYNC)
-    cfg.value = datetime.utcnow()
+    cfg.value = now()
     cfg.save()
