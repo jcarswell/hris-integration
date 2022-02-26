@@ -65,14 +65,11 @@ tinymce.init({
 });
 function s(e)
 {
-  console.log(e)
   $('textarea',e).each(function(i,v) {
     $(this).html(tinymce.editors[i].getContent());
   })
 }
-
 $("#form_list").submit(function(e) {
-  form = $("#form_list");
   e.preventDefault();
   data = serialize_form(e);
   var b = 'submit';
