@@ -145,8 +145,8 @@ class BaseExport:
         config.set_last_run()
 
     def update_groups(self, employee:config.EmployeeManager, user:config.EmployeeManager):
-        self._ad.groups_add(user,employee.add_groups)
-        self._ad.groups_remove(user,employee.remove_groups)
+        self._ad.groups_add(user,employee.groups_add())
+        self._ad.groups_remove(user,employee.groups_remove())
 
     def update_user_extra(self,employee:config.EmployeeManager, user:config.EmployeeManager):
         """To be implemented in a sub-class. Set any extra attibutes for the user."""
