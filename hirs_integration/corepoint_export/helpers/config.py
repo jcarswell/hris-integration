@@ -4,7 +4,7 @@ import re
 from typing import Any
 from ad_export.helpers.config import EmployeeManager
 from hirs_admin.models import Setting,Employee
-from datetime import datetime
+from django.utils.timezone import now
 from common.functions import ConfigurationManagerBase
 
 from .settings_fields import * # Yes I hate this, deal with it!
@@ -101,5 +101,5 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
 def set_last_run():
     cfg = Config()
     cfg.get(CAT_CONFIG,CONFIG_LAST_SYNC)
-    cfg.value = datetime.utcnow()
+    cfg.value = now()
     cfg.save()

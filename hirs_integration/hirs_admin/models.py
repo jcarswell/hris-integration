@@ -854,6 +854,14 @@ class EmployeePending(models.Model):
         self._password = FieldEncryption().encrypt(passwd)
 
     @property
+    def designations(self):
+        return self.designation
+
+    @designations.setter
+    def designations(self,v):
+        self.designation = v
+
+    @property
     def username(self):
         return self._username
 
