@@ -3,13 +3,14 @@ import logging
 from typing import Union,Any
 from common.functions import ConfigurationManagerBase
 from django.db.models import Q
+from django.utils.timezone import now
 from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
                                Employee,EmployeeOverrides,
                                EmployeePending,Location,GroupMapping)
-from datetime import datetime
-from pyad import ADGroup
+from warnings import warn
 
 from .settings_fields import * # Yes I hate this, deal with it!
+from .group_manager import GroupManager
 
 #CONST REFERANCES
 STAT_LEA = Employee.STAT_LEA
@@ -44,6 +45,9 @@ class EmployeeManager:
             self.__qs_emp = Employee.objects.get(emp_id=emp_object.employee.pk)
             self.pre_merge()
         self.get()
+        self.GroupManager = GroupManager(self.__qs_emp.primary_job,
+                                         self.__qs_emp.primary_job.bu,
+                                         self.__qs_over.location)
 
     def get(self):
         if isinstance(self.__qs_emp,Employee):
@@ -181,30 +185,32 @@ class EmployeeManager:
     def id(self) -> int:
         return self.__qs_emp.emp_id
 
+    def groups_add(self) -> list:
+        if self.__qs_emp.leave:
+            return self.GroupManager.groups_leave + self.GroupManager.add_groups
+        elif not self.__qs_emp.state:
+            return []
+        else:
+            return self.GroupManager.add_groups
+
+    def groups_remove(self) -> list:
+        if self.__qs_emp.leave:
+            return self.GroupManager.remove_groups
+        elif not self.__qs_emp.state:
+            return []
+        else:
+            return self.GroupManager.groups_leave + self.GroupManager.remove_groups
+        
+
     @property
     def add_groups(self) -> list[str]:
-        output = self._leave_groups_add()
+        warn("The add_groups property is depricated, the groups_add method should be used instead")
+        return self.groups_add()
 
-        #Positive group lookups
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)&Q(jobs_not=False)|
-                                            Q(bu=self.__qs_emp.primary_job.bu.pk)&Q(bu_not=False)|
-                                            Q(loc=self.__qs_over.location.pk)&Q(loc_not=False)|
-                                            Q(all=True))
-
-        for group in gmaps:
-            if group.dn not in output:
-                output.append(group.dn)
-
-        #Negitive group lookups
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk,_negated=True)&Q(jobs_not=True)|
-                                            Q(bu=self.__qs_emp.primary_job.bu.pk,_negated=True)&Q(bu_not=True)|
-                                            Q(loc=self.__qs_over.location.pk,_negated=True)&Q(loc_not=True))
-
-        for group in gmaps:
-            if group.dn not in output:
-                output.append(group.dn)
-
-        return output
+    @property
+    def remove_groups(self) -> list[str]:
+        warn("The remove_groups property is depricated, the groups_remove method should be used instead")
+        return self.groups_remove()
 
     @property
     def bu(self):
@@ -218,74 +224,8 @@ class EmployeeManager:
             return None
 
     @property
-    def remove_groups(self) -> list[str]:
-        output = self._leave_groups_del()
-
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk)&Q(jobs_not=True)|
-                                            Q(bu=self.__qs_emp.primary_job.bu.pk)&Q(bu_not=True)|
-                                            Q(loc=self.__qs_over.location.pk)&Q(loc_not=True))
-
-        for group in gmaps:
-            if group.dn not in output:
-                output.append(group.dn)
-
-        gmaps = GroupMapping.objects.filter(Q(jobs=self.__qs_emp.primary_job.pk,_negated=True)&Q(jobs_not=False)|
-                                            Q(bu=self.__qs_emp.primary_job.bu.pk,_negated=True)&Q(bu_not=False)|
-                                            Q(loc=self.__qs_over.location.pk,_negated=True)&Q(loc_not=False))
-
-        for group in gmaps:
-            if group.dn not in output:
-                output.append(group.dn)
-
-        return output
-
-    @staticmethod
-    def parse_group(groups:str):
-        output = []
-        ou = []
-        for group in groups.split(','):
-            if group[0:2].lower() == "cn=" and ou:
-                output.append(','.join(ou))
-                ou = []
-            elif '=' in group:
-                ou.append(group)
-            else:
-                if ou:
-                    output.append(','.join(ou))
-                    ou = []
-                try:
-                    g = ADGroup.from_cn(group)
-                    output.append(g.dn)
-                except Exception:
-                    #not sure what the exception will be
-                    logger.warning(f"{group} doesn't appear to be valid")
-
-        return output
-
-    @property
     def upn(self) -> str:
         return f'{self.email_alias}@{self.config(CONFIG_CAT,CONFIG_UPN)}'
-
-    def _leave_groups_add(self) -> list:
-        output = []
-
-        if self.__qs_emp.status == "Leave":
-            output = output + self.parse_group(self.config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD))
-
-        elif self.__qs_emp.status == "Active":
-            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL)
-
-        return output
-            
-    def _leave_groups_del(self) -> list:
-        output = []
-
-        if self.__qs_emp.status == "Leave":
-            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_DEL)
-        elif self.__qs_emp.status == "Active":
-            output = output + self.parse_group(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD)
-
-        return output
 
     def clear_password(self) -> bool:
         if self.__qs_emp._password:
@@ -390,5 +330,5 @@ def fuzzy_employee(username:str) -> list[EmployeeManager]:
 def set_last_run():
     cfg = Config()
     cfg.get(CONFIG_CAT,CONFIG_LAST_SYNC)
-    cfg.value = datetime.utcnow()
+    cfg.value = now()
     cfg.save()

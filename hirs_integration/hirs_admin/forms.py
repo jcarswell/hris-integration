@@ -179,9 +179,9 @@ class EmployeePending(Form):
         model = models.EmployeePending
         fields = ['firstname','lastname','suffix','designation','state','leave',
                    'type','primary_job','jobs','manager','location','start_date',
-                   'employee']
+                   'employee','guid','_username','_password','_email_alias']
         exclude = ('created_on','updated_on','_username','_password','_email_alias')
-        disabled = ('guid','employee')
+        disabled = ('guid','employee','_username','_password','_email_alias')
         labels = {
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
@@ -197,6 +197,9 @@ class EmployeePending(Form):
             'location': _t('Home Building'),
             'employee': _t('HRIS Matched Employee'),
             'guid': _t('AD GUID'),
+            '_username': _t('Username'),
+            '_password': _t('Password'),
+            '_email_alias': _t('Email Alias')
         }
         widgets = {
             'state': widgets.CheckboxInput(attrs={"class":"form-control"}),
