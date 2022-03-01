@@ -233,7 +233,7 @@ class ADUserExport(BaseExport):
             f.write(j2.render(mailboxes=mailboxes))
 
         logger.debug("Running script")
-        subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path])
+        subprocess.run(['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe','-executionPolicy','bypass','-file',path],timeout=900)
 
     def __del__(self):
         if self.mailboxes:
