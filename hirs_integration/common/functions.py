@@ -181,7 +181,12 @@ class FieldConversion:
         self.value = parse_date(value)
 
     def DateTimeField(self,value):
-        self.value = make_aware(parse_datetime(value))
+        self.value = parse_datetime(value)
+        try:
+            self.value = make_aware(self.value)
+        except ValueError:
+            # self.value is already tz enabled
+            pass
 
     def Pattern(self):
         return str(self.value.pattern)
