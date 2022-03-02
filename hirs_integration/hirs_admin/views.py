@@ -18,7 +18,7 @@ from .helpers import settings_view,config
 from .fields import SettingFieldGenerator
 from . import models
 from .widgets import SelectPicker
-from .forms import ManualImportForm
+from .forms import ManualImportForm,EmployeePending
 
 logger = logging.getLogger('hirs_admin.view')
 
@@ -633,3 +633,16 @@ class JobActions(TemplateResponseMixin, LoggedInView):
 
     def post(self, request, *args, job:str =None, **kwargs):
         pass
+
+
+class PendingEmployeeEdit(FormView):
+    template_name = 'hirs_admin/pending_employee_edit.html'
+    form = EmployeePending
+
+    def get_context(self, **kwargs):
+        context = super().get_context(**kwargs)
+        if self._form.instance.pk is not None:
+            context['password'] = self._form.instance.password
+
+        return context
+    

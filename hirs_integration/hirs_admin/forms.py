@@ -1,3 +1,4 @@
+from cProfile import label
 import logging
 
 from django import forms
@@ -179,9 +180,9 @@ class EmployeePending(Form):
         model = models.EmployeePending
         fields = ['firstname','lastname','suffix','designation','state','leave',
                    'type','primary_job','jobs','manager','location','start_date',
-                   'employee','guid','_username','_password','_email_alias']
-        exclude = ('created_on','updated_on','_username','_password','_email_alias')
-        disabled = ('guid','employee','_username','_password','_email_alias')
+                   'employee','guid','_username','_email_alias']
+        exclude = ('created_on','updated_on','_password')
+        disabled = ('guid','employee','_username','_email_alias')
         labels = {
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
@@ -198,7 +199,6 @@ class EmployeePending(Form):
             'employee': _t('HRIS Matched Employee'),
             'guid': _t('AD GUID'),
             '_username': _t('Username'),
-            '_password': _t('Password'),
             '_email_alias': _t('Email Alias')
         }
         widgets = {
