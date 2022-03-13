@@ -1,4 +1,6 @@
-## Overriding export forms
+Overriding export forms
+=======================
+
 Where the configuration allows for it, an export form or module may be overridden
 to accomidate custom configuration. To do this setup a custom module that will either be
 in the root directory of the Django app or will be installed into your global path.
@@ -16,26 +18,27 @@ Base Froms:
 - corepoint_export: corepoint_export.forms.BaseExport
 
 An example module would look something like:
-```
-from corepoint_export.forms import BaseExport
-Class MyExportClass(BaseImport):
-    def run(self):
-        keys = []
-        for key,value in self.map.items():
-            if value:
-                keys.append(value)
-        with open(self.export_file, 'w') as output:
-            output.write(",".join(keys))
-            for employee in self.employees:
-                line = []
-                for key in keys:
-                    line.append(str(getattr(employee,key,'')))
-                output.write(",".join(line))
-        
-        subprocess.run(self.callable)
-        self.set_last_run()
 
-form = MyExportClass
-```
+.. code-block:: python
+
+    from corepoint_export.forms import BaseExport
+    Class MyExportClass(BaseImport):
+        def run(self):
+            keys = []
+            for key,value in self.map.items():
+                if value:
+                    keys.append(value)
+            with open(self.export_file, 'w') as output:
+                output.write(",".join(keys))
+                for employee in self.employees:
+                    line = []
+                    for key in keys:
+                        line.append(str(getattr(employee,key,'')))
+                    output.write(",".join(line))
+            
+            subprocess.run(self.callable)
+            self.set_last_run()
+
+    form = MyExportClass
 
 Once you have you module loaded update the configuration to be the import path for your form.
