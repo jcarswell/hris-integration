@@ -11,10 +11,11 @@ HIRS Integration Overview
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Model Referances
+   :caption: Code and Model References
    :glob:
    
-   models/*
+   references/index
+   models/index
 
 .. toctree::
    :maxdepth: 2
