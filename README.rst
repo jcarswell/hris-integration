@@ -63,4 +63,4 @@ Copyright
 =========
 
 HRIS Syncronization System is licenesed under GNU GLP v3
-copyright 2021 Josh Carswell
+copyright 2022 Josh Carswell
