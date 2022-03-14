@@ -2,11 +2,11 @@ Overriding export forms
 =======================
 
 Where the configuration allows for it, an export form or module may be overridden
-to accomidate custom configuration. To do this setup a custom module that will either be
+to accommodate custom configuration. To do this setup a custom module that will either be
 in the root directory of the Django app or will be installed into your global path.
 
 Your form will extend the base class which provides most of the basic interfaces and data.
-You will need to define the `run` method which is what will be called after class initalization.
+You will need to define the `run` method which is what will be called after class initialization.
 
 Once you have built your class you will need to define add a form variable that points to your
 custom class.
@@ -14,7 +14,7 @@ custom class.
 If you have not worked with Django before, the app root is added to the path. When you are importing
 other classes you would not use hirs_integration.module, instead you just call the module directly.
 
-Base Froms:
+Base Forms:
 - corepoint_export: corepoint_export.forms.BaseExport
 
 An example module would look something like:

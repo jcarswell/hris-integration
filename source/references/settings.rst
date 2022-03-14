@@ -93,26 +93,26 @@ display a specfic field as well as the FieldManager what type of data should be 
     the field will raise.
 
     :*Type*: dictionary
-:field_properties.widget:  The widget to use if the default widget isn't sufficiant
+:field_properties.widget:  The widget to use if the default widget isn't sufficient
 
     :*Type*: callable
 :field_properties.initial: The inline initial value that is rendered but not saved to 
     the database
 
     :*Type*: string
-:field_properties.localize: Specify if the feild should be localized
+:field_properties.localize: Specify if the field should be localized
 
     :*Type*: boolean
-:field_properties.label_suffix: Overrides the suffix to be added to the lable
+:field_properties.label_suffix: Overrides the suffix to be added to the label
 
     :*Type*: string
-:field_properties.min_length: *int* The minimum lenght if the field
+:field_properties.min_length: *int* The minimum length if the field
 
     :*Type*: integer
-:field_properties.max_length: *int* The max length of the feild (Default: 768)
+:field_properties.max_length: *int* The max length of the field (Default: 768)
 
     :*Type*: integer
-:field_properties.strip: *bool* Stip the string (Default: True)
+:field_properties.strip: *bool* Strip the string (Default: True)
 
     :*Type*: boolean
 :field_properties.empty_value: *str* The value to set if the a field is empty
@@ -122,7 +122,7 @@ display a specfic field as well as the FieldManager what type of data should be 
 
     Refer to `Django choices <https://docs.djangoproject.com/en/4.0/ref/models/fields/#choices>`
 
-    For more complex choice field definitions place them in your validtors 
+    For more complex choice field definitions place them in your validators 
     sub-module in the root of your module
 :field_properties.min_value: The minimum acceptable value
 

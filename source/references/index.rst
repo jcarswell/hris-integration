@@ -1,4 +1,4 @@
-Code Referance
+Code Reference
 ==============
 
 Documentation for the core project source code.
@@ -6,7 +6,7 @@ Documentation for the core project source code.
 .. toctree::
     :glob:
     :maxdepth: 3
-    :caption: Code and Model Referances
+    :caption: Code and Model References
 
     settings
     validators
