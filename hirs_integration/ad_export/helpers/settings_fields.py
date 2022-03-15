@@ -8,7 +8,7 @@ CONFIG_CAT = 'configuration'
 EMPLOYEE_CAT = 'employee_configurations'
 DEFAULTS_CAT = 'user_defaults'
 
-CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
+CATEGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
 
 ## Config Fields
 EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
@@ -26,7 +26,7 @@ DEFAULT_COUNTRY = 'country'
 CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
 CONFIG_LAST_SYNC = 'last_sycronization_run'
 CONFIG_AD_USER = 'ad_export_user'
-CONFIF_AD_PASSWORD = 'ad_export_password'
+CONFIG_AD_PASSWORD = 'ad_export_password'
 CONFIG_UPN = 'ad_upn_suffix'
 CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
 CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
@@ -51,7 +51,7 @@ CONFIG_DEFAULTS = {
                 "disabled": True,
             },
         },
-        CONFIF_AD_PASSWORD: {
+        CONFIG_AD_PASSWORD: {
             "default_value": None,
             "hidden": True,
             "field_properties": {
