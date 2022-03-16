@@ -1,2 +1,2 @@
-from manual_import import ManualImportForm
-from model_forms import *
+from .manual_import import ManualImportForm
+from .model_forms import *
