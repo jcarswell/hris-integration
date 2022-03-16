@@ -1,11 +1,10 @@
 import logging
 
 from django import forms
-from django.forms import widgets
 from common.functions import model_to_choices,name_to_pk
 from django.utils.safestring import mark_safe
 
-from hirs_admin import models
+from hirs_admin import models,widgets
 
 logger = logging.getLogger('hirs_admin.forms')
 
