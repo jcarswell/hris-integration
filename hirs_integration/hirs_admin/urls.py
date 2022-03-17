@@ -70,12 +70,21 @@ urlpatterns = [
          name='actions_go'),
     path('pending_manual/<int:id>/',
          views.ManualImport.as_view(),
-         name='pending_manual'),
-   path('settings/email_templates/',
-         views.ListView.as_view(form=forms.EmailTemplate),
-         name='email_template'),
-    path('settings/email_templates/<int:id>/',
-         views.FormView.as_view(form=forms.EmailTemplate,
-                                template_name='hirs_admin/tinymce_edit.html'),
-         name='email_template_edit'),
+         name='pending_manual')
     ]
+
+try:
+     from smtp_client.forms import EmailTemplate
+     urlpatterns.append(
+          path('settings/email_templates/<int:id>/',
+               views.FormView.as_view(form=EmailTemplate,
+               template_name='hirs_admin/tinymce_edit.html'),
+               name='email_template_edit')
+     )
+     urlpatterns.append(
+          path('settings/email_templates/',
+               views.ListView.as_view(form=EmailTemplate),
+               name='email_template')
+     )
+except ImportError:
+     pass
