@@ -32,6 +32,8 @@ CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
 CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
 CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
 CONFIG_IMPORT_FORM = 'export_model_form'
+CONFIG_WELCOME_ENABLE = "welcome_email_enable"
+CONFIG_WELCOME_TEMPLATE = 'welcome_email_template'
 
 
 CONFIG_DEFAULTS = {
@@ -107,7 +109,22 @@ CONFIG_DEFAULTS = {
                 "help_text": "The time the AD Export last ran",
                 "required": True,
             },
-        },            
+        },
+        CONFIG_WELCOME_ENABLE: {
+            "default_value": False,
+            "field_properties": {
+                "type": "BooleanField",
+                "help": "Enable sending of the welcome email on user creation"
+            }
+        },
+        CONFIG_WELCOME_TEMPLATE: {
+            "default_value": None,
+            "field_properties": {
+                "type": "ChoiceField",
+                "help": "The tempate to use from the welcome email",
+                "choices": ["validators.template_list"]
+            }
+        }
     },
     EMPLOYEE_CAT: {
         EMPLOYEE_DISABLE_LEAVE: {
