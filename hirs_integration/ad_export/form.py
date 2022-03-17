@@ -1,5 +1,4 @@
 import logging
-from re import template
 import subprocess
 import os
 
