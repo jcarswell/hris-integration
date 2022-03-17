@@ -49,7 +49,7 @@ class EmployeeManager(employee_manager.EmployeeManager):
             self.__qs_phone = None
             self.__qs_addr = None
 
-        self.__aduser = None
+        self._aduser = None
 
     def pre_merge(self) -> None:
         if EmployeeOverrides.objects.filter(employee=self.__qs_emp).exists:
@@ -154,6 +154,16 @@ class EmployeeManager(employee_manager.EmployeeManager):
                     logger.warning(f"{group} doesn't appear to be valid")
 
         return output
+
+    @property
+    def guid(self) -> str:
+        # needs to be defined locally otherwise setter freaks out... :(
+        return super().guid
+
+    @guid.setter
+    def guid(self,id) -> None:
+        if hasattr(self.__qs_emp,'guid'):
+            self.__qs_emp.guid = id
 
     @property
     def upn(self) -> str:
