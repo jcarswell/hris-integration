@@ -14,7 +14,7 @@ class SmtpTemplate:
 
         if template:
             try:
-                template_obj:EmailTemplates = EmailTemplates.objects.get(name=template)
+                template_obj:EmailTemplates = EmailTemplates.objects.get(template_name=template)
                 subject = template_obj.email_subject
                 body = template_obj.email_body
             except EmailTemplates.DoesNotExist as e:
@@ -24,14 +24,11 @@ class SmtpTemplate:
         if subject is None and body is None:
             raise ValueError("If the template name is not provided then the subject and body fields are required")
 
-        self.env_subject = Environment(
+        env = Environment(
             autoescape=select_autoescape()
         )
-        self.env_subject.from_string(subject)
-        self.env_body = Environment(
-            autoescape=select_autoescape()
-        )
-        self.env_subject.from_string(body)
+        self.env_subject = env.from_string(subject)
+        self.env_body = env.from_string(body)
         self.to = to
         self.kwargs = kwargs
 
@@ -41,7 +38,7 @@ class SmtpTemplate:
         return context
 
     def send(self,**kwargs) -> None:
-        context = self.make_context(kwargs)
+        context = self.make_context(**kwargs)
         s = Smtp()
         msg = s.mime_build(html=self.env_body.render(context),
                            subject=self.env_subject.render(context),
