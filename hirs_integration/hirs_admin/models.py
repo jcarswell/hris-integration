@@ -30,7 +30,7 @@ def name_conflict(instance, name:str) -> bool:
 
 def username_validator(first:str, last:str =None, suffix:str =None, allowed_char:list =None) -> str:
     """
-    Username creation and valudation helper. Ensures that usernames are built using standard
+    Username creation and validation helper. Ensures that usernames are built using standard
     username rules and do not contain invalid characters.
 
     Args:
@@ -45,7 +45,7 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     invalid_char = ['!','@','#','$','%','^','&','*','(',')',
                     '_','+','=',';',':','\'','"',',','<','>',
                     ',',' ','`','~','{','}','|']
-    substitue = ''
+    substitute = ''
     suffix = suffix or ""
     if suffix == "0":
         suffix = ""
@@ -56,7 +56,7 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
     output = ''
     for x in first[0] + (last or first[1:]):
         if x in invalid_char and not x in allowed_char:
-            output += substitue
+            output += substitute
         else:
             output += x
 
@@ -68,7 +68,7 @@ def username_validator(first:str, last:str =None, suffix:str =None, allowed_char
 
 def upn_validator(first:str, last:str =None, suffix:str =None, allowed_char:list =None) -> str:
     """
-    user principle name creation and valudation helper. Ensures that usernames are built using standard
+    user principle name creation and validation helper. Ensures that usernames are built using standard
     username rules and do not contain invalid characters.
 
     Args:
@@ -83,7 +83,7 @@ def upn_validator(first:str, last:str =None, suffix:str =None, allowed_char:list
     invalid_char = ['!','@','#','$','%','^','&','*','(',')',
                     '_','+','=',';',':','\'','"',',','<','>',
                     ',',' ','`','~','{','}','|']
-    substitue = ''
+    substitute = ''
     suffix = suffix or ""
     if suffix == "0":
         suffix = ""
@@ -99,7 +99,7 @@ def upn_validator(first:str, last:str =None, suffix:str =None, allowed_char:list
     output = ''
     for x in upn:
         if x in invalid_char and not x in allowed_char:
-            output += substitue
+            output += substitute
         else:
             output += x
 
@@ -174,7 +174,7 @@ def set_upn(instance, upn:str =None) -> None:
         return
 
     if not isinstance(instance,(Employee,EmployeePending)):
-        logger.debug(f'type recieved {type(instance)}')
+        logger.debug(f'type received {type(instance)}')
         raise ValueError("Only supported for Employee objects")
 
     if upn:
@@ -214,7 +214,7 @@ class FieldEncryption:
         try:
             return self.key.encrypt(data.encode('utf-8')).decode('utf-8')
         except Exception as e:
-            logger.critical("An Error occured encrypting the data provided")
+            logger.critical("An Error occurred encrypting the data provided")
             raise ValueError(e) from e
 
     def decrypt(self,data:bytes) -> str:
@@ -226,7 +226,7 @@ class FieldEncryption:
         try:
             return self.key.decrypt(data).decode('utf-8')
         except Exception as e:
-            logger.critical("An Error occured decypting the data provided")
+            logger.critical("An Error occurred decrypting the data provided")
             raise ValueError(e) from e
 
 #######################
@@ -236,11 +236,11 @@ class FieldEncryption:
 #######################
 
 class SettingsManager(models.Manager):
-    def get_by_path(self, group:str, catagory:str =None, item:str =None) -> QuerySet:
+    def get_by_path(self, group:str, category:str =None, item:str =None) -> QuerySet:
         path = group + Setting.FIELD_SEP
 
-        if catagory:
-            path = path + catagory + Setting.FIELD_SEP
+        if category:
+            path = path + category + Setting.FIELD_SEP
 
         if item:
             path = path + item
@@ -306,7 +306,7 @@ class Setting(models.Model):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        """Ensure the the value is encrypted if the feild is set as hidden"""
+        """Ensure the the value is encrypted if the field is set as hidden"""
         field_types = ('CharField','ChoiceField','DateField','BooleanField',
                        'DecimalField','FloatField',
                        'DateTimeField','RegexField','IntegerField')
@@ -316,7 +316,7 @@ class Setting(models.Model):
                 instance.setting.replace(char,'_')
  
         if len(instance.setting.split(instance.FIELD_SEP)) != 3:
-            raise ValueError("setting does not contain proper format, should be group/catagory/item")
+            raise ValueError("setting does not contain proper format, should be group/category/item")
 
         if instance.field_properties['type'] not in field_types:
             raise ValueError(f"Field type must be one of {field_types}")
@@ -459,7 +459,7 @@ class Employee(models.Model):
 
     def __hash__(self):
         if self.pk is None:
-            raise TypeError("Model instances without primary key value are unhashable")
+            raise TypeError("Model instances without primary key value are un-hashable")
         return hash(self.pk)
 
     def clear_password(self,confirm=False):
@@ -539,7 +539,7 @@ class Employee(models.Model):
             jobs (Any): the job ID or list of job IDs
 
         Raises:
-            ValueError: If we cannont conver the provided job(s) to a list
+            ValueError: If we cannot convert the provided job(s) to a list
             ValueError: If the Job ID is not a valid int
         """
         if isinstance(jobs,str):
@@ -591,7 +591,7 @@ class Employee(models.Model):
             instance.password = passwd
             instance.save()
 
-            #instanciate the EmployeeOverride Table
+            #instantiate the EmployeeOverride Table
             override = EmployeeOverrides()
             override.employee = instance
             override.save()
@@ -647,7 +647,7 @@ class EmployeeOverrides(models.Model):
 
     def __hash__(self):
         if self.pk is None:
-            raise TypeError("Model instances without primary key value are unhashable")
+            raise TypeError("Model instances without primary key value are un-hashable")
         return hash(self.pk)
 
     def __eq__(self, other) -> bool:
@@ -668,7 +668,7 @@ class EmployeeOverrides(models.Model):
     @property
     def username(self):
         """
-        Returns the Employees Username Exists for conitinuity
+        Returns the Employees Username Exists for continuity
         """
         return self.employee.username
 
@@ -832,7 +832,7 @@ class EmployeePending(models.Model):
 
     def __hash__(self):
         if self.pk is None:
-            raise TypeError("Model instances without primary key value are unhashable")
+            raise TypeError("Model instances without primary key value are un-hashable")
         return hash(self.pk)
 
     def __str__(self) -> str:
@@ -881,7 +881,7 @@ class EmployeePending(models.Model):
 
     @property
     def emp_id(self) -> int:
-        #When called return 0 as this employee has not been commited/assigned an employee id yet.
+        #When called return 0 as this employee has not been committed/assigned an employee id yet.
         return 0
 
     @property

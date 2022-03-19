@@ -12,7 +12,14 @@
 			"**/templates/**/*.html": "django-html",
 			"**/templates/**/*": "django-txt",
 			"**/requirements{/**,*}.{txt,in}": "pip-requirements"
-		}
+		},
+		"autoDocstring.docstringFormat": "sphinx",
+		"pythonIndent.keepHangingBracketOnLine": true,
+		"pythonIndent.trimLinesWithOnlyWhitespace": true,
+		"cSpell.words": [
+			"corepoint",
+			"HRIS"
+		]
 	},
 	"launch": {
 		"version": "0.2.0",

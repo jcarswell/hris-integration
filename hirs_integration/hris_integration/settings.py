@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'ftp_import',
     'ad_export',
     'corepoint_export',
+    'smtp_client'
 ]
 
 MIDDLEWARE = [

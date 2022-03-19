@@ -1,1 +1,1 @@
-from .errors import ConfigError,SmtpServerError,SmtpToInvalid
+from .errors import ConfigError,SmtpServerError,SmtpToInvalid,InvlaidTemplate

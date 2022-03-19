@@ -1,6 +1,6 @@
 {% extends "hirs_admin/base.html" %}
 {% block extra_style %}
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.11.4/b-2.2.2/b-html5-2.2.2/cr-1.5.5/datatables.min.css"/>
 {% endblock %}
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
@@ -37,6 +37,7 @@
 <div>
 {% endblock content %}
 {% block extra_js %}
+{% include 'hirs_admin/components/datatables_scripts.html' %}
 <script type="text/javascript">
 <!--
 $(document).ready(function() {
@@ -44,6 +45,4 @@ $(document).ready(function() {
 } );
 -->
 </script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
 {% endblock extra_js %}

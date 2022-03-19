@@ -8,7 +8,7 @@ CONFIG_CAT = 'configuration'
 EMPLOYEE_CAT = 'employee_configurations'
 DEFAULTS_CAT = 'user_defaults'
 
-CATAGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
+CATEGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
 
 ## Config Fields
 EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
@@ -26,12 +26,14 @@ DEFAULT_COUNTRY = 'country'
 CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
 CONFIG_LAST_SYNC = 'last_sycronization_run'
 CONFIG_AD_USER = 'ad_export_user'
-CONFIF_AD_PASSWORD = 'ad_export_password'
+CONFIG_AD_PASSWORD = 'ad_export_password'
 CONFIG_UPN = 'ad_upn_suffix'
 CONFIG_ROUTE_ADDRESS = 'office_online_routing_domain'
 CONFIG_ENABLE_MAILBOXES = 'enable_exchange_mailboxes'
 CONFIG_MAILBOX_TYPE = 'remote_or_local_mailbox'
 CONFIG_IMPORT_FORM = 'export_model_form'
+CONFIG_WELCOME_ENABLE = "welcome_email_enable"
+CONFIG_WELCOME_TEMPLATE = 'welcome_email_template'
 
 
 CONFIG_DEFAULTS = {
@@ -51,7 +53,7 @@ CONFIG_DEFAULTS = {
                 "disabled": True,
             },
         },
-        CONFIF_AD_PASSWORD: {
+        CONFIG_AD_PASSWORD: {
             "default_value": None,
             "hidden": True,
             "field_properties": {
@@ -107,7 +109,22 @@ CONFIG_DEFAULTS = {
                 "help_text": "The time the AD Export last ran",
                 "required": True,
             },
-        },            
+        },
+        CONFIG_WELCOME_ENABLE: {
+            "default_value": False,
+            "field_properties": {
+                "type": "BooleanField",
+                "help": "Enable sending of the welcome email on user creation"
+            }
+        },
+        CONFIG_WELCOME_TEMPLATE: {
+            "default_value": None,
+            "field_properties": {
+                "type": "ChoiceField",
+                "help": "The tempate to use from the welcome email",
+                "choices": ["validators.template_list"]
+            }
+        }
     },
     EMPLOYEE_CAT: {
         EMPLOYEE_DISABLE_LEAVE: {

@@ -1,0 +1,149 @@
+{% extends "hirs_admin/base_edit.html" %}
+{% load i18n static %}
+
+{% block extra_js %}
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
+<script src="https://cdn.tiny.cloud/1/eko91hbw6kdnf7zv1k4rckibty1z5p0z4dirhcqogtr53zid/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+tinymce.init({
+  selector: 'textarea',
+  min_height: 375,
+  height: 400,
+  plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars',
+  toolbar: 'undo redo | fontselect fontsizeselect formatselect | bold italic forecolor | alignleft aligncenter alignright | outdent indent | bullist numlist | image media variable',
+  setup: function(editor) {
+    editor.ui.registry.addMenuButton('variable', {
+      text: 'Insert variable',
+      fetch: function(callback) {
+        var items = [
+          {
+            type: 'nestedmenuitem',
+            text: 'Employee Info',
+            getSubmenuItems: function() {
+              return [
+                {
+                  type: 'menuitem',
+                  text: 'First Name',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.firstname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Last Name',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.lastname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Username',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.username \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Email Address',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.email_address \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Manager',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.manager.firstname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Password Expiry Date',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.password_expiry_date \}\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Days Till Password Expiry',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.password_expiration_days \}\}')
+                  }
+                }
+              ];
+            },
+          },
+          {
+            type: 'nestedmenuitem',
+            text: 'Jinja Blocks',
+            getSubmenuItems: function() {
+              return [
+                {
+                  type: 'menuitem',
+                  text: 'If statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'If-else statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% else \%\}<br>insert other content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'If-else if statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% elif variable2 \%\}<br>insert content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'For loop',
+                  onAction: function() {
+                    editor.insertContent('\{\% for item in variable \%\}<br>insert content here<br>\{\% endfor \%\}')
+                  }
+                }
+              ];
+            }
+          }
+        ];
+        callback(items);
+      }
+    });
+  }
+});
+function s(e)
+{
+  $('textarea',e).each(function(i,v) {
+    $(this).html(tinymce.editors[i].getContent());
+  })
+}
+$("#form_list").submit(function(e) {
+  e.preventDefault();
+  data = serialize_form(e.currentTarget);
+
+  $.ajax({
+    method: "POST",
+    url: location.href,
+    data: data
+  })
+  .done(function(data) {
+    doneProcess(data,e.currentTarget);
+    if (data["status"] == "success") {
+      if (data["id"] !== undefined) {
+        if (snew) {
+          $(this).reset();
+          location.reload(true);
+        } else {
+          location.replace(get_basepath() + data["id"] + '/');
+        }
+      } else {location.replace(get_basepath());}
+    }
+  })
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e.currentTarget);});
+});
+</script>
+{% endblock %}

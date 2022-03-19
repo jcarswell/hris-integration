@@ -144,6 +144,7 @@ class ListView(TemplateResponseMixin, LoggedInView):
                     val = f"<strong>{val}</strong>"
 
                 output.append(f'<td><a href="{url}">{val}</a></td>')
+            output.append('</tr>')
         logger.debug(f"Output contains: {output}")
         return mark_safe('\n'.join(output))
 

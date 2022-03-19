@@ -43,13 +43,12 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
 <script>
 $('form').each(function(i,v) {
   $(this).submit(function(e) {
     e.preventDefault();
-    data = $(this).serializeArray()
+    data = serialize_form(this)
     data.push({name:"form",value:$(this)[0].id});
     console.debug("POSTing form: " + $(this)[0].id)
     
@@ -66,13 +65,6 @@ $('form').each(function(i,v) {
     })
     .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
   });
-});
-$(function() {
-  const csrftoken = getCookie('csrftoken')
-  $.ajaxSetup({
-    headers: { "X-CSRFToken": csrftoken }
-  });
-  $('#btn_back')[0].href = get_basepath()
 });
 </script>
 {% endblock %}

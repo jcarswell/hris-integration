@@ -18,27 +18,13 @@
 {% endblock %}
 {% block extra_js %}
 <script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js" inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd" crossorigin="anonymous"></script>
-<script src="{% static 'hirs_admin/dist/js/cookie.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/alerts.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
 <script type="text/javascript">
-var startItems
-const csrftoken = getCookie('csrftoken')
-$(function() {
-  $.ajaxSetup({
-    headers: { "X-CSRFToken": csrftoken }
-  });
-});
 $('form').each(function(i,v) {
   $(this).submit(function(e) {
     form = $(this);
     e.preventDefault();
-    data = $(this).serializeArray()
-    $("input:disabled",this).each(function(i,e) {
-      data.push({name:e.name,value:e.value});
-    })
-    $("input[type=checkbox]:not(:checked)",this).each(function(i,e) {
-      data.push({name:e.name,value:"off"});
-    })
+    data = serialize_form(form);
 
     $.ajax({
       method: "POST",
