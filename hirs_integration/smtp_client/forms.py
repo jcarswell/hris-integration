@@ -4,8 +4,9 @@ from django.utils.translation import gettext_lazy as _t
 from smtp_client import models
 
 class EmailTemplate(Form):
+    name = _t("Email Template")
     list_fields = ['template_name']
-    
+
     class Meta:
         model = models.EmailTemplates
         fields = ['template_name','email_subject','email_body']
