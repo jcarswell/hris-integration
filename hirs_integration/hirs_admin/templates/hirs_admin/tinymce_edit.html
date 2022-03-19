@@ -3,7 +3,7 @@
 
 {% block extra_js %}
 <script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.tiny.cloud/1/eko91hbw6kdnf7zv1k4rckibty1z5p0z4dirhcqogtr53zid/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
 tinymce.init({
   selector: 'textarea',
@@ -15,49 +15,101 @@ tinymce.init({
     editor.ui.registry.addMenuButton('variable', {
       text: 'Insert variable',
       fetch: function(callback) {
-        var items = [{
-          type: 'nestedmenuitem',
-          text: 'Employee Info',
-          getSubmenuItems: function() {
-            return [
-              {
-                type: 'menuitem',
-                text: 'First Name',
-                onAction: function() {
-                  editor.insertContent('{{ firstname }}');
+        var items = [
+          {
+            type: 'nestedmenuitem',
+            text: 'Employee Info',
+            getSubmenuItems: function() {
+              return [
+                {
+                  type: 'menuitem',
+                  text: 'First Name',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.firstname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Last Name',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.lastname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Username',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.username \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Email Address',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.email_address \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Manager',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.manager.firstname \}\}');
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Password Expiry Date',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.password_expiry_date \}\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'Days Till Password Expiry',
+                  onAction: function() {
+                    editor.insertContent('\{\{ employee.password_expiration_days \}\}')
+                  }
                 }
-              },
-              {
-                type: 'menuitem',
-                text: 'Last Name',
-                onAction: function() {
-                  editor.insertContent('{{ lastname }}');
+              ];
+            },
+          },
+          {
+            type: 'nestedmenuitem',
+            text: 'Jinja Blocks',
+            getSubmenuItems: function() {
+              return [
+                {
+                  type: 'menuitem',
+                  text: 'If statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'If-else statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% else \%\}<br>insert other content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'If-else if statment',
+                  onAction: function() {
+                    editor.insertContent('\{\% if variable \%\}<br>insert content here<br>\{\% elif variable2 \%\}<br>insert content here<br>\{\% endif \%\}')
+                  }
+                },
+                {
+                  type: 'menuitem',
+                  text: 'For loop',
+                  onAction: function() {
+                    editor.insertContent('\{\% for item in variable \%\}<br>insert content here<br>\{\% endfor \%\}')
+                  }
                 }
-              },
-              {
-                type: 'menuitem',
-                text: 'Email Address',
-                onAction: function() {
-                  editor.insertContent('{{ email }}');
-                }
-              },
-              {
-                type: 'menuitem',
-                text: 'Password Expiry Date',
-                onAction: function() {
-                  editor.insertContent('{{ pwdexpiredate }}')
-                }
-              },
-              {
-                type: 'menuitem',
-                text: 'Days Till Password Expiry',
-                onAction: function() {
-                  editor.insertContent('{{ pwdexpiredays }}')
-                }
-              }
-            ];
+              ];
+            }
           }
-        }];
+        ];
         callback(items);
       }
     });
@@ -71,15 +123,7 @@ function s(e)
 }
 $("#form_list").submit(function(e) {
   e.preventDefault();
-  data = serialize_form(e);
-  var b = 'submit';
-  for(i=0;i<data.length;i++) {
-    if (data[i].name == 'submit' || data[i].name == 'submit-new') {
-      b = data[i].name;
-      data.pop(i);
-      break;
-    }
-  }
+  data = serialize_form(e.currentTarget);
 
   $.ajax({
     method: "POST",
@@ -87,19 +131,19 @@ $("#form_list").submit(function(e) {
     data: data
   })
   .done(function(data) {
-    doneProcess(data,e);
+    doneProcess(data,e.currentTarget);
     if (data["status"] == "success") {
       if (data["id"] !== undefined) {
-        if (b == 'submit') {
-          location.replace(get_basepath() + data["id"] + '/');
-        } else if (b == 'submit-new') {
+        if (snew) {
           $(this).reset();
           location.reload(true);
+        } else {
+          location.replace(get_basepath() + data["id"] + '/');
         }
       } else {location.replace(get_basepath());}
     }
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e);});
+  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e.currentTarget);});
 });
 </script>
 {% endblock %}
