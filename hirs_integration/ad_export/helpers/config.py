@@ -38,6 +38,10 @@ class EmployeeManager(employee_manager.EmployeeManager):
         super().__init__(emp_object)
         self.config = Config()
 
+        self.GroupManager = GroupManager(self.__qs_emp.primary_job,
+                                         self.__qs_emp.primary_job.bu,
+                                         self.__qs_over.location)
+
     def get(self):
         """Overriding the base function as we don't wan't to grab guid here"""
         if isinstance(self.__qs_emp,Employee):
