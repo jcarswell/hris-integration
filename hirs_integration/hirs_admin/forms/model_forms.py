@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from django.utils.translation import gettext_lazy as _t
 from django.forms.widgets import Select
 
@@ -12,7 +15,8 @@ class GroupMapping(Form):
         model = models.GroupMapping
         fields = '__all__'
         widgets = {
-            'dn': widgets.SelectPicker(choices=adtools.get_adgroups(),attrs={'data-live-search':'true','data-style':'bg-white'}),
+            'dn': widgets.SelectPicker(choices=adtools.get_adgroups(),
+                                       attrs={'data-live-search':'true','data-style':'bg-white'}),
             'all': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'jobs_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'bu_not': widgets.CheckboxInput(attrs={"class":"form-control"}),

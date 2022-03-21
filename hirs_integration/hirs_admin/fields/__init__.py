@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 import re
 
@@ -35,7 +38,7 @@ def SettingFieldGenerator(setting:Setting):
         return keys
 
     if not isinstance(setting,Setting):
-        raise TypeError(f"Expexted Settings object got {setting.__class__.__name__}")
+        raise TypeError(f"Expected Settings object got {setting.__class__.__name__}")
 
     try:
         field = eval(setting.field_properties['type'])

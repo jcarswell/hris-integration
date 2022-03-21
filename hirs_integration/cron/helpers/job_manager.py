@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from types import MethodType
 from importlib import import_module
 import logging
@@ -11,7 +14,8 @@ logger = logging.getLogger("cron.job_manager")
 class Job:
     """Cron Job Manager defines the ability to add, update and delete jobs."""
     
-    def __init__(self, name:str, path:str =None,schedule:str =None, args:str =None, state:bool =False, **kwargs):
+    def __init__(self, name:str, path:str =None,schedule:str =None, args:str =None, 
+                 state:bool =False, **kwargs):
         self.name = self._clean(name)
         self.job_config = config.get_job(self.name)
 
@@ -55,7 +59,7 @@ class Job:
         Args:
             path (str)[optional]: the path to call for the job if not already set during init
             schedule (str)[optional]: the cron schedule to use if not already set during init
-            args (str)[optional]: any arguments requred for the path
+            args (str)[optional]: any arguments required for the path
             state (bool)[optional]: Job Status
 
         Raises:

@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 from re import split
 
@@ -16,7 +19,7 @@ class Config(ConfigurationManagerBase):
     Setting = Setting
 
 def get_config(catagory:str ,item:str) -> Any:
-    """Now depricated use Config instead to manage the value"""
+    """Now deprecated use Config instead to manage the value"""
     return Config()(catagory,item)
 
 def setting_parse(setting:Setting =None,html_id:str =None):
@@ -24,7 +27,7 @@ def setting_parse(setting:Setting =None,html_id:str =None):
     or converts a html safe id into a Setting object
 
     Args:
-        object (Setting, optional): Returns an html safe id from the referance object
+        object (Setting, optional): Returns an html safe id from the reference object
         html_id (str, optional): [description]. Returns a tuple from the html safe id.
 
     Raises:

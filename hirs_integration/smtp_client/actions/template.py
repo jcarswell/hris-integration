@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 
 from jinja2 import Environment,select_autoescape
@@ -18,11 +21,13 @@ class SmtpTemplate:
                 subject = template_obj.email_subject
                 body = template_obj.email_body
             except EmailTemplates.DoesNotExist as e:
-                logger.critical(f"The template '{template}' is no longer valid, please check the configuration")
+                logger.critical(f"The template '{template}' is no longer valid, please check "
+                                "the configuration")
                 raise InvlaidTemplate(e,template_name=template)
 
         if subject is None and body is None:
-            raise ValueError("If the template name is not provided then the subject and body fields are required")
+            raise ValueError("If the template name is not provided then the subject and body "
+                             "fields are required")
 
         env = Environment(
             autoescape=select_autoescape()

@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import json
 import logging
 
@@ -51,7 +54,8 @@ def Error(request,code:int,detail:str,template:str =None):
     else:
         t = loader.get_template(base_template)
         
-    return HttpResponse(t.render({"title":f"{code}! Error","err_code":code,"err_detail":detail},request),status=code,reason=detail)
+    return HttpResponse(t.render({"title":f"{code}! Error","err_code":code,"err_detail":detail},request),
+                        status=code,reason=detail)
 
 class LoggedInView(ContextMixin, View):
     page_title = 'HRIS Sync'
@@ -219,7 +223,8 @@ class FormView(TemplateResponseMixin, LoggedInView):
             logger.debug("Form is valid, saving()")
             save_data = self._form.save()
         else:
-            logging.error(f"encountered Exception while saving form {self.form.name}\n Errors are: {self._form._errors.keys()}")
+            logging.error(f"encountered Exception while saving form {self.form.name}\n" 
+                          f"Errors are: {self._form._errors.keys()}")
             ers = []
             for e in self._form._errors.values():
                 ers.append("<br>".join(e))
@@ -341,7 +346,8 @@ class Employee(TemplateResponseMixin, LoggedInView):
         if errors == []:
             return JsonResponse({"status":"success","fields":errors})
         else:            
-            return JsonResponse({"status":"error","fields":errors,"errors":"Error saving fields, please review the highlited fields."})
+            return JsonResponse({"status":"error","fields":errors,
+                                 "errors":"Error saving fields, please review the highlighted fields."})
 
 
 class Settings(TemplateResponseMixin, LoggedInView):
@@ -487,7 +493,8 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 output.append(field_emp.render(pk_to_name(row.pk),employee))
                 output.append(f'</div>')
                 output.append(f'<div class="form-group col-md-2">')
-                output.append('<a href="{}"><ion-icon name="create"></ion-icon></a>'.format(reverse('pending_manual',args=[row.pk])))
+                output.append('<a href="{}"><ion-icon name="create"></ion-icon></a>'.format(
+                    reverse('pending_manual',args=[row.pk])))
                 output.append(f'</div>')
                 output.append(f'</div>')
 
@@ -522,7 +529,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
             try:
                 from .helpers.csv_import import CsvImport
             except ImportError:
-                return handler500("System Missing ftp_import module. Please contact the system administartor")
+                return handler500("System Missing ftp_import module. Please contact the system administrator")
 
             for csv_id,pending_id in request.POST.items():
                 logger.debug(f"Processing row {csv_id},{pending_id}")
@@ -542,11 +549,13 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                         logger.error(f"JSON Decode fail for CsvPending row '{csv}' error:\n {e}")
 
         else:
-            return JsonResponse({"status":"error","feilds":None,"errors":f"{request.POST['form']} is not supported"})
+            return JsonResponse({"status":"error","feilds":None,
+                                 "errors":f"{request.POST['form']} is not supported"})
 
 
         if errors:
-            return JsonResponse({"status":"error","feilds":list(errors.keys()),"errors":list(errors.values())})
+            return JsonResponse({"status":"error","feilds":list(errors.keys()),
+                                 "errors":list(errors.values())})
         else:
             return JsonResponse({"status":"success"})
 

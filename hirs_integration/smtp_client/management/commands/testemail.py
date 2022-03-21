@@ -12,8 +12,9 @@ class Command(BaseCommand):
         from smtp_client.smtp import Smtp
         c = Smtp()
         try:
-            c.send(kwargs['dest_email'],'This is a test email generated from the HRIS Intergration Tool','Test')
+            c.send(kwargs['dest_email'],'This is a test email generated from the HRIS Intergration Tool',
+                   'Test')
         except Exception as e:
             self.stderr.write(f"Failed to send email, an exception was thrown: \n{e}")
         else:
-            self.stdout.write(f"Test email sent sucessfully")
+            self.stdout.write(f"Test email sent successfully")

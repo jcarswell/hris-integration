@@ -1,8 +1,11 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from cron.validators import cron_validator,ValidationError
 
 class CronJob:
-    """A Dict like object that is setup spcifically to handle
-    the schdule for a cron job. CronJob take one argument of
+    """A Dict like object that is setup specifically to handle
+    the schedule for a cron job. CronJob take one argument of
     a string that's a valid cron schedule. From the minute,
     hour, day, month and day_of_week variable are populated
     with a list of valid matching times. Theses variable can

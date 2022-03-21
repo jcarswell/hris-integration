@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import pyodbc
 import logging
 
@@ -27,7 +30,7 @@ def get_adgroups():
         logger.warning("Caught django.utils.ProgrammingError")
         return INIT_ERROR
     except AttributeError:
-        logger.info("Caught Attibute Error, this is likely due to pre-init")
+        logger.info("Caught Attribute Error, this is likely due to pre-init")
         return INIT_ERROR
 
 def get_adous():
@@ -51,5 +54,5 @@ def get_adous():
         logger.warning("Caught django.utils.ProgrammingError")
         return INIT_ERROR
     except AttributeError:
-        logger.info("Caught Attibute Error, this is likely due to pre-init")
+        logger.info("Caught Attribute Error, this is likely due to pre-init")
         return INIT_ERROR

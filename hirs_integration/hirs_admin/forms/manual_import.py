@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 
 from django import forms
@@ -120,7 +123,8 @@ class ManualImportForm(forms.Form):
             except ValueError as e:
                 self.add_error(field,str(e))
             except (models.Employee.DoesNotExist,models.JobRole.DoesNotExist):
-                self.add_error(field,f"Reference object for {field} does not exist. Please refresh and try again")
+                self.add_error(field,
+                               f"Reference object for {field} does not exist. Please refresh and try again")
             except KeyError:
                 self.add_error(field,f"{field} - an internal error occurred")
 

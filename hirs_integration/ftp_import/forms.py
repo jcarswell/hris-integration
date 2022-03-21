@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import datetime
 import logging
 import json
@@ -29,7 +32,7 @@ class BaseImport():
     supporting functions along with the shell to which processing happens.
     
     Initialization:
-      The class expects a list of feild configuration data that will be provided as kwargs.
+      The class expects a list of felid configuration data that will be provided as kwargs.
       The list should be structured as: 
       [
           {
@@ -39,9 +42,9 @@ class BaseImport():
           ...
       ]
       
-      Durring initalization the following things happen:
-       - Employee object is initailized either with the existing object or an empty object
-       - The status field from the import is re-mapped to the expexted model value
+      Durring initialization the following things happen:
+       - Employee object is initialized either with the existing object or an empty object
+       - The status field from the import is re-mapped to the expected model value
        - If this is a "new" Employee the save attribute is set
        - csv_pending is initialized with the kwargs and employee id
     """
@@ -55,7 +58,8 @@ class BaseImport():
         self.import_bu = self.config(config.CAT_CSV,config.CSV_IMPORT_BU)
         self.import_jobs_all = self.config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS)
         self.import_loc = self.config(config.CAT_CSV,config.CSV_IMPORT_LOC)
-        logger.debug(f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} - bu: {self.import_bu} - location: {self.import_loc}")
+        logger.debug(f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} "
+                     f"- bu: {self.import_bu} - location: {self.import_loc}")
         Stats.rows_processed += 1
 
         emp_id_field = get_pk(Employee)
@@ -206,7 +210,7 @@ class BaseImport():
                 May return None if the creation fails
         """
         if not isinstance(id,int):
-            raise ValueError(f"Expexted int got type {type(id)}")
+            raise ValueError(f"Expected int got type {type(id)}")
 
         loc_desc = self.config(config.CAT_FIELD,config.FIELD_LOC_NAME)
         changed = False
@@ -260,7 +264,7 @@ class BaseImport():
                 May return None if the creation fails
         """
         if not isinstance(id,int):
-            raise ValueError(f"Expexted int got type {type(id)}")
+            raise ValueError(f"Expected int got type {type(id)}")
 
         job_desc = self.config(config.CAT_FIELD,config.FIELD_JD_NAME)
         job_bu = self.config(config.CAT_FIELD,config.FIELD_JD_BU)
@@ -326,12 +330,12 @@ class BaseImport():
             parent [optional](int): An optional parrent business unit
 
         Returns:
-            BusinessUnit: returns the new/updated buesiness unit
+            BusinessUnit: returns the new/updated business unit
                 may return None if the creation of a new JobRole Fails
         """
 
         if not isinstance(id,int):
-            raise ValueError(f"Expexted int got type {type(id)}")
+            raise ValueError(f"Expected int got type {type(id)}")
 
         bu_desc = self.config(config.CAT_FIELD,config.FIELD_BU_NAME)
         bu_parent = self.config(config.CAT_FIELD,config.FIELD_BU_PARENT)
@@ -340,7 +344,7 @@ class BaseImport():
         changed = False
 
         if new and not self.import_bu:
-            logger.debug("Importing BU's disabled in configuraion")
+            logger.debug("Importing BU's disabled in configuration")
             bu.delete()
             return
 
@@ -528,10 +532,10 @@ class EmployeeForm(BaseImport):
                     try:
                         setattr(self.employee,map_val,value)
                     except IntegrityError:
-                        #This may be expexted as the employee has yet to be created in the database
-                        # therfore a forien key relationship cannot be created.
+                        #This may be expected as the employee has yet to be created in the database
+                        # therefore a foreign key relationship cannot be created.
                         if map_val != 'jobs':
-                            logger.warning(f"Failed to set feild '{map_val}' for {self.employee}")
+                            logger.warning(f"Failed to set felid '{map_val}' for {self.employee}")
 
         pend_obj,multiple = self.fuzz_pending()
 

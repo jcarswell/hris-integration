@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
@@ -10,5 +13,5 @@ class Command(BaseCommand):
         from ftp_import.helpers import settings 
         print("Clearing all ftp import fields")
         for f in Setting.o2.get_by_path(settings.MAP_GROUP):
-            print(f"[VERBOS] Deleting {f.setting}")
+            print(f"[VERBOSE] Deleting {f.setting}")
             f.delete()

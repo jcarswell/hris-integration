@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 import os
 import subprocess
@@ -22,8 +25,9 @@ class BaseExport:
 
         if (not os.path.isdir(config.get_config(config.CAT_CONFIG,config.CONFIG_PATH)) or
             not os.path.isfile(self.callable)):
-            logger.critical(f"Corepoint WebService Module is not availbe at {self.callable}")
-            raise ConfigError("It appears that Corepoint web service module is not installed, please install it or check the config")
+            logger.critical(f"Corepoint WebService Module is not available at {self.callable}")
+            raise ConfigError("It appears that Corepoint web service module is not installed, "
+                              "please install it or check the config")
 
         self.generate_config()
 
@@ -57,10 +61,10 @@ class BaseExport:
         """
         This Method must be must be defined in a sub class
         
-        Avalible class configs are:
+        Available class configs are:
             self.map - A dictionary containing the configured export map values.
                 Unless you are overriding the generate config, the values should be
-                used as the csv feilds
+                used as the csv fields
             self.callable - The executable to be called to run the CorePoint Import
             self.export_file - The path at which the export file should be saved. 
                 To change this value override the __init__ function

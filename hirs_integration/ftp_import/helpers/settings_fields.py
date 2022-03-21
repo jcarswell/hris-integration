@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from django.utils.translation import gettext_lazy as _t
 
 #CONSTANTS
@@ -147,7 +150,7 @@ CONFIG_DEFAULTS = {
             "default_value": '70',
             "field_properties": {
                 "type": "IntegerField",
-                "help_text": "Fuzzy match required for matching aginst pending users",
+                "help_text": "Fuzzy match required for matching against pending users",
                 "required": True,
             },
         },
@@ -218,7 +221,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "help_text": "Buisness Unit name field to use with the Business Unit ID",
+                "help_text": "Business Unit name field to use with the Business Unit ID",
             },
         },
         FIELD_BU_PARENT: {

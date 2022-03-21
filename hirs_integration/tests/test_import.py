@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import json
 import logging
 import unittest
@@ -32,7 +35,8 @@ class CsvManual(csv.CsvImport):
                 logger.error("Failed to save Employee refere to previous logs for more details")
                 Stats.errors.append(f"Line: {row} - Error: {e}")
             except ObjectCreationError as e:
-                logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
+                logger.error("Caught exception while creating employee, failed to create reference object. "
+                             "Refer to above logs")
                 Stats.errors.append(f"Line: {row} - Error: {e}")
 
 class TestCSVImport(unittest.TestCase):

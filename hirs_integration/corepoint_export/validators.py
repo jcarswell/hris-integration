@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 from common.validators import import_validator,ValidationError
 from django.utils.translation import gettext_lazy as _t
 
@@ -18,7 +21,7 @@ employee_fields = [
     ('bu',_t('Business Unit Name')),
     ('manager',_t('Manager')),
     ('upn',_t('User Principal Name')),
-    ('bu_id',_t('Businss Unit ID')),
+    ('bu_id',_t('Business Unit ID')),
     ('email',_t('Email Address')),
     ('is_supervisor',_t('Is Supervisor')),
     ('employeetype',_t('Employee Type')),

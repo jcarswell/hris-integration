@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import smtplib
 import logging
 
@@ -76,7 +79,8 @@ class Smtp:
         del self.__conn
         logger.debug("Server connection closed. Until next time.")
 
-    def mime_build(self, text:AnyStr =None, html:AnyStr =None, subject:AnyStr =None, to:Union[AnyStr,List[AnyStr]] =None) -> MIMEMultipart:
+    def mime_build(self, text:AnyStr =None, html:AnyStr =None, subject:AnyStr =None,
+                   to:Union[AnyStr,List[AnyStr]] =None) -> MIMEMultipart:
         if text is None and html is None:
             raise ValueError("both html and text may not be None")
 

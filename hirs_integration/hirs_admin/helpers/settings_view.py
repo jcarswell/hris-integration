@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 
 from django.forms import forms
@@ -138,5 +141,6 @@ class Settings():
                             form_fields[id] = item
                             values[id] = self.fields[id].value
 
-                    self.items[group][cname]["_FORM_"] = Form(data=values, field_order=sorted(form_fields.keys()),
+                    self.items[group][cname]["_FORM_"] = Form(data=values,
+                                                              field_order=sorted(form_fields.keys()),
                                                               **form_fields)

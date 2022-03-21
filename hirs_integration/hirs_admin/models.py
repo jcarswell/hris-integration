@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 import time
 import json
@@ -377,7 +380,8 @@ class JobRole(models.Model):
         db_table = 'jobroles'
     job_id = models.IntegerField(verbose_name="Job ID",primary_key=True)
     name = models.CharField(max_length=255,verbose_name="Job Name")
-    bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Business Units")
+    bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True,
+                           verbose_name="Business Units")
     seats = models.IntegerField(default=0, verbose_name="Seats")
 
     def __str__(self):
@@ -416,7 +420,8 @@ class Employee(models.Model):
     leave = models.BooleanField(default=False)
     type = models.CharField(max_length=64,null=True,blank=True)
     _username = models.CharField(max_length=64,null=True,blank=True)
-    primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True, on_delete=models.SET_NULL)
+    primary_job = models.ForeignKey(JobRole, related_name='primary_job', null=True, blank=True,
+                                    on_delete=models.SET_NULL)
     jobs = models.ManyToManyField(JobRole, blank=True)
     photo = models.FileField(upload_to='uploads/', null=True, blank=True)
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
@@ -794,7 +799,8 @@ class EmployeePending(models.Model):
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
     _password = models.CharField(max_length=128,null=True,blank=True)
     _email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True)
-    employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True, on_delete=models.SET_NULL)
+    employee = models.ForeignKey(Employee, related_name='pending_employee', null=True, blank=True,
+                                 on_delete=models.SET_NULL)
     guid = models.CharField(max_length=40,null=True,blank=True)
     
     def __eq__(self,other) -> bool:

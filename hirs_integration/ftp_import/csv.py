@@ -1,3 +1,6 @@
+# Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+
 import logging
 import string
 import importlib
@@ -91,7 +94,8 @@ class CsvImport():
         try:
             form_module = importlib.import_module(self.form)
         except ModuleNotFoundError as e:
-            logger.critical(f"failed to import configure form module {self.form}. Please ensure that the configured value is for a module not a class or function.")
+            logger.critical(f"failed to import configure form module {self.form}. Please "
+                            "ensure that the configured value is for a module not a class or function.")
             Stats.errors.append(f"Failed to import importer. Please check the configuration")
             raise ConfigurationError(f"unable to import form lib {self.form}") from e
         
@@ -110,5 +114,6 @@ class CsvImport():
                 logger.error("Failed to save Employee refere to previous logs for more details")
                 Stats.errors.append(f"Line: {row} - Error: {e}")
             except ObjectCreationError as e:
-                logger.error("Caught exception while creating employee, failed to create referance object. Refer to above logs")
+                logger.error("Caught exception while creating employee, failed to create reference "
+                             "object. Refer to above logs")
                 Stats.errors.append(f"Line: {row} - Error: {e}")
