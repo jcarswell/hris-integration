@@ -73,14 +73,14 @@ class GroupManager:
     def parse_group(self,groups:str) -> list:
         output = []
         dn = []
-        for group in groups.split(','):
+        logger.debug(f"parsing the following groups: {groups}")
+        for group in groups.strip('\'"').split(','):
             if len(group.split('=')) == 1:
                 if dn != []:
-                    output.append(dn.join(','))
+                    output.append(','.join(dn))
                     dn = []
                 try:
-                    g = ADGroup.from_cn(group)
-                    output.append(g.dn)
+                    output.append(ADGroup.from_cn(group).dn)
                 except Exception as e:
                     logger.warning(f"{group} doesn't appear to be valid")
                     logger.debug(f"Caught exception while retrieving group: {e}")
@@ -88,7 +88,7 @@ class GroupManager:
             else:
                 if group[0:2].lower() == "cn=":
                     if dn != []:
-                        output.append(dn.join(','))
+                        output.append(','.join(dn))
                         dn = []
                     dn.append(group)
                 else:
@@ -96,7 +96,7 @@ class GroupManager:
         
         #Ensure that we're not leaving a DN out of the output
         if dn != []:
-            output.append(dn.join(','))
+            output.append(','.join(dn))
 
         #Check that we are only returning valid DN's
         for x in range(0,len(output)):
