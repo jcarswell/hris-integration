@@ -96,7 +96,7 @@ class BaseExport:
                         self.update_user(employee)
                         self.update_user_extra(employee,employee._aduser)
                         employee._aduser._flush() #ensure that updates are committed
-                        self.update_groups(employee,employee._aduser)
+                        self.update_groups(employee)
                         if employee.merge:
                             logger.debug(f"purging pending employee record for {employee}")
                             employee.purge_pending()
@@ -154,8 +154,6 @@ class BaseExport:
             msg = "The following new users have been add:\n"
             for employee in self.new_users:
                 msg += f"{str(employee)}\n"
-                
-                SmtpTemplate()
 
             try:
                 s = Smtp()
@@ -239,6 +237,7 @@ class BaseExport:
         :return: the ADUser object
         :rtype: ADUser
         """
+
         logger.debug(f"Trying to fetch AD user object for {employee}")
         user = None
         if employee.guid:
@@ -282,6 +281,7 @@ class ADUserExport(BaseExport):
         :return: The mailbox creation command
         :rtype: string
         """
+
         type = self.config(config.CONFIG_CAT,config.CONFIG_MAILBOX_TYPE)
         if type.lower() == 'local':
             return f"Enable-Mailbox {username}"
@@ -339,12 +339,11 @@ class ADUserExport(BaseExport):
                 logger.exception("Failed to create mailboxes and send welcome emails emails")
 
     def setup_mailboxes(self):
-        """Process the creation of mailboxes for new users
-        """
+        """Process the creation of mailboxes for new users"""
+
         if not self.config(config.CONFIG_CAT,config.CONFIG_ENABLE_MAILBOXES):
             logger.info("Mailbox import is disabled")
             return
-
 
         logger.debug('Setting up Jinja 2 Environment')
         env = Environment(loader=PackageLoader('ad_export','templates'),
@@ -369,6 +368,7 @@ class ADUserExport(BaseExport):
         """In the event that we terminate early ensure that users mailboxes are setup or at least written to file
         before the class is deleted
         """
+
         if self.mailboxes:
             try:
                 self.setup_mailboxes(self.mailboxes)
