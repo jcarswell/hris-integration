@@ -37,12 +37,14 @@ function set_nav() {
       ref = $this.getAttribute('href');
       if (ref !== null && ref.indexOf(loc) !== -1) {
         $this.setAttribute('class',$this.className + ' active');
+        $($this.closest('.has-treeview')).addClass('menu-open');
       }
     });
   }
 }
 
 $(function() {
+  $('.menu-open','.sidebar').removeClass('menu-open')
   set_nav();
   $('input[type=password]').attr('autocomplete','false')
 });
