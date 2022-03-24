@@ -27,7 +27,7 @@ function errorProcess(jqXHR,status,error,focus) {
   $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
   $('#alert-container').removeClass('d-none');
   $(".alert").addClass('alert-danger');
-  $("#alert-inner").html("<storng>"+status+":</strong> "+error);
+  $("#alert-inner").html("<strong>"+status+":</strong> "+error);
 }
 function createAlert() {
   var alertBody = `  <div class="alert" role="alert">
