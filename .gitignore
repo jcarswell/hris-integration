@@ -404,3 +404,5 @@ target/
 mailbox_scripts/
 user_scripts/
 hirs_integration/hris_integration/config.py
+hirs_integration/static/
+hirs_integration/media/
