@@ -403,3 +403,4 @@ target/
 #project folders and files
 mailbox_scripts/
 user_scripts/
+hirs_integration/hris_integration/config.py
