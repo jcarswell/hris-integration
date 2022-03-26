@@ -12,5 +12,5 @@ class Command(BaseCommand):
         parser.add_argument('--service',action='store_true',help="install the cron job service")
     
     def handle(self, *args, **kwargs):
-        import setup
-        setup.setup(kwargs['service'])
+        from setup import django
+        django.setup(kwargs['service'])
