@@ -4,6 +4,7 @@
 import json
 import importlib
 import os
+import sys
 
 from pathlib import Path,PureWindowsPath,PurePosixPath
 from django.core.management import utils
@@ -11,6 +12,7 @@ from cryptography.fernet import Fernet
 from copy import deepcopy
 from django.core.exceptions import ImproperlyConfigured
 
+BASE_PATH = Path(__file__).resolve().parent.parent
 DATABASE_CHOICES = ['mssql','postgres','mysql']
 
 DB_MSSQL = {
@@ -95,7 +97,7 @@ def config(path:Path,name:str ="config.py",**kwargs) -> bool:
         if key[-5:] == '_ROOT': 
             # Make sure that all _ROOT paths are valid otherwise convert them into
             # local paths that are valid.
-            lp = Path(path,DEFAULTS[key].lstrip('/').lstrip('\\')) # strip leading slashes
+            lp = Path(BASE_PATH,DEFAULTS[key].lstrip('/').lstrip('\\')) # strip leading slashes
             if not Path(DEFAULTS[key]).exists() or not lp.exists():
                 print(f"Creating '{str(lp)}'")
                 lp.mkdir()
