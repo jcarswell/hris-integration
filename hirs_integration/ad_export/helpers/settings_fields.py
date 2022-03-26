@@ -114,7 +114,7 @@ CONFIG_DEFAULTS = {
             },
         },
         CONFIG_WELCOME_ENABLE: {
-            "default_value": False,
+            "default_value": "False",
             "field_properties": {
                 "type": "BooleanField",
                 "help": "Enable sending of the welcome email on user creation"
