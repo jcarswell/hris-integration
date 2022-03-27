@@ -48,7 +48,7 @@ class JobRole(Form):
         labels= {
             'job_id': _t("Job Number"),
             'name': _t("Job Name"),
-            'bu': _t("Business Units"),
+            'bu': _t("Business Unit"),
             'seats': _t("Number of Seats")
         }
         disabled = ('job_id',)
