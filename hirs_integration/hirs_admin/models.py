@@ -13,9 +13,9 @@ from copy import deepcopy
 from django import conf
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_save,post_save
-from random import choice
 from django.utils.translation import gettext_lazy as _t
-from string import ascii_letters, digits, capwords, ascii_uppercase,ascii_lowercase
+from string import ascii_letters, digits, capwords
+from common.functions import password_generator
 
 logger = logging.getLogger('hirs_admin.Model')
 
@@ -590,10 +590,7 @@ class Employee(models.Model):
     @classmethod
     def post_save(cls, sender, instance, created, **kwargs):
         if created:
-            passwd = "".join(choice(ascii_letters + digits) for char in range(9))
-            passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
-
-            instance.password = passwd
+            instance.password = password_generator()
             instance.save()
 
             #instantiate the EmployeeOverride Table
@@ -930,10 +927,7 @@ class EmployeePending(models.Model):
     @classmethod
     def post_save(cls, sender, instance, created, **kwargs):
         if created:
-            passwd = "".join(choice(ascii_letters + digits) for char in range(9))
-            passwd = choice(ascii_lowercase) + passwd + choice(digits) + choice(ascii_uppercase)
-
-            instance.password = passwd
+            instance.password = password_generator()
             instance.save()
 
     @classmethod
