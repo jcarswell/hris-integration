@@ -11,6 +11,8 @@ from django.utils.timezone import make_aware
 from distutils.util import strtobool
 from django.db.utils import ProgrammingError
 from warnings import warn
+from django.conf import settings
+from random import choice
 
 from .exceptions import FixturesError,SettingsError
 
@@ -206,3 +208,11 @@ class FieldConversion:
             return str(self.value)
         except AttributeError:
             return str(self.value)
+
+
+def password_generator(length:int = None, chars:str = None) -> str:
+    if not length:
+        length = settings.PASSWORD_LENGTH
+    if not chars:
+        chars = settings.PASSWORD_CHARS
+    return ''.join(choice(chars) for _ in range(length))
