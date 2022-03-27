@@ -138,10 +138,10 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s - [%(levelname)s] - (%(name)s-%(process)d:%(thread)d) - %(message)s'
+            'format': '%(asctime)s - (%(name)s) - [%(levelname)s] %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s',
+            'format': '%(asctime)s - [%(levelname)s] %(message)s',
         },
     },
     'handlers': {
