@@ -38,19 +38,26 @@ class Form(forms.ModelForm):
             if bf.is_hidden:
                 hidden_fields.append(bf.as_hidden)
             else:
+                attrs={}
                 if bf.label:
                     label = bf.label_tag() or ''
                 output.append('<div class="form-row">')
                 output.append(label)
+
+                if hasattr(self.Meta, 'required') and bf.name in self.Meta.required:
+                    attrs['required'] = True
+
                 if hasattr(self.Meta, 'classes') and bf.name in self.Meta.classes:
                     if isinstance(self.Meta.classes[bf.name],str):
                         classes.append(self.Meta.classes[bf.name])
                     elif isinstance(self.Meta.classes[bf.name],(list,tuple)):
                         classes = classes + list(self.Meta.classes[bf.name])
+                attrs['class'] = " ".join(classes)
+
                 if hasattr(self.Meta,'disabled') and bf.name in self.Meta.disabled:
-                    output.append(bf.as_widget(attrs={'class':" ".join(classes),'disabled':True}))
-                else:
-                    output.append(bf.as_widget(attrs={'class':" ".join(classes)}))
+                    attrs['disabled'] = True
+
+                output.append(bf.as_widget(attrs=attrs))
                 output.append('</div>')
 
         if hidden_fields:
