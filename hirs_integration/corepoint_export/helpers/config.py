@@ -5,10 +5,11 @@ import logging
 import re
 
 from typing import Any
-from ad_export.helpers.config import EmployeeManager
+from hirs_admin.data_structures import EmployeeManager
 from hirs_admin.models import Setting,Employee
 from django.utils.timezone import now
 from common.functions import ConfigurationManagerBase
+from warnings import warn
 
 from .settings_fields import * # Yes I hate this, deal with it!
 
@@ -21,7 +22,7 @@ class Config(ConfigurationManagerBase):
     Setting = Setting
 
 def get_config(catagory:str ,item:str) -> Any:
-    """Now depricated use Config instead to manage the value"""
+    """Now deprecated use Config instead to manage the value"""
     return Config()(catagory,item)
 
 class CPEmployeeManager(EmployeeManager):
@@ -38,7 +39,8 @@ class CPEmployeeManager(EmployeeManager):
 
     @property
     def email(self):
-        return f"{self.email_alias}@{self.config(CAT_EMPLOYEE,EMPLOYEE_EMAIL_DOMAIN)}"
+        warn("Use email_address instead", DeprecationWarning)
+        return self.email_address
 
     @property
     def bu_id(self):
@@ -70,7 +72,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     """
     Gets all employees and returns a list of EmployeeManager instances.
     if delta is not set this will return all employees regardless of the
-    last syncronization date.
+    last synchronization date.
 
     Args:
         delta (bool, optional): Whether to get all employees or just a delta. Defaults to True.
