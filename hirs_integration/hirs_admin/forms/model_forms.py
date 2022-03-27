@@ -55,6 +55,7 @@ class JobRole(Form):
         classes = {
             'bu':'selectpicker',
         }
+        required = ('job_id','name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,7 +84,8 @@ class BusinessUnit(Form):
             'ad_ou': 'selectpicker',
             'parent': 'selectpicker',
         }
-    
+        required = ('bu_id','name','ad_ou')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['manager'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
@@ -101,6 +103,7 @@ class Location(Form):
             'name': _t("Name")
         }
         disabled = ('bld_id',)
+        required = ('bld_id','name')
 
 
 class WordList(Form):
@@ -113,6 +116,7 @@ class WordList(Form):
             'replace': _t("Substitution")
         }
         disabled = ('id',)
+        required = ('src','replace')
 
 
 class EmployeePending(Form):
@@ -151,3 +155,4 @@ class EmployeePending(Form):
             'employee': widgets.SelectPicker(attrs={"class":"form-control"}),
             'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
         }
+        required = ('firstname','lastname','primary_job','location')
