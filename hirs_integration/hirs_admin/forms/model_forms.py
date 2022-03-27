@@ -123,7 +123,7 @@ class EmployeePending(Form):
     list_fields = ['firstname','lastname','state']
     class Meta:
         model = models.EmployeePending
-        fields = ['firstname','lastname','suffix','designation','state','leave',
+        fields = ['firstname','lastname','suffix','designations','state','leave',
                    'type','primary_job','jobs','manager','location','start_date',
                    'employee','guid','_username','_email_alias']
         exclude = ('created_on','updated_on','_password')
@@ -132,7 +132,7 @@ class EmployeePending(Form):
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
             'suffix': _t('Suffix'),
-            'designation': _t('Designations'),
+            'designations': _t('Designations'),
             'state': _t('Active'),
             'leave': _t('On Leave'),
             'type': _t('Employee Type'),

@@ -16,6 +16,7 @@ from django.db.models.signals import pre_save,post_save
 from django.utils.translation import gettext_lazy as _t
 from string import ascii_letters, digits, capwords
 from common.functions import password_generator
+from warnings import warn
 
 logger = logging.getLogger('hirs_admin.Model')
 
@@ -783,7 +784,7 @@ class EmployeePending(models.Model):
     firstname = models.CharField(max_length=96, null=False, blank=False)
     lastname = models.CharField(max_length=96, null=False, blank=False)
     suffix = models.CharField(max_length=20, null=True, blank=True)
-    designation = models.CharField(max_length=128, null=True, blank=True)
+    designations = models.CharField(max_length=128, null=True, blank=True)
     start_date = models.DateField(default=timezone.now)
     state = models.BooleanField(default=True)
     leave = models.BooleanField(default=False)
@@ -857,11 +858,13 @@ class EmployeePending(models.Model):
         self._password = FieldEncryption().encrypt(passwd)
 
     @property
-    def designations(self):
+    def designation(self):
+        warn("EmployeePending.designation is deprecated, use EmployeePending.designations instead", DeprecationWarning)
         return self.designation
 
-    @designations.setter
-    def designations(self,v):
+    @designation.setter
+    def designation(self,v):
+        warn("EmployeePending.designation is deprecated, use EmployeePending.designations instead", DeprecationWarning)
         self.designation = v
 
     @property
