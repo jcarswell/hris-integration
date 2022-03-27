@@ -9,8 +9,6 @@ from warnings import warn
 from hris_integration.settings import INSTALLED_APPS
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _t
-from typing import List,Tuple
-from common.functions import model_to_choices
 
 logger = logging.getLogger('hris_admin.validators')
 
@@ -40,9 +38,3 @@ class DnValidator(RegexValidator):
     regex = r'^((CN=([^,]*)),)?((((?:CN|OU)=[^,]+,?)+),)?((DC=[^,]+,?)+)$',
     message=_t("Not a valid DN string")
     flags=re.IGNORECASE
-
-
-def EmailTemplateChoices(none:bool =True) -> List[Tuple]:
-    """Wrapper for model_to_choices for Email Templates"""
-    from hirs_admin.models import EmailTemplates
-    return model_to_choices(EmailTemplates,none)
