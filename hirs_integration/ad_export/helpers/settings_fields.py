@@ -125,7 +125,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "help": "The tempate to use from the welcome email",
-                "choices": ["validators.template_list"]
+                "choices": "validators.email_template_list"
             }
         }
     },
