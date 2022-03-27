@@ -370,7 +370,8 @@ class BusinessUnit(models.Model):
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     ad_ou = models.CharField(max_length=256)
-    manager = models.ForeignKey("Employee",null=True,blank=True, on_delete=models.SET_NULL)
+    manager = models.ForeignKey("Employee",null=True,blank=True, on_delete=models.SET_NULL,
+                                limit_choices_to={'state':True})
 
     def __str__(self):
         return self.name
@@ -411,7 +412,8 @@ class Employee(models.Model):
     emp_id = models.IntegerField(primary_key=True)
     created_on = models.DateField(null=False, blank=False, default=timezone.now)
     updated_on = models.DateTimeField(null=False, blank=False, default=timezone.now)
-    manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
+    manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL,
+                                limit_choices_to={'state':True})
     givenname = models.CharField(max_length=96, null=False, blank=False)
     middlename = models.CharField(max_length=96, null=True, blank=True)
     surname = models.CharField(max_length=96, null=False, blank=False)
@@ -780,7 +782,8 @@ class EmployeePending(models.Model):
 
     created_on = models.DateField(null=False, blank=False, default=timezone.now)
     updated_on = models.DateTimeField(null=False, blank=False, default=timezone.now)
-    manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL)
+    manager = models.ForeignKey(Employee, null=True, blank=True, on_delete=models.SET_NULL,
+                                limit_choices_to={'state': True})
     firstname = models.CharField(max_length=96, null=False, blank=False)
     lastname = models.CharField(max_length=96, null=False, blank=False)
     suffix = models.CharField(max_length=20, null=True, blank=True)
