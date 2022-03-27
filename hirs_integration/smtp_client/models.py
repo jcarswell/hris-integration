@@ -11,3 +11,6 @@ class EmailTemplates(models.Model):
     template_name = models.CharField(blank=False,unique=True,max_length=64)
     email_subject = models.CharField(blank=False,max_length=78)
     email_body = models.TextField()
+
+    def __str__(self) -> str:
+        return self.template_name
