@@ -127,7 +127,7 @@ class EmployeePending(Form):
                    'type','primary_job','jobs','manager','location','start_date',
                    'employee','guid','_username','_email_alias']
         exclude = ('created_on','updated_on','_password')
-        disabled = ('guid','employee','_username','_email_alias')
+        disabled = ('guid','employee')
         labels = {
             'firstname': _t('First Name'),
             'lastname': _t('Last Name'),
