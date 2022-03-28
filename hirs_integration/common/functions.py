@@ -131,8 +131,7 @@ class FieldConversion:
         f.value = 123
         str(f)
     
-    Raises:
-        TypeError: Unsupported type provided
+    :raises TypeError: Unsupported type provided
     """
 
     def __init__(self,type:str, value:str =None) -> None:
@@ -211,8 +210,36 @@ class FieldConversion:
 
 
 def password_generator(length:int = None, chars:str = None) -> str:
+    """A simple password generator. If no length or chars are provided, the default
+    is used from the configuration.
+
+    REF: 
+    - config.PASSWORD_LENGTH
+    - config.PASSWORD_CHARS
+    
+    :param length: The length of the password to generate
+    :type length: int, optional
+    :param chars: The characters to use when generating the password
+    :type chars: str, optional
+    :return: A password of the specified length
+    :rtype: str
+    """
+
     if not length:
         length = settings.PASSWORD_LENGTH
     if not chars:
         chars = settings.PASSWORD_CHARS
     return ''.join(choice(chars) for _ in range(length))
+
+def get_model_pk_name(model) -> str:
+    """Gets the model primary key field name
+
+    :param model: the model to get the primary key field name from
+    :type model: django.models.Model
+    :return: the field name of the primary key
+    :rtype: str
+    """
+
+    for f in model._meta.fields:
+        if f.primary_key:
+            return f.name

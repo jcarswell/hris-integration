@@ -12,6 +12,7 @@ from hirs_admin.models import (EmployeePending, JobRole, Location, BusinessUnit,
                                CsvPending, EmployeeOverrides)
 from django.db.utils import IntegrityError
 from django.db.models import Q
+from common.functions import get_model_pk_name
 
 from .helpers import config
 from .helpers.text_utils import int_or_str,clean_phone,fuzz_name,parse_date
@@ -20,11 +21,6 @@ from .helpers.stats import Stats
 __all__ = ('form')
 
 logger = logging.getLogger('ftp_import.EmployeeForm')
-
-def get_pk(model) -> str:
-    for f in model._meta.fields:
-        if f.primary_key:
-            return f.name
 
 class BaseImport():
     """
@@ -62,7 +58,7 @@ class BaseImport():
                      f"- bu: {self.import_bu} - location: {self.import_loc}")
         Stats.rows_processed += 1
 
-        emp_id_field = get_pk(Employee)
+        emp_id_field = get_model_pk_name(Employee)
         employee_id_field = self.get_field_name(emp_id_field)
 
         if employee_id_field == None or employee_id_field not in kwargs:
