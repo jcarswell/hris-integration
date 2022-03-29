@@ -15,7 +15,7 @@ from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.template import loader
-from common.functions import model_to_choices, pk_to_name, name_to_pk
+from common.functions import model_to_choices, pk_to_name, name_to_pk, get_model_pk_name
 
 from .helpers import settings_view,config
 from .fields import SettingFieldGenerator
@@ -111,7 +111,9 @@ class ListView(TemplateResponseMixin, LoggedInView):
             request.GET.pop('form')
 
         self._model = self.form._meta.model
-        self.fields = self.form.list_fields or self.form.base_fields.keys()
+        self.fields = self.form.list_fields
+        if self.fields == []:
+            self.fields = list(self.form.base_fields.keys())
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -138,16 +140,23 @@ class ListView(TemplateResponseMixin, LoggedInView):
     def list_rows(self):
         logger.debug("requested list_rows")
         output = []
+        pk = get_model_pk_name(self._model)
+        if pk not in self.fields:
+            pk = self.fields[0]
+        logger.debug(f"using {pk} as primary key in view")
         for row in self._model.objects.all():
             output.append(f'<tr id="{row.pk}">')
             for field in self.fields:
                 val = getattr(row, field)
-                url = f"{self.request.path}{row.pk}/"
 
-                if field[-2:] == "id":
-                    val = f"<strong>{val}</strong>"
+                if field == pk:
+                    val = f'<a href="{self.request.path}{row.pk}/"><strong>{val}</strong></a>'
 
-                output.append(f'<td><a href="{url}">{val}</a></td>')
+                if getattr(self._model,field).__class__.__name__ == "ForwardManyToOneDescriptor":
+                    #TODO: [#57] Lookup ForeignKey URL and update val with link to that view
+                    pass 
+
+                output.append(f'<td>{val}</td>')
             output.append('</tr>')
         logger.debug(f"Output contains: {output}")
         return mark_safe('\n'.join(output))
@@ -319,7 +328,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         try:
             emp_id = kwargs['id']
         except KeyError:
-            return JsonResponse({"status":"error","feilds":["emp_id"]})
+            return JsonResponse({"status":"error","fields":["emp_id"]})
         
         errors = []
         if request.POST['form'] == 'override':
@@ -387,7 +396,7 @@ class Settings(TemplateResponseMixin, LoggedInView):
                     logger.debug(f"Item {html_id} is not a valid setting ID")
                     errors[html_id] = None
                 except TypeError:
-                    logger.debug(f"Caughht TypeError setting up field for {html_id}")
+                    logger.debug(f"Caught TypeError setting up field for {html_id}")
                     errors[html_id] = None
                 except ValidationError as e:
                     logger.debug(f"Caught validationError - {iter(e)}")
@@ -549,12 +558,12 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                         logger.error(f"JSON Decode fail for CsvPending row '{csv}' error:\n {e}")
 
         else:
-            return JsonResponse({"status":"error","feilds":None,
+            return JsonResponse({"status":"error","fields":None,
                                  "errors":f"{request.POST['form']} is not supported"})
 
 
         if errors:
-            return JsonResponse({"status":"error","feilds":list(errors.keys()),
+            return JsonResponse({"status":"error","fields":list(errors.keys()),
                                  "errors":list(errors.values())})
         else:
             return JsonResponse({"status":"success"})
@@ -610,7 +619,7 @@ class ManualImport(TemplateResponseMixin, LoggedInView):
             return JsonResponse({
                 "status":"error",
                 "fields":['emp_id'],
-                "errors":["Employee ID already extist. Please use import form on previous page"],
+                "errors":["Employee ID already exits. Please use import form on previous page"],
                 })
         self._form.data = request.POST
         self._form.is_bound = True
@@ -625,7 +634,7 @@ class ManualImport(TemplateResponseMixin, LoggedInView):
                                 })
         #try:
         self._form.save(self.pending_employee)
-        return JsonResponse({"status":"sucess"})
+        return JsonResponse({"status":"success"})
         #except Exception as e:
         #    return JsonResponse({
         #        "status":"error",
