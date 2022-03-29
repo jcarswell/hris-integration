@@ -78,6 +78,10 @@ function getCookie(c_name)
     }
     return "";
 }
+function reset_form(f) {
+  $('input:not([type="hidden"])',f).not(':button,:submit,:reset').val('')
+  .prop('checked',false).prop('selected',false);
+}
 $('.alert').on('closed.bs.alert',function() {
   $('#alert-container').addClass('d-none');
   createAlert();
@@ -91,10 +95,12 @@ $(function() {
     if (id !== undefined) {
       id.disabled = false;
       id.readOnly = false;
-      //$('<input type="submit" name="submit-new" class="btn btn-primary" style="margin: 4pt 0 0 auto;" value="Submit & New"/>').insertBefore($('input[name=submit]'));
-      //$('button[name=submit]').attr('style','margin: 4pt 0 0 4pt;');
+      $('<input type="submit" name="submit-new" class="btn btn-primary" onclick="s_new($(this).closest(\'form\'))" style="margin: 4pt 0 0 auto;" value="Submit & New"/>')
+      .insertBefore('button[name=submit]','.container');
+      $('button[name=submit]').attr('style','margin: 4pt 0 0 4pt;');
     }
   }
+  $('input[type=password]').attr('autocomplete','false')
   const csrftoken = getCookie('csrftoken')
   $.ajaxSetup({
     headers: { "X-CSRFToken": csrftoken }
