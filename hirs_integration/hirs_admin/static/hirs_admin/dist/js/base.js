@@ -46,5 +46,5 @@ function set_nav() {
 $(function() {
   $('.menu-open','.sidebar').removeClass('menu-open')
   set_nav();
-  $('input[type=password]').attr('autocomplete','false')
+  $('#search').addClass('d-none');  
 });
