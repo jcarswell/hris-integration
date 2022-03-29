@@ -50,7 +50,7 @@ $("#form_list").submit(function(e) {
     if (data["status"] == "success") {
       if (data["id"] !== undefined) {
         if (snew) {
-          $(this).reset();
+          reset_form(this);
           location.reload(true);
         } else {
           location.replace(get_basepath() + data["id"] + '/');
