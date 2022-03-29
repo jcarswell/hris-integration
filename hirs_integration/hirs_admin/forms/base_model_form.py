@@ -16,7 +16,7 @@ class Form(forms.ModelForm):
     :type list_fields: list
     """
 
-    list_fields = None
+    list_fields = []
 
     def as_form(self) -> None:
         """renders a form using the bootstrap from model.
@@ -68,3 +68,34 @@ class Form(forms.ModelForm):
     def __str__(self) -> str:
         """Returns the as_form method"""
         return self.as_form()
+
+
+class MetaBase:
+    """The base Meta class for all forms.
+
+    :param required: A list of fields that should be required
+    :type required: list
+    :param classes: A list of fields and the classes that should be included as part of the field
+    :type classes: dict
+    :param disabled: A list of fields that should be disable
+    :type disabled: list
+    :param exclude: A list of fields that should be excluded
+    :type exclude: list
+    :param widgets: A list of fields and the widgets that should be used for rendering
+    :type widgets: dict
+    :param labels: A list of fields and the labels that should be use for rendering
+    :type labels: dict
+    :param fields: A list of fields that should be rendered or __all__ for all fields
+    :type help_texts: list or __all__
+    :param model: the reference model if used with ModelForm's
+    :type model: django.models.Model
+    """
+
+    model = None
+    fields = '__all__'
+    widgets = {}
+    label = {}
+    classes = {}
+    exclude = []
+    disabled = ()
+    required = ()

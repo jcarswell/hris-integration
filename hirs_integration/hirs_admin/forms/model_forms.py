@@ -4,16 +4,15 @@
 from django.utils.translation import gettext_lazy as _t
 from django.forms.widgets import Select
 
-from .base_model_form import Form
+from .base_model_form import Form,MetaBase
 from hirs_admin import models,widgets
 from hirs_admin.helpers import adtools
 
 class GroupMapping(Form):
     name = _t("Group Mappings to Jobs")
     list_fields = ["dn"]
-    class Meta:
+    class Meta(MetaBase):
         model = models.GroupMapping
-        fields = '__all__'
         widgets = {
             'dn': widgets.SelectPicker(choices=adtools.get_adgroups(),
                                        attrs={'data-live-search':'true','data-style':'bg-white'}),
@@ -42,7 +41,7 @@ class GroupMapping(Form):
 
 class JobRole(Form):
     name = _t("Job Roles")
-    class Meta:
+    class Meta(MetaBase):
         model = models.JobRole
         fields = ('job_id','name','bu','seats')
         labels= {
@@ -65,7 +64,7 @@ class JobRole(Form):
 class BusinessUnit(Form):
     name = _t("Business Unit")
 
-    class Meta:
+    class Meta(MetaBase):
         model = models.BusinessUnit
         fields = ('bu_id','name','parent','ad_ou','manager')
         widgets = {
@@ -95,7 +94,7 @@ class BusinessUnit(Form):
 
 class Location(Form):
     name = _t("Building")
-    class Meta:
+    class Meta(MetaBase):
         model = models.Location
         fields = ('bld_id','name')
         labels = {
@@ -108,7 +107,7 @@ class Location(Form):
 
 class WordList(Form):
     name = _t("Word Expansion Map")
-    class Meta:
+    class Meta(MetaBase):
         model = models.WordList
         fields = ('id','src','replace')
         labels = {
@@ -121,7 +120,7 @@ class WordList(Form):
 
 class EmployeePending(Form):
     list_fields = ['firstname','lastname','state']
-    class Meta:
+    class Meta(MetaBase):
         model = models.EmployeePending
         fields = ['firstname','lastname','suffix','designations','state','leave',
                    'type','primary_job','jobs','manager','location','start_date',
