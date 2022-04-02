@@ -30,7 +30,7 @@ function errorProcess(jqXHR,status,error,focus) {
   $("#alert-inner").html("<strong>"+status+":</strong> "+error);
 }
 function createAlert() {
-  var alertBody = `  <div class="alert" role="alert">
+  var alertBody = `<div class="alert" role="alert">
   <div id="alert-inner"></div>
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
@@ -51,7 +51,7 @@ function do_delete() {
   .done(function(data){
     location.replace(get_basepath());
   })
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+  .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 }
 function serialize_form(f) {
   d=$(f).serializeArray();
