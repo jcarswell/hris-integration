@@ -2,6 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 import logging
+from pydoc import describe
 import time
 import json
 
@@ -366,7 +367,8 @@ pre_save.connect(Setting.pre_save, sender=Setting)
 class BusinessUnit(models.Model):
     class Meta:
         db_table = 'businessunit'
-    bu_id = models.IntegerField(primary_key=True)
+
+    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
     ad_ou = models.CharField(max_length=256)
@@ -376,28 +378,46 @@ class BusinessUnit(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def bu_id(self) -> int:
+        """Legacy id field (DEPRECATED)"""
+        warn("BusinessUnit.bu_id is deprecated, use BusinessUnit.id instead", DeprecationWarning)
+        return self.id
+
 
 class JobRole(models.Model):
     class Meta:
         db_table = 'jobroles'
-    job_id = models.IntegerField(verbose_name="Job ID",primary_key=True)
+
+    id = models.IntegerField(verbose_name="Job ID",primary_key=True)
     name = models.CharField(max_length=255,verbose_name="Job Name")
     bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True,
                            verbose_name="Business Units")
     seats = models.IntegerField(default=0, verbose_name="Seats")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
+    @property
+    def job_id(self) -> int:
+        """Legacy id name (Deprecated)"""
+        warn("JobRole.job_id is deprecated, use JobRole.id instead", DeprecationWarning)
+        return self.bu.id
 
 class Location(models.Model):
     class Meta:
         db_table = 'locations'
-    bld_id = models.IntegerField(primary_key=True,)
+
+    id = models.IntegerField(primary_key=True,)
     name = models.CharField(max_length=128, null=False, blank=False, unique=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
+
+    def loc_id(self) -> int:
+        """Legacy id name (Deprecated)"""
+        warn("Location.loc_id is deprecated, use Location.id instead", DeprecationWarning)
+        return self.id
 
 
 class Employee(models.Model):
@@ -409,7 +429,7 @@ class Employee(models.Model):
     STAT_ACT = 'active'
     STAT_LEA = 'leave'
 
-    emp_id = models.IntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     created_on = models.DateField(null=False, blank=False, default=timezone.now)
     updated_on = models.DateTimeField(null=False, blank=False, default=timezone.now)
     manager = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL,
@@ -604,8 +624,8 @@ class Employee(models.Model):
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         try:
-            if instance.emp_id:
-                prev_instance = Employee.objects.get(pk=instance.emp_id)
+            if instance.id:
+                prev_instance = Employee.objects.get(pk=instance.id)
             else:
                 prev_instance = None
         except Employee.DoesNotExist:
@@ -633,6 +653,12 @@ class Employee(models.Model):
         if instance._email_alias is None:
             set_upn(instance)
 
+    @property
+    def emp_id(self):
+        """Legacy employee id property (DEPRECATED)"""
+        warn("The emp_id property is deprecated. Please use the employee_id property instead",
+             DeprecationWarning)
+        return self.id
 
 # Employee Model signal connections
 pre_save.connect(Employee.pre_save, sender=Employee)
@@ -640,6 +666,10 @@ post_save.connect(Employee.post_save, sender=Employee)
 
 
 class EmployeeOverrides(models.Model):
+
+    class Meta:
+        db_table = 'employee_overrides'
+
     employee = models.OneToOneField(Employee, on_delete=models.CASCADE, unique=True)
     _firstname = models.CharField(max_length=96, null=True, blank=True)
     _lastname = models.CharField(max_length=96, null=True, blank=True)
@@ -732,13 +762,18 @@ pre_save.connect(EmployeeOverrides.pre_save, sender=EmployeeOverrides)
 
 
 class EmployeePhone(models.Model):
+
+    class Meta:
+        db_table = 'phone_numbers'
+
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     label = models.CharField(max_length=50, default="Primary")
     number = models.CharField(max_length=20)
     primary = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{str(self.employee)} - {self.label} {self.number}"
+        s = "%s%s%s-%s%s%s-%s%s%s%s" % tuple(self.number),
+        return f"{str(self.employee)} - {self.label} {s}"
     
     @property
     def phone_label(self):
@@ -748,8 +783,22 @@ class EmployeePhone(models.Model):
     def phone_label(self,value):
         self.label = value
 
+    @classmethod
+    def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        number = []
+        for i in instance.number:
+            if i.isdigit():
+                number.append(i)
+        instance.number = "".join(number)
+
+pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
+
 
 class EmployeeAddress(models.Model):
+
+    class Meta:
+        db_table = 'addresses'
+
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     label = models.CharField(max_length=50, default="Primary")
     street1 = models.CharField(max_length=128)
@@ -974,6 +1023,10 @@ post_save.connect(EmployeePending.post_save, sender=EmployeePending)
 
 
 class GroupMapping(models.Model):
+
+    class Meta:
+        db_table = 'group_mapping'
+
     dn = models.CharField(max_length=256)
     all = models.BooleanField(default=False)
     jobs = models.ManyToManyField(JobRole, blank=True)
@@ -985,6 +1038,10 @@ class GroupMapping(models.Model):
 
 
 class WordList(models.Model):
+
+    class Meta:
+        db_table = 'word_list'
+
     src = models.CharField(max_length=256)
     replace = models.CharField(max_length=256)
 
@@ -996,7 +1053,7 @@ class CsvPending(models.Model):
     class Meta:
         db_table = 'csv_pending'
 
-    emp_id = models.IntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     givenname = models.CharField(max_length=96,blank=True)
     surname = models.CharField(max_length=96,blank=True)
     row_data = models.TextField()
@@ -1019,3 +1076,9 @@ class CsvPending(models.Model):
 
     def __str__(self):
         return f"{self.emp_id} - {self.givenname} {self.surname}"
+
+    @property
+    def emp_id(self):
+        """Legacy method to return the emp_id of the employee (DEPRECATED)"""
+        warn("CsvPending.emp_id is deprecated, use CsvPending.id instead", DeprecationWarning)
+        return self.id
