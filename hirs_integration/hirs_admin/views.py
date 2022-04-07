@@ -348,7 +348,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
             emp.save()
         elif request.POST['form'] == 'employee':
-            emp = models.Employee.objects.get(emp_id)
+            emp = models.Employee.objects.get(pk=emp_id)
             emp.photo = request.POST['photo']
             emp.save()
         
@@ -458,10 +458,10 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
             for row in data:
                 output.append(f'<div class="form-row">')
                 output.append(f'<div class="form-group col-md-8">')
-                output.append(f'<p><strong>{row.emp_id} - {row.givenname} {row.surname}</strong></p>')
+                output.append(f'<p><strong>{row.id} - {row.givenname} {row.surname}</strong></p>')
                 output.append(f'</div>')
                 output.append(f'<div class="form-group col-md-4">')
-                output.append(field_emp.render(pk_to_name(row.emp_id),None))
+                output.append(field_emp.render(pk_to_name(row.id),None))
                 output.append(f'</div>')
                 output.append(f'</div>')
             
@@ -544,7 +544,7 @@ class CsvImport(TemplateResponseMixin, LoggedInView):
                 logger.debug(f"Processing row {csv_id},{pending_id}")
                 if csv_id[:2] == 'id' and (pending_id[:2] == 'id' or pending_id == 'new'):
                     try:
-                        csv = models.CsvPending.objects.get(emp_id=name_to_pk(csv_id))
+                        csv = models.CsvPending.objects.get(pk=name_to_pk(csv_id))
                         if pending_id == 'new':
                             pending_emp = None
                         else:
