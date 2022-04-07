@@ -43,18 +43,18 @@ class JobRole(Form):
     name = _t("Job Roles")
     class Meta(MetaBase):
         model = models.JobRole
-        fields = ('job_id','name','bu','seats')
+        fields = ('id','name','bu','seats')
         labels= {
-            'job_id': _t("Job Number"),
+            'id': _t("Job Number"),
             'name': _t("Job Name"),
             'bu': _t("Business Unit"),
             'seats': _t("Number of Seats")
         }
-        disabled = ('job_id',)
+        disabled = ('id',)
         classes = {
             'bu':'selectpicker',
         }
-        required = ('job_id','name')
+        required = ('id','name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,24 +66,24 @@ class BusinessUnit(Form):
 
     class Meta(MetaBase):
         model = models.BusinessUnit
-        fields = ('bu_id','name','parent','ad_ou','manager')
+        fields = ('id','name','parent','ad_ou','manager')
         widgets = {
             'ad_ou': Select(choices=adtools.get_adous()),
         }
         labels = {
-            'bu_id': _t("Number"),
+            'id': _t("Number"),
             'name': _t("Name"),
             'parent': _t("Parent"),
             'ad_ou': _t("Active Directory Folder"),
             'manager': _t("Manager"),
         }
-        disabled = ('bu_id',)
+        disabled = ('id',)
         classes = {
             'manager': 'selectpicker',
             'ad_ou': 'selectpicker',
             'parent': 'selectpicker',
         }
-        required = ('bu_id','name','ad_ou')
+        required = ('id','name','ad_ou')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,13 +96,13 @@ class Location(Form):
     name = _t("Building")
     class Meta(MetaBase):
         model = models.Location
-        fields = ('bld_id','name')
+        fields = ('id','name')
         labels = {
-            'bld_id': _t("Number"),
+            'id': _t("Number"),
             'name': _t("Name")
         }
-        disabled = ('bld_id',)
-        required = ('bld_id','name')
+        disabled = ('id',)
+        required = ('id','name')
 
 
 class WordList(Form):

@@ -16,7 +16,7 @@ class ManualImportForm(forms.Form):
     This form handles the Manual import form allowing for an admin to manually convert
     a pending employee to employee.
     """
-    emp_id = forms.IntegerField(label="Employee ID",
+    id = forms.IntegerField(label="Employee ID",
                                 min_value=1,required=True)
     givenname = forms.CharField(label="Given Name",
                                 max_length=96,required=True,
@@ -57,7 +57,7 @@ class ManualImportForm(forms.Form):
                                  required=False)
     type = forms.CharField(label="Employee Type",
                            max_length=64,required=False)
-    field_order = ['emp_id','givenname','middlename','surname','suffix',
+    field_order = ['id','givenname','middlename','surname','suffix',
                    'primary_job','jobs','manager','location',
                    'manager','type','start_data']
 
