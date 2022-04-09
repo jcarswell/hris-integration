@@ -4,7 +4,7 @@
 from pyad.adquery import ADQuery
 from pyad.pyadexceptions import noExecutedQuery
 
-class AD(ADQuery):
+class Query(ADQuery):
     """
     Extension of the ADQuery class adding return values as tuple
     which is needed for the Django models.
