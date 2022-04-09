@@ -3,7 +3,12 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
-
+def update_id_field(apps, schema_editor):
+    Setting = apps.get_model('hirs_admin','Setting')
+    for s in Setting.objects.all():
+        if s.value[-3:] == '_id' and s.hidden == False:
+            s.value = 'id'
+            s.save()
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -71,4 +76,5 @@ class Migration(migrations.Migration):
             name='wordlist',
             table='word_list',
         ),
+        migrations.RunPython(update_id_field)
     ]
