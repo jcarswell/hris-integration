@@ -3,9 +3,9 @@
 
 from pyad.adbase import ADBase
 
-GROUP_CONFIG = 'global_settings'
+GROUP_CONFIG = 'active_directory'
 CONFIG_CAT = 'configuration'
-CATAGORY_SETTINGS = (CONFIG_CAT,)
+CATEGORY_SETTINGS = (CONFIG_CAT,)
 BASE_DN = 'ad_search_base_dn'
 
 CONFIG_DEFAULTS = {
