@@ -1,7 +1,7 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
-from common.validators import import_validator,ValidationError
+from hris_integration.validators import import_validator,ValidationError
 from django.utils.translation import gettext_lazy as _t
 
 __all__= ('employee_fields',)
