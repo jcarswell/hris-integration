@@ -2,19 +2,29 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 from hris_integration.validators import ValidationError
+from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext_lazy as _t
 
 from .exceptions import ProcessError
 
+@deconstructible
 class UsernameValidatorBase:
-    """
-    Class to validate usernames and aliases.
-    """
+    """Class to validate usernames and aliases."""
+
+    message = _t("Enter a valid username.")
+    code = 'invalid'
+
+    #: list: The list of invalid characters for a username or email alias
     invalid_chars = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',
                      ',','<','>',',',' ','`','~','{','}','|']
+    #: str: The default character to replace invalid characters with
     substitute = ''
+    #: int: The default max length for a username
+    max_length = None
 
     
-    def __init__(self, first:str, last:str =None, suffix:str =None, allowed_char:list =None):
+    def __init__(self, first:str, last:str =None, suffix:str =None,
+                 allowed_char:list =None, max_length:int =None):
         """Base initializer for username validator.
 
         :param first: Firstname or username/alias to be validate
@@ -25,11 +35,14 @@ class UsernameValidatorBase:
         :type suffix: str, optional
         :param allowed_char: override the default list of invalid characters, defaults to None
         :type allowed_char: list, optional
+        :param max_length: override the default max length, defaults to None
+        :type max_length: int, optional
         """
 
         self.first = first
         self.last = last or ''
         self.suffix = suffix or ''
+        self.max_length = max_length or self.max_length
         if isinstance(allowed_char, list):
             for char in allowed_char:
                 if char in self.invalid_chars:
@@ -38,80 +51,94 @@ class UsernameValidatorBase:
             if allowed_char in self.invalid_chars:
                 self.invalid_chars.remove(allowed_char)
 
-        self.parse()
+        if self.last is None and self.suffix is None:
+            self.username = first
 
 
     def parse(self):
         raise NotImplementedError("Must be implemented by subclass")
 
     def clean(self):
-        """Ensure that the username is valid.
+        """Ensure that the username is valid."""
 
-        :raises ProcessError: If clean is called before parse
+        self.parse()
+        for char in self.username:
+            if char in self.invalid_chars:
+                self.username = self.username.replace(char,self.substitute)
+
+    def is_valid(self):
+        """Check that the username is valid."""
+        try:
+            self.__call__()
+            return True
+        except ValidationError:
+            return False
+
+    def __call__(self,value:str =None) -> str:
+        """ Validate the username.
+
+        :param value: Username to validate, for compatibility with Django
+        :type value: str, optional
+        :raises ValidationError: If the username contains invalid characters or is too long.
         """
 
-        if not hasattr(self,'username'):
-            raise ProcessError("Username must be parsed before cleaning")
-        for char in self.useranme:
+        username = value or self.username
+        for char in username:
             if char in self.invalid_chars:
-                self.useranme = self.useranme.replace(char,self.substitute)
+                raise ValidationError(f"Username contains invalid character: {char}")
 
-    def __call__(self):
-        raise NotImplementedError("Must be implemented by subclass")
+        if len(username) > self.max_length:
+            raise ValidationError(f"Username is too long: {username}")
 
     def __str__(self) -> str:
-        """Returns a valid username base on the initailized values.
+        """Returns a valid username base on the initialized values.
 
         :return: Valid Username
         :rtype: str
         """
 
         self.clean()
-        return self.useranme
+        return self.username
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, UsernameValidatorBase):
+            return (self.username == other.username and
+                    self.invalid_chars == other.invalid_chars and
+                    self.max_length == other.max_length and
+                    self.__class__.__name == other.__class__.__name)
+        return False
 
 
+@deconstructible
 class UsernameValidator(UsernameValidatorBase):
     """
     Username creation and validation helper. Ensures that usernames are built using standard
     username rules and do not contain invalid characters.
     """
 
+    max_length = 20
     def parse(self):
         """
         Parse the passed values into a username.
         """
 
         if self.last is None and self.suffix is None:
-            self.useranme = self.first
+            self.username = self.first
 
         else:
-            self.useranme = self.first[1] + self.last
+            self.username = self.first[1] + self.last
             if self.suffix:
-                self.useranme = self.useranme[:20-len(self.suffix)] + self.suffix
-            self.username = self.useranme[:20]
+                self.username = self.username[:self.max_length-len(self.suffix)] + self.suffix
 
-    def __call__(self):
-        """ Validate the username.
-
-        :raises ValidationError: If the username contains invalid characters or is too long.
-        """
-
-        self.parse()
-        for char in self.useranme:
-            if char in self.invalid_chars:
-                raise ValidationError(f"Username contains invalid character: {char}")
-
-        if len(self.username) > 20:
-            raise ValidationError(f"Username is too long: {self.username}")
+        self.username = self.username[:self.max_length]
 
 
+@deconstructible
 class UPNValidator(UsernameValidatorBase):
-    def __call__(self):
-        self.parse()
-
-        for char in self.useranme:
-            if char in self.invalid_chars:
-                raise ValidationError(f"Username contains invalid character: {char}")
+    """
+    UserPrincipalName creation and validation helper. Ensures that UPNs are built using standard
+    upn rules and do not contain invalid characters.
+    """
 
     def parse(self):
         """
@@ -119,6 +146,9 @@ class UPNValidator(UsernameValidatorBase):
         """
 
         if self.last is '' and self.suffix is '':
-            self.useranme = self.first
+            self.username = self.first
+
         else:
-            self.useranme = f"{self.first}.{self.last}{self.suffix}"
+            self.username = f"{self.first}.{self.last}{self.suffix}"
+
+        self.username = self.username[:self.max_length]
