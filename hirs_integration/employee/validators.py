@@ -16,14 +16,13 @@ class UsernameValidatorBase:
 
     #: list: The list of invalid characters for a username or email alias
     invalid_chars = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',
-                     ',','<','>',',',' ','`','~','{','}','|']
+                     ',','<','>',' ','`','~','{','}','|']
     #: str: The default character to replace invalid characters with
     substitute = ''
     #: int: The default max length for a username
     max_length = None
 
-    
-    def __init__(self, first:str, last:str =None, suffix:str =None,
+    def __init__(self, first:str =None, last:str =None, suffix:str =None,
                  allowed_char:list =None, max_length:int =None):
         """Base initializer for username validator.
 
@@ -39,7 +38,7 @@ class UsernameValidatorBase:
         :type max_length: int, optional
         """
 
-        self.first = first
+        self.first = first or ''
         self.last = last or ''
         self.suffix = suffix or ''
         self.max_length = max_length or self.max_length
@@ -53,7 +52,8 @@ class UsernameValidatorBase:
 
         if self.last is None and self.suffix is None:
             self.username = first
-
+        else:
+            self.parse()
 
     def parse(self):
         raise NotImplementedError("Must be implemented by subclass")
@@ -82,7 +82,11 @@ class UsernameValidatorBase:
         :raises ValidationError: If the username contains invalid characters or is too long.
         """
 
-        username = value or self.username
+        try:
+            username = value or self.username
+        except AttributeError:
+            self.parse() # If the username is not set, call the parser to generate it
+            username = self.username
         for char in username:
             if char in self.invalid_chars:
                 raise ValidationError(f"Username contains invalid character: {char}")
@@ -116,17 +120,22 @@ class UsernameValidator(UsernameValidatorBase):
     username rules and do not contain invalid characters.
     """
 
+    #: int: The default max length for a username
     max_length = 20
+
     def parse(self):
         """
         Parse the passed values into a username.
         """
 
-        if self.last is None and self.suffix is None:
+        if self.first == '':
+            raise AttributeError("First name/Username is required.")
+
+        if self.last == '' and self.suffix == '':
             self.username = self.first
 
         else:
-            self.username = self.first[1] + self.last
+            self.username = self.first[0] + self.last
             if self.suffix:
                 self.username = self.username[:self.max_length-len(self.suffix)] + self.suffix
 
@@ -140,12 +149,19 @@ class UPNValidator(UsernameValidatorBase):
     upn rules and do not contain invalid characters.
     """
 
+    #: int: The default max length for a UserPrincipalName (As per ms-Exch-Mail-Nickname rangeUpper)
+    max_length = 64
+
     def parse(self):
         """
         Parse the passed values into a username.
         """
 
-        if self.last is '' and self.suffix is '':
+        if self.first == '':
+            raise AttributeError("First name/Username is required.")
+
+
+        if self.last == '' and self.suffix == '':
             self.username = self.first
 
         else:
