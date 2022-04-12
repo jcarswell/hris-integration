@@ -16,7 +16,7 @@ class Query(ADQuery):
     __row_counter = 0
     
     def __init__(self, options={}):
-        super(AD,self).__init__()
+        super().__init__(options)
     
     def get_all_results_tuple(self) -> list:
         """
