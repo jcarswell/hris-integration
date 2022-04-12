@@ -160,7 +160,6 @@ class UPNValidator(UsernameValidatorBase):
         if self.first == '':
             raise AttributeError("First name/Username is required.")
 
-
         if self.last == '' and self.suffix == '':
             self.username = self.first
 
