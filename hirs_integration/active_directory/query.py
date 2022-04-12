@@ -69,7 +69,7 @@ class Query(ADQuery):
         
         return tuple(d)
 
-    def reset_positon(self):
+    def reset_position(self):
         self._ADQuery__rs.MoveFirst()
 
     @property
