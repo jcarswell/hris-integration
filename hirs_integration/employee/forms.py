@@ -6,10 +6,14 @@ import logging
 from django import forms
 from common.functions import model_to_choices,name_to_pk
 from django.utils.safestring import mark_safe
+from hris_integration import widgets
+from hris_integration.forms import Form,MetaBase
+from django.utils.translation import gettext_lazy as _t
 
-from hirs_admin import models,widgets
 
-logger = logging.getLogger('hirs_admin.forms')
+from . import models
+
+logger = logging.getLogger('employee.forms')
 
 class ManualImportForm(forms.Form):
     """
@@ -143,3 +147,42 @@ class ManualImportForm(forms.Form):
         employee_overrides.save()
         pending_employee.employee = employee
         pending_employee.save()
+
+
+class EmployeePending(Form):
+    list_fields = ['firstname','lastname','state']
+    class Meta(MetaBase):
+        model = models.EmployeePending
+        fields = ['firstname','lastname','suffix','designations','state','leave',
+                   'type','primary_job','jobs','manager','location','start_date',
+                   'employee','guid','_username','_email_alias']
+        exclude = ('created_on','updated_on','_password')
+        disabled = ('guid','employee')
+        labels = {
+            'firstname': _t('First Name'),
+            'lastname': _t('Last Name'),
+            'suffix': _t('Suffix'),
+            'designations': _t('Designations'),
+            'state': _t('Active'),
+            'leave': _t('On Leave'),
+            'type': _t('Employee Type'),
+            'start_date': _t('Start Date'),
+            'primary_job': _t('Primary Job'),
+            'manager': _t('Manager'),
+            'photo': _t('Employee Photo'),
+            'location': _t('Home Building'),
+            'employee': _t('HRIS Matched Employee'),
+            'guid': _t('AD GUID'),
+            '_username': _t('Username'),
+            '_email_alias': _t('Email Alias')
+        }
+        widgets = {
+            'state': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'leave': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'primary_job': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'jobs': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
+            'location': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'employee': widgets.SelectPicker(attrs={"class":"form-control"}),
+            'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
+        }
+        required = ('firstname','lastname','primary_job','location')
