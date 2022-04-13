@@ -9,7 +9,7 @@ Django>=3.2,<3.3
 django-appconf
 mssql-django>=1.1.1,<2
 greenlet
-Jinja2>=2.11.3
+Jinja2>=3
 MarkupSafe>=1.1
 paramiko>=2.8.1
 python-win-ad
@@ -20,3 +20,6 @@ sqlparse>=0.4.2
 toml>=0.10.2
 wrapt>=1.11,<1.13
 fuzzywuzzy
+djangorestframework>=3.13.1,<4
+drf-yasg==1.20.0
+django-mptt=>0.13.4
