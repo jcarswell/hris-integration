@@ -5,6 +5,10 @@ import logging
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _t
+from mptt.models import MPTTModel, TreeForeignKey
+from hris_integration.models import ChangeLogMixin
+from organization.models import JobRole,Location
+from employee.validators import UPNValidator,UsernameValidator
 
 logger = logging.getLogger('employee.models.base')
 
@@ -57,3 +61,44 @@ class EmployeeState(models.Model):
                 self.leave = False
                 self.state = True
 
+class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
+    """This represent the common fields between the mutable employee model 
+    and the upstream HRIS data model.
+    """
+
+    class Meta:
+        abstract = True
+
+    #: datetime: The start date of the employee.
+    start_date = models.DateField(auto_now=True)
+
+    #: str: The first name of the employee.
+    first_name = models.CharField(max_length=256)
+    #: str: The last name of the employee.
+    last_name = models.CharField(max_length=256)
+    #: str: The middle name of the employee.
+    middle_name = models.CharField(max_length=256, blank=True)
+    #: str: Suffix of the employee.
+    suffix = models.CharField(max_length=20, null=True, blank=True)
+
+    #: TreeForeignKey: The manager of the employee.
+    manager = TreeForeignKey('self', on_delete=models.SET_NULL, null=True,
+                             blank=True)
+    #: str: The employees Primary Job Role.
+    primary_job = models.ForeignKey(JobRole, null=True, blank=True,
+                                    on_delete=models.SET_NULL)
+    #: ManyToManyField: Any jobs that the employee is cross-trained into.
+    jobs = models.ManyToManyField(JobRole, blank=True)
+    #: ForeignKey: The location of the employee.
+    location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
+
+    #: str: The employee's username.
+    username = models.CharField(max_length=256, null=True, blank=True, unique=True,
+                                validators=[UsernameValidator])
+    #: str: The Employees email_alias
+    email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True,
+                                   validators=[UPNValidator])
+    type = models.CharField(max_length=64,null=True,blank=True)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}.objects.get(id={self.id})"
