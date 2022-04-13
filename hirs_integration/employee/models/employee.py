@@ -5,51 +5,42 @@ import logging
 
 from django.db import models
 from django.db.models.signals import post_save,pre_save
-from mptt.models import MPTTModel, TreeForeignKey
-from hris_integration.models import ChangeLogMixin
-from organization.models import JobRole,Location
 from common.functions import password_generator
 from hris_integration.models.encryption import PasswordField
 from time import time
+from employee.validators import UPNValidator,UsernameValidator
 
-from employee.validations import UPNValidator,UsernameValidator
-from .base import EmployeeState
+from .base import EmployeeBase
 
 logger = logging.getLogger('employee.models')
 
 
-class Employee(MPTTModel, ChangeLogMixin, EmployeeState):
+class Employee(EmployeeBase):
+    """The base Employee Form. This represents the mutable entity for each employee.
+    This table used the Modified Preorder Tree Traversal extention to allow for mappings
+    between the employee and the employee's manager and my extension direct-reports.
+    """
 
     class Meta:
         db_table = 'employee'
 
+    #: int: The primary key for the employee. This does not represet the employee id
     id = models.AutoField(primary_key=True)
+    #: bool: If this model has a matched EmployeeImport record.
     is_imported = models.BooleanField(default=False)
+    #: bool: If the employee has been exported to Active Directory. Used for filtering.
     is_exported_ad = models.BooleanField(default=False)
+    #: str: The Active Directory unique identifier for the employee.
     guid = models.CharField(max_length=40,null=True,blank=True)
 
-    start_date = models.DateField(auto_now=True)
-
-    first_name = models.CharField(max_length=256)
-    last_name = models.CharField(max_length=256)
-    middle_name = models.CharField(max_length=256, blank=True)
-    suffix = models.CharField(max_length=20, null=True, blank=True)
-
+    #: str: The nickname of the employee.
     nickname = models.CharField(max_length=96, null=True, blank=True)
+    #: str: Designations that the employee holds
     designations = models.CharField(max_length=256, blank=True)
+    #: str: The path the the employees uploaded file.
     photo = models.FileField(upload_to='employeephoto/', null=True, blank=True)
 
-    manager = TreeForeignKey('self', on_delete=models.SET_NULL, null=True,
-                             blank=True, related_name='direct_reports')
-    primary_job = models.ForeignKey(JobRole, null=True, blank=True,
-                                    on_delete=models.SET_NULL)
-    jobs = models.ManyToManyField(JobRole, blank=True)
-    location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
-
-    username = models.CharField(max_length=256, null=True, blank=True, unique=True,
-                                validators=[UsernameValidator])
-    email_alias = models.CharField(max_length=128, null=True, blank=True, unique=True,
-                                   validators=[UPNValidator])
+    #: str: The employees password (encrypted at the database level).
     password = PasswordField(null=True,blank=True)
 
     def __eq__(self,other) -> bool:
@@ -93,13 +84,14 @@ class Employee(MPTTModel, ChangeLogMixin, EmployeeState):
     def __str__(self):
         return f"Employee: {self.givenname} {self.surname}"
 
-    def clear_password(self,confirm=False):
+    def clear_password(self,confirm:bool =False) -> None:
+        """Unset the password field and save the model."""
         if confirm:
             self.password = None
             self.save()
 
     @classmethod
-    def reset_username(cls,instance):
+    def reset_username(cls,instance:'Employee') -> None:
         """Regenerate a username, useful for new employees or re-hired employees
 
         :raises ValueError: If the username cannot be generated after 10 cycles
@@ -122,7 +114,7 @@ class Employee(MPTTModel, ChangeLogMixin, EmployeeState):
         raise ValueError("Could not generate a unique username")
 
     @classmethod
-    def reset_upn(cls,instance):
+    def reset_upn(cls,instance:'Employee') -> None:
         """Regenerate a users upn or email_alias, useful for new employees or re-hired employees
 
         :raises ValueError: If the username cannot be generated after 10 cycles
@@ -185,24 +177,19 @@ pre_save.connect(Employee.pre_save, sender=Employee)
 post_save.connect(Employee.post_save, sender=Employee)
 
 
-class EmployeeImport(models.Model, ChangeLogMixin, EmployeeState):
+class EmployeeImport(EmployeeBase):
     """This Class is used to store the data that is imported from the upstream
-    HRIS Database system
+    HRIS Database system.
     """
 
     class Meta:
         db_table = 'employee_import'
 
+
+    #: int: The employee's id in the upstream HRIS system.
     id = models.IntegerField(primary_key=True)
+    #: Employee: The matched Employee object.
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True)
-    givenname = models.CharField(max_length=96, null=False, blank=False)
-    middlename = models.CharField(max_length=96, null=True, blank=True)
-    surname = models.CharField(max_length=96, null=False, blank=False)
-    suffix = models.CharField(max_length=20, null=True, blank=True)
-    type = models.CharField(max_length=64,null=True,blank=True)
-    primary_job = models.ForeignKey(JobRole, null=True, blank=True,
-                                    on_delete=models.SET_NULL)
-    location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __eq__(self,other) -> bool:
         if not isinstance(other,Employee):
@@ -237,4 +224,4 @@ class EmployeeImport(models.Model, ChangeLogMixin, EmployeeState):
         return hash(self.pk)
 
     def __str__(self):
-        return f"{self.emp_id}: {self.givenname} {self.surname}"
+        return f"{self.id}: {self.givenname} {self.surname}"
