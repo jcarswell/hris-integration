@@ -56,15 +56,15 @@ class JobRole(models.Model,ChangeLogMixin,InactiveMixin):
     """The Job roles of the organization"""
     
     class Meta:
-        db_table = 'jobroles'
+        db_table = 'job_role'
 
     #: int: The ID of the Job Role as defined by the organization
     id = models.IntegerField(verbose_name="Job ID",primary_key=True)
     #: str: The name of the Job Role
     name = models.CharField(max_length=255,verbose_name="Job Name")
     #: BusinessUnit: The Business Unit that the Job Role belongs to
-    bu = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True, blank=True,
-                           verbose_name="Business Units")
+    business_unit = models.ForeignKey(BusinessUnit, on_delete=models.SET_NULL, null=True,
+                                      blank=True, verbose_name="Business Units")
     #: int: The number of positions that are available for this Job Role
     seats = models.IntegerField(default=0, verbose_name="Seats")
 
@@ -82,7 +82,7 @@ class Location(MPTTModel,ChangeLogMixin,InactiveMixin):
     """The Locations of the organization"""
 
     class Meta:
-        db_table = 'locations'
+        db_table = 'location'
 
     #: int: The ID of the Location as defined by the organization
     id = models.IntegerField(primary_key=True,)
@@ -122,11 +122,11 @@ class GroupMapping(models.Model,ChangeLogMixin):
     jobs_not = models.BooleanField(default=False)
     #: BusinessUnit: The Business Unit that the group applies to
 
-    bu = models.ManyToManyField(BusinessUnit, blank=True)
+    business_unit = models.ManyToManyField(BusinessUnit, blank=True)
     #: bool: Negates the Business Unit constraint
-    bu_not = models.BooleanField(default=False)
+    business_unit_not = models.BooleanField(default=False)
     #: Location: The Location that the group applies to
 
-    loc = models.ManyToManyField(Location, blank=True)
+    location = models.ManyToManyField(Location, blank=True)
     #: bool: Negates the Location constraint
-    loc_not = models.BooleanField(default=False)
+    location_not = models.BooleanField(default=False)
