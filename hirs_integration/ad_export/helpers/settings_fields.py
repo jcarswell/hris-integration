@@ -15,9 +15,7 @@ CATEGORY_SETTINGS = (CONFIG_CAT,EMPLOYEE_CAT,DEFAULTS_CAT)
 
 ## Config Fields
 EMPLOYEE_DISABLE_LEAVE = 'disable_on_leave'
-EMPLOYEE_LEAVE_GROUP_ADD = 'leave_groups_add'
-EMPLOYEE_LEAVE_GROUP_DEL = 'leave_groups_remove'
-DEFAULT_ORG = 'orginization'
+DEFAULT_ORG = 'organization'
 DEFAULT_PHONE = 'office_phone'
 DEFAULT_FAX = 'fax_number'
 DEFAULT_STREET = 'street_address'
@@ -27,7 +25,7 @@ DEFAULT_STATE = 'province_or_state'
 DEFAULT_ZIP = 'zip_or_postal_code'
 DEFAULT_COUNTRY = 'country'
 CONFIG_NEW_NOTIFICATION = 'new_user_email_notification'
-CONFIG_LAST_SYNC = 'last_sycronization_run'
+CONFIG_LAST_SYNC = 'last_synchronization_run'
 CONFIG_AD_USER = 'ad_export_user'
 CONFIG_AD_PASSWORD = 'ad_export_password'
 CONFIG_UPN = 'ad_upn_suffix'
@@ -136,20 +134,6 @@ CONFIG_DEFAULTS = {
                 "type": "BooleanField",
                 "help_text": "Disable user accounts when they are on leave",
             },
-        },
-        EMPLOYEE_LEAVE_GROUP_ADD: {
-            "default_value": None,
-             "field_properties": {
-                "type": "CharField",
-                "help_text": "Comma seperated list of groups names to add when a user goes on leave",
-             },
-        },
-        EMPLOYEE_LEAVE_GROUP_DEL: {
-            "default_value": None,
-             "field_properties": {
-                "type": "CharField",
-                "help_text": "Comma seperated list of groups names to remove when a user goes on leave",
-             },
         },
     },
     DEFAULTS_CAT: {
