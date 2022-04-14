@@ -69,9 +69,9 @@ class GroupManager:
 
     def parse_config_groups(self):
         """Parse config groups by dn or cn"""
-        from .config import Config,EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD
+        from .config import Config,GROUP_CAT,GROUPS_LEAVE_GROUP
         config = Config()
-        self.groups_leave = self.parse_group(config(EMPLOYEE_CAT,EMPLOYEE_LEAVE_GROUP_ADD))
+        self.groups_leave = self.parse_group(config(GROUP_CAT,GROUPS_LEAVE_GROUP))
 
     def parse_group(self,groups:str) -> list:
         output = []
