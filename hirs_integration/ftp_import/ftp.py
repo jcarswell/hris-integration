@@ -40,7 +40,7 @@ class FTPClient:
         self.user = config.get_config(config.CAT_SERVER,config.SERVER_USER)
         basepath = config.get_config(config.CAT_SERVER,config.SERVER_PATH)
         file_expr = config.get_config(config.CAT_SERVER,config.SERVER_FILE_EXP)
-        protocol = config.get_config(config.CAT_SERVER,config.SERVER_PROTOCAL)
+        protocol = config.get_config(config.CAT_SERVER,config.SERVER_PROTOCOL)
         self.__password = config.get_config(config.CAT_SERVER,config.SERVER_PASSWORD)
         Stats.time_start = time.time()
         

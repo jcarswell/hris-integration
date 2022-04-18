@@ -18,14 +18,14 @@ SETTINGS_CATAGORIES = (CAT_SERVER,CAT_CSV,CAT_FIELD,CAT_EXPORT)
 
 ## Config Fields
 SERVER_SERVER = 'server'
-SERVER_PROTOCAL = 'protocal'
+SERVER_PROTOCOL = 'protocol'
 SERVER_PORT = 'port'
 SERVER_USER = 'user'
 SERVER_PASSWORD = 'password'
 SERVER_SSH_KEY = 'ssh_key'
 SERVER_PATH = 'base_path'
 SERVER_FILE_EXP = 'file_name_expression'
-CSV_FIELD_SEP = 'field_sperator'
+CSV_FIELD_SEP = 'field_separator'
 CSV_FAIL_NOTIF = 'import_failure_notification_email'
 CSV_IMPORT_CLASS = 'import_form_class'
 CSV_USE_EXP = 'use_word_expansion'
@@ -41,7 +41,7 @@ FIELD_JD_BU = 'job_description_business_unit_field'
 FIELD_BU_NAME = 'business_unit_name_field'
 FIELD_BU_PARENT = 'business_unit_parent_field'
 FIELD_STATUS = 'employee_status_field'
-EXPORT_ACTIVE = 'actve_status_field_value'
+EXPORT_ACTIVE = 'active_status_field_value'
 EXPORT_LEAVE = 'leave_status_field_value'
 EXPORT_TERM = 'terminated_status_field_value'
 
@@ -56,7 +56,7 @@ CONFIG_DEFAULTS = {
                 "required": True,
             },
         },
-        SERVER_PROTOCAL: {
+        SERVER_PROTOCOL: {
             "default_value": 'sftp',
             "field_properties": {
                 "type":"ChoiceField",
