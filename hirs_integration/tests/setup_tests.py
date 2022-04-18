@@ -70,7 +70,7 @@ def setup_ftp_import():
     module_config = {
         config.CAT_SERVER: {
             config.SERVER_SERVER: None,
-            config.SERVER_PROTOCAL: 'sftp',
+            config.SERVER_PROTOCOL: 'sftp',
             config.SERVER_PORT: '22',
             config.SERVER_USER: None,
             config.SERVER_PASSWORD: None,
@@ -141,8 +141,8 @@ def setup_ad_export():
     module_config = {
         config.CONFIG_CAT: {
             config.CONFIG_NEW_NOTIFICATION:'',
-            config.CONFIG_UPN: 'wch.net',
-            config.CONFIG_ROUTE_ADDRESS: 'thecarswells-ca.mail.onmicrosoft.com',
+            config.CONFIG_UPN: 'constco.com',
+            config.CONFIG_ROUTE_ADDRESS: 'mail.onmicrosoft.com',
             config.CONFIG_ENABLE_MAILBOXES: 'True',
             config.CONFIG_MAILBOX_TYPE: 'remote',
             config.CONFIG_LAST_SYNC:'1999-01-01 00:00'
@@ -159,7 +159,7 @@ def setup_ad_export():
             config.DEFAULT_STREET: '123 Harlem Ave',
             config.DEFAULT_PO: '',
             config.DEFAULT_CITY: 'Regina',
-            config.DEFAULT_STATE: 'Saskatchewam',
+            config.DEFAULT_STATE: 'Saskatchewan',
             config.DEFAULT_ZIP: 'S4S 4S4',
             config.DEFAULT_COUNTRY: 'CA'
         }
