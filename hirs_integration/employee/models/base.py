@@ -9,6 +9,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 from hris_integration.models import ChangeLogMixin
 from organization.models import JobRole,Location
 from employee.validators import UPNValidator,UsernameValidator
+from warnings import warn
 
 logger = logging.getLogger('employee.models.base')
 
@@ -102,3 +103,71 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.objects.get(id={self.id})"
+
+    @property
+    def secondary_jobs(self):
+        """Returns the Many to Many object of secondary jobs"""
+        return self.jobs
+
+    @secondary_jobs.setter
+    def secondary_jobs(self,jobs):
+        """Set the jobs field based on the provided value. The value can be
+        a list,tuple,dict*,int or string. for strings we will try and 
+        split the string either by whitespace or comma.
+
+        * For dicts we'll only use the values. 
+
+        :param jobs: the job ID or list of job IDs
+        :type jobs: Any
+        :raises ValueError: If we cannot convert the provided job(s) to a list or If the 
+            Job ID is not a valid int 
+        """
+
+        if isinstance(jobs,str):
+            jobs = jobs.split()
+            if len(jobs) == 1:
+                jobs = jobs[0].split(',')
+
+        elif isinstance(jobs,dict):
+            jobs = jobs.values()
+
+        elif isinstance(jobs,int):
+            jobs = [str(jobs)]
+
+        elif isinstance(jobs,tuple):
+            jobs = list(jobs)
+
+        if not isinstance(jobs,list):
+            raise ValueError(f"Unable to convert {type(jobs)} to list")  
+
+        jl = []
+        for job in jobs:
+            try:
+                jl.append(JobRole.objects.get(pk=int(job)))
+            except JobRole.DoesNotExist:
+                logger.warning(f"Job ID {job} doesn't exists yet")
+
+        try:
+            self.jobs.add(*jl)
+        except ValueError:
+            logger.info("Can't set the jobs until the model has been saved")
+
+    @property
+    def firstname(self) -> str:
+        warn("firstname is deprecated, use first_name instead", DeprecationWarning)
+        return self.first_name
+
+    @property
+    def lastname(self) -> str:
+        warn("lastname is deprecated, use last_name instead", DeprecationWarning)
+        return self.last_name
+
+    @property
+    def givenname(self) -> str:
+        warn("givenname is deprecated, use first_name instead", DeprecationWarning)
+        return self.first_name
+
+    @property
+    def surname(self) -> str:
+        warn("surname is deprecated, use last_name instead", DeprecationWarning)
+        return self.last_name
