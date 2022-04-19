@@ -32,6 +32,9 @@ class Form(forms.ModelForm):
 
         logger.debug(f"Building {self.__class__.__name__} as html form")
 
+        if self.Meta.disabled == '__all__':
+            self.Meta.disabled = self.fields.keys()
+
         for name in self.fields.keys():
             classes = ["form-control"]
             bf = self[name]
