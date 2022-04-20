@@ -7,6 +7,6 @@ from . import views
 
 urlpatterns = [
     path('pending/',
-         views.CsvImport.as_view(),
-         name="pending"),
+         views.PendingEmployeeImportView.as_view(),
+         name="import_pending"),
 ]
