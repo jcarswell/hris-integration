@@ -188,6 +188,8 @@ class EmployeeImport(EmployeeBase):
 
     #: int: The employee's id in the upstream HRIS system.
     id = models.IntegerField(primary_key=True)
+    #: bool: If the employee has been matched
+    is_matched = models.BooleanField(default=False)
     #: Employee: The matched Employee object.
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, blank=True, null=True)
 
