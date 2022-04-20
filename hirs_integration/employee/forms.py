@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from hris_integration import widgets
 from hris_integration.forms import Form,MetaBase
 from django.utils.translation import gettext_lazy as _t
-
+from organization.models import JobRole,Location
 
 from . import models
 
@@ -20,15 +20,16 @@ class ManualImportForm(forms.Form):
     This form handles the Manual import form allowing for an admin to manually convert
     a pending employee to employee.
     """
+
     id = forms.IntegerField(label="Employee ID",
                                 min_value=1,required=True)
-    givenname = forms.CharField(label="Given Name",
+    first_name = forms.CharField(label="Given Name",
                                 max_length=96,required=True,
                                 help_text="Provide actual Given name, first name defined on pending object will be preserved")
-    middlename = forms.CharField(label="Middle Name",
+    middle_name = forms.CharField(label="Middle Name",
                                  max_length=96,
                                  required=False)
-    surname = forms.CharField(label="Surname",
+    last_name = forms.CharField(label="Surname",
                               max_length=96,required=True,
                               help_text="Provide actual surname, last name defined on pending object will be preserved")
     suffix = forms.CharField(label="Suffix",
@@ -45,14 +46,14 @@ class ManualImportForm(forms.Form):
     primary_job = forms.ChoiceField(label="Primary Job",
                                     widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                     required=True,
-                                    choices=model_to_choices(models.JobRole.objects.all(),True))
+                                    choices=model_to_choices(JobRole.objects.all(),True))
     jobs = forms.MultipleChoiceField(label="Additional Jobs",
                                      required=False,
-                                     choices=model_to_choices(models.JobRole.objects.all()))
+                                     choices=model_to_choices(JobRole.objects.all()))
     location = forms.ChoiceField(label="Location",
                                  widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                  required=True,
-                                 choices=model_to_choices(models.Location.objects.all()))
+                                 choices=model_to_choices(Location.objects.all()))
     manager = forms.ChoiceField(label="Manager",
                                  widget=widgets.SelectPicker(attrs={"class":"form-control"}),
                                  required=False,
@@ -61,12 +62,14 @@ class ManualImportForm(forms.Form):
                                  required=False)
     type = forms.CharField(label="Employee Type",
                            max_length=64,required=False)
+
     field_order = ['id','givenname','middlename','surname','suffix',
                    'primary_job','jobs','manager','location',
                    'manager','type','start_data']
 
     def as_form(self):
-        """Render the form as bootstarp HTML form"""
+        """Render the form as bootstrap HTML form"""
+
         output = []
         hidden_fields = []
 
@@ -91,20 +94,20 @@ class ManualImportForm(forms.Form):
 
     def __str__(self) -> str:
         """Returns the as_form method"""
+
         return self.as_form()
 
-    def save(self,pending_employee:models.EmployeePending):
+    def save(self,mutable_employee:models.Employee):
         """
-        Merges the submitted data and EmployeePending object and creates
-        the required Employee and Employee Override objects. The submitted
-        data should be store on the employee object while any personal
-        preferences are store on the override fields.
+        Merges the submitted data and Employee object. The submitted
+        data will be store in the EmployeeImport object.
 
-        :param pending_employee: The source EmployeePending object that will be merged
+        :param mutable_employee: The source EmployeePending object that will be merged
             into the employee object.
-        :type pending_employee: models.EmployeePending
+        :type mutable_employee: models.Employee
         """
-        employee = models.Employee()
+
+        employee = models.EmployeeImport()
         for field in self.data.keys():
             try:
                 if hasattr(employee,field) and not field in ('manager','jobs','primary_jobs','state','leave'):
@@ -117,64 +120,48 @@ class ManualImportForm(forms.Form):
                     setattr(employee,field,bool(self.data[field]))
                 elif self.data[field] != '':
                     if field == 'manager':
-                        m = models.Employee.objects.get(pk=name_to_pk(self.data[field]))
-                        employee.manager = m
+                        employee.manager = models.Employee.objects.get(pk=name_to_pk(self.data[field]))
                     elif field == 'primary_job':
-                        j = models.JobRole.objects.get(pk=name_to_pk(self.data[field]))
-                        employee.manager = j
+                        employee.manager = JobRole.objects.get(pk=name_to_pk(self.data[field]))
                 elif field == 'jobs' and self.data[field] != []:
                     employee.jobs = [name_to_pk(x) for x in self.data[field]]
             except ValueError as e:
                 self.add_error(field,str(e))
-            except (models.Employee.DoesNotExist,models.JobRole.DoesNotExist):
+            except (models.Employee.DoesNotExist,JobRole.DoesNotExist):
                 self.add_error(field,
                                f"Reference object for {field} does not exist. Please refresh and try again")
             except KeyError:
                 self.add_error(field,f"{field} - an internal error occurred")
 
-        employee.guid = pending_employee.guid
-        employee.password = pending_employee.password
-
+        employee = mutable_employee
+        employee.is_matched = True
         employee.save()
-        employee_overrides = models.EmployeeOverrides.objects.get(employee=employee)
-        if pending_employee.firstname != self.data['givenname']:
-            employee_overrides.firstname = pending_employee.firstname
-        if pending_employee.lastname != self.data['surname']:
-            employee_overrides.lastname = pending_employee.lastname
-        if pending_employee.designation != None:
-            employee_overrides.designations = pending_employee.designation
-
-        employee_overrides.save()
-        pending_employee.employee = employee
-        pending_employee.save()
 
 
-class EmployeePending(Form):
-    list_fields = ['firstname','lastname','state']
+class NewEmployeeForm(Form):
+    """The Form view that is used to create new employees, this differs from the edit
+    view which unlocks all the potentail functionality associated with the employee"""
     class Meta(MetaBase):
         model = models.EmployeePending
-        fields = ['firstname','lastname','suffix','designations','state','leave',
-                   'type','primary_job','jobs','manager','location','start_date',
-                   'employee','guid','_username','_email_alias']
-        exclude = ('created_on','updated_on','_password')
-        disabled = ('guid','employee')
+        fields = ['first_name','middle_name','last_name','suffix','designations','manager',
+                  'primary_job','jobs','location','start_date','state','leave','type',
+                  'password','photo']
         labels = {
-            'firstname': _t('First Name'),
-            'lastname': _t('Last Name'),
+            'first_name': _t('First Name'),
+            'middle_name': _t('Middle Name'),
+            'last_name': _t('Last Name'),
             'suffix': _t('Suffix'),
             'designations': _t('Designations'),
+            'manager': _t('Manager'),
+            'primary_job': _t('Primary Job'),
+            'jobs': _t('Additional Jobs'),
+            'location': _t('Home Building'),
+            'start_date': _t('Start Date'),
             'state': _t('Active'),
             'leave': _t('On Leave'),
             'type': _t('Employee Type'),
-            'start_date': _t('Start Date'),
-            'primary_job': _t('Primary Job'),
-            'manager': _t('Manager'),
             'photo': _t('Employee Photo'),
-            'location': _t('Home Building'),
-            'employee': _t('HRIS Matched Employee'),
-            'guid': _t('AD GUID'),
-            '_username': _t('Username'),
-            '_email_alias': _t('Email Alias')
+            'password': _t('Password (Leave blank to generate)')
         }
         widgets = {
             'state': widgets.CheckboxInput(attrs={"class":"form-control"}),
@@ -182,7 +169,33 @@ class EmployeePending(Form):
             'primary_job': widgets.SelectPicker(attrs={"class":"form-control"}),
             'jobs': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
             'location': widgets.SelectPicker(attrs={"class":"form-control"}),
-            'employee': widgets.SelectPicker(attrs={"class":"form-control"}),
             'manager': widgets.SelectPicker(attrs={"class":"form-control"}),
         }
         required = ('firstname','lastname','primary_job','location')
+
+class ImportedEmployeeView(Form):
+    """The list of imported employees"""
+
+    list_fields = ['id','firstname','lastname','state','is_matched']
+
+    class Meta(MetaBase):
+        models = models.EmployeeImport
+        disabled = '__all__'
+        exclude = ('created_on','updated_on')
+        labels = {
+            'is_matched': _t('Matched'),
+            'start_date': _t('Start Date'),
+            'first_name': _t('First Name'),
+            'last_name': _t('Last Name'),
+            'middle_name': _t('Middle Name'),
+            'suffix': _t('Suffix'),
+            'manager': _t('Manager'),
+            'primary_job': _t('Primary Job'),
+            'jobs': _t('Jobs'),
+            'location': _t('Location'),
+            'username': _t('Username'),
+            'email_alias': _t('Email Alias'),
+            'type': _t('Employee Type'),
+            'state': _t('Active'),
+            'leave': _t('On Leave'),
+        }
