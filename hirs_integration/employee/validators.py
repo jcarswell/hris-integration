@@ -55,6 +55,14 @@ class UsernameValidatorBase:
         else:
             self.parse()
 
+    def __eq__(self, other) -> bool:
+        return (
+            isinstance(other, self.__class__) and
+            self.is_valid() == other.is_valid() and
+            self.max_length == other.max_length and
+            self.first == other.first and
+            self.username or None == other.username or None)
+
     def parse(self):
         raise NotImplementedError("Must be implemented by subclass")
 
