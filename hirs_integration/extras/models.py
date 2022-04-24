@@ -49,6 +49,6 @@ class State(models.Model):
     #: str: State code
     code = models.CharField(max_length=255)
     #: Countries: Country this state resides in
-    country = models.ForeignKey(Countries, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
     #: str: State type
     type = models.CharField(max_length=255)
