@@ -8,13 +8,18 @@ from hris_integration.models import ChangeLogMixin
 from .employee import Employee
 
 class EmployeePhone(models.Model,ChangeLogMixin):
+    """The phone number(s) for an employee"""
 
     class Meta:
-        db_table = 'phone_numbers'
+        db_table = 'phone_number'
 
+    #: Employee: The employee this phone number belongs to
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    #: str: The label for this entry
     label = models.CharField(max_length=50, default="Primary")
+    #: str: The phone number
     number = models.CharField(max_length=20)
+    #: bool: True if this is the primary phone number
     primary = models.BooleanField(default=False)
 
     def __str__(self):
@@ -41,19 +46,30 @@ pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
 
 
 class EmployeeAddress(models.Model,ChangeLogMixin):
+    """The address(es) for an employee"""
 
     class Meta:
-        db_table = 'addresses'
+        db_table = 'address'
 
+    #: Employee: The employee this address belongs to
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    #: str: The label for this entry
     label = models.CharField(max_length=50, default="Primary")
+    #: str: The street address
     street1 = models.CharField(max_length=128)
+    #: str: The street address
     street2 = models.CharField(max_length=128)
+    #: str: The street address
     street3 = models.CharField(max_length=128)
-    province = models.CharField(max_length=128)
+    #: str: The city
     city = models.CharField(max_length=128)
-    postal_code = models.CharField(max_length=128)
+    #: str: The province
+    province = models.CharField(max_length=128)
+    #: str: The postal code
+    postal_code = models.CharField(max_length=10)
+    #: str: The country
     country = models.CharField(max_length=128)
+    #: bool: True if this is the primary address
     primary = models.BooleanField(default=False)
 
     def __str__(self):
