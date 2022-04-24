@@ -5,7 +5,7 @@ from hris_integration.validators import ValidationError
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _t
 
-from .exceptions import ProcessError
+__all__ = ('UsernameValidator','UPNValidator')
 
 @deconstructible
 class UsernameValidatorBase:
