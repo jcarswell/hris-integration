@@ -21,5 +21,5 @@ class S2Router(routers.DefaultRouter):
         """Register a viewset with a prefix."""
 
         if base_name is None:
-            base_name = self.get_default_base_name(viewset)
+            base_name = 's2-' + self.get_default_base_name(viewset)
         self.registry.append((f"{self.prefix}/{prefix}", viewset, base_name))
