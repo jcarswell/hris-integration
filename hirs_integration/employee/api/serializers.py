@@ -10,7 +10,7 @@ class S2EmployeePhoneSerializer(Select2Serializer):
     class Meta(Select2Meta):
         model = models.EmployeePhone
         field_id = 'id'
-        field_text = ['phone_number']
+        field_text = ['number']
 
 
 class EmployeePhoneSerializer(ModelSerializer):
