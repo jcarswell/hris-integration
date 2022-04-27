@@ -49,6 +49,20 @@
       {% endblock content_wrapper %}
     </div>
 {% endblock body %}
+{% block modal %}
+<div class="modal d-none" tabindex="-1" role="dialog" id="modal-default">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% block modal_body %}{% endblock%}
+    </div>
+  </div>
+{% endblock %}
 {% block base_js %}
 {% include 'hirs_admin/components/_scripts.html' %}
 {% endblock %}
