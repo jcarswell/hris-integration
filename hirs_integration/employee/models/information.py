@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save,post_save
 from hris_integration.models import ChangeLogMixin
 
 from .employee import Employee
@@ -42,8 +42,14 @@ class EmployeePhone(models.Model,ChangeLogMixin):
                 number.append(i)
         instance.number = "".join(number)
 
-pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
+    @classmethod
+    def post_save(cls, sender, instance, created, raw, using, update_fields, **kwargs):
+        if instance.primary:
+            EmployeePhone.objects.filter(employee=instance.employee) \
+                .exclude(pk=instance.pk).update(primary=False)
 
+pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
+post_save.connect(EmployeePhone.post_save, sender=EmployeePhone)
 
 class EmployeeAddress(models.Model,ChangeLogMixin):
     """The address(es) for an employee"""
@@ -82,3 +88,11 @@ class EmployeeAddress(models.Model,ChangeLogMixin):
     @address_label.setter
     def address_label(self,value):
         self.label = value
+
+    @classmethod
+    def post_save(cls, sender, instance, created, raw, using, update_fields, **kwargs):
+        if instance.primary:
+            EmployeeAddress.objects.filter(employee=instance.employee) \
+                .exclude(pk=instance.pk).update(primary=False)
+
+post_save.connect(EmployeeAddress.post_save, sender=EmployeeAddress)
