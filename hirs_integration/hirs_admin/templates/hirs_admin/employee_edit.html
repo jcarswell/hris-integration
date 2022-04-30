@@ -1,190 +1,297 @@
 {% extends "hirs_admin/base.html" %}
-{% load static i18n%}
+{% load static i18n mppt_tags %}
 
 {% block extra_style %}
-<link rel="stylesheet" href="{% static 'hirs_admin/dist/css/base.css' %}">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" 
+  integrity="sha256-h7vy42BP4MtLE0udIyBuOEoB8nJI2iLaiOJEgO5Ykp0=" crossorigin="anonymous">
 {% endblock %}
 
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
-  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#">
+    <i class="fas fa-arrow-circle-left"></i> Back</a>
+  {% if employee.is_imported is False %}
+  <a class="btn btn-md btn-danger" style="margin:0 2pt;" id="btn_delete" onclick="do_delete()">
+    <i class="fas fa-trash-alt"></i> Delete</a>  {% endif %}
+  {% endif %}
   {% block toolbar %}{% endblock %}
 <div>
 {% endblock %}
 
 {% block content %}
 <div id="alert-container" class="row d-none"></div>
-<div class="container">
-  <h2 id="employee">{{ employee.pk }} - {{ employee.givenname }} {%if employee.middlename %}{{ employee.middlename}}{% endif %}
-   {{ employee.surname }} {% if employee.suffix %}{{ employee.suffix }}{% endif %}</h2>
-  <div class="row">
-    <p class='col-sm'><strong>Status</strong><br>
-    {% if employee.status == employee.STAT_LEA %}
-    <span class="text-warning">On Leave</span>
-    {% elif employee.status == employee.STAT_TERM %}
-    <span class="text-danger">Terminated</span>
-    {% else %}
-    <span class="text-success">Active</span>
-    {% endif %}</p>
-    <p class='col-sm'><strong>Given Name</strong><br>
-    {{ employee.givenname }}</p>
-    <p class='col-sm'><strong>Surname</strong><br>
-    {{ employee.surname }}</p>
-  </div>
-  <div class="row">
-    <p class='col-sm'><strong>Start Date</strong><br>
-    {{ employee.start_date }}</p>
-    <p class='col-sm'><strong>Position</strong><br>
-    {{ employee.primary_job.name }}</p>
-    <p class='col-sm'><strong>Manager</strong><br>
-    {{ employee.manager }}</p>
-  </div>
-  <hr style="border-top:2px solid #bbb;display:None;">
-  <form style="display:None;" id="employee-form" enctype="multipart/form-data">
-    {% csrf_token %}
-    <h4>Photo</h4>
-    {% if employee.photo %}
-    <img class="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{{ employee.photo }}">
-    {% else %}
-    <img clas="m-3" style="height:200px;margin: 0 0 5pt 0;" src="{% static 'hirs_admin/default-user.jpg' %}">
+  <div data-bs-spy="scroll" data-bs-target="#page-nav" data-bs-offset="0" tabindex="0" 
+    class="container col-md-10 order-md-2">
+    <div id="info">
+      <h2 id="employee">{{ employee_import.pk }} - {{ employee_import.first_name }} 
+        {%if employee_import.middle_name %}{{ employee_import.middle_name }} {% endif %}
+        {{ employee_import.last_name }}
+        {% if employee_import.suffix %} {{ employee_import.suffix }}{% endif %}
+      </h2>
+      <div class="row">
+        <p class='col-sm'><strong>Status</strong><br>
+        {% if employee.status == employee.STAT_LEA %}
+        <span class="text-warning">On Leave</span>
+        {% elif employee.status == employee.STAT_TERM %}
+        <span class="text-danger">Terminated</span>
+        {% else %}
+        <span class="text-success">Active</span>
+        {% endif %}</p>
+        <p class='col-sm'><strong>Given Name</strong><br>
+        {{ employee_import.first_name }}</p>
+        <p class='col-sm'><strong>Surname</strong><br>
+        {{ employee_import.last_name }}</p>
+      </div>
+      <div class="row" id="org_structure">
+        {% full_tree_for_model employee.Employee as node %}
+      </div>
+    </div>
+    <div id="sec-edit">
+      <hr>
+      <h4>Edit</h4>
+      <form id="edit">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ employee.pk }}">
+        <div class="form-row">
+          <div class="col-md-4 d-flex justify-content-center">
+            <img src="{% if employee.photo %}{{ employee.photo }}{% else %}
+            {% static 'hirs_admin/default-user.jpg' %}{% endif %}"
+                id="employee-photo" class="img-fluid pr-1">
+          </div>
+          <div class="col-md-8 mb-1">
+            <div class="custom-file" style="padding: 2pt 0;" >
+              <input type="file" class="custom-file-input" name="photo" accept="image/jpeg,image/png">
+              <label class="custom-file-label" for="photo">Choose file</label>
+              <div class="invalid-feedback"> A valid photo is required.</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <lable for="first_name">First Name</lable>
+            <input type="text" class="form-control" name="first_name" 
+              value="{{employee.first_name}}" required>
+            <div class="invalid-feedback d-none"></div>
+          </div>
+          <div class="form-group col-md-3">
+            <lable for="middle_name">Middle Name</lable>
+            <input type="text" class="form-control" name="middle_name"
+              value="{{employee.middle_name}}">
+          </div>
+          <div class="form-group col-md-4">
+            <lable for="last_name">Last Name</lable>
+            <input type="text" class="form-control" name="last_name"
+              value="{{employee.last_name}}" required>
+          </div>
+          <div class="form-group col-md-1">
+            <lable for="suffix">Suffix</lable>
+            <input type="text" class="form-control" name="suffix"
+              value="{{employee.suffix}}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <lable for="username">Username</lable>
+            <input type="text" class="form-control" name="username" 
+              value="{{employee.username}}">
+          </div>
+          <div class="form-group col-md-4">
+            <lable for="email_alias">Email Alias</lable>
+            <input type="text" class="form-control" name="email_alias"
+              value="{{employee.email_alias}}">
+          </div>
+          <div class="form-group col-md-4">
+            <lable for="nickname">Nickname</lable>
+            <input type="text" class="form-control" name="nickname"
+              value="{{employee.nickname}}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <lable for='designations'>Designations</lable>
+            <input type="text" class="form-control" placeholder="CISSP CPA ..." 
+              name="designations" value="{{ employee.designations }}">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="location" style="font-weight:400;margin-bottom:0em;">Home Building</label>
+            <select name="location" class="form-control" required>
+              <option value="id_{{employee.location.pk}}">{{employee.location.name}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label for="status">Status</label>
+            <select class="form-control" name="status" required>
+              <option value="{{employee.STATE_ACT}}"
+                {% if employee.status == employee.STATE_ACT %} selected{% endif %}>
+                Active</option>
+              <option value="{{employee.STATE_LEA}}"
+                {% if employee.status == employee.STATE_LEA %} selected{% endif %}>
+                On Leave</option>
+              <option value="{{employee.STATE_TERM}}"
+                {% if employee.status == employee.STATE_TERM %} selected{% endif %}>
+                Terminated</option>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label for="primary_job">Primary Job</label>
+            <select class="form-control" name="primary_job" required>
+              <option value="id_{{employee.primary_job.pk}}" selected="selected">
+                {{employee.primary_job.name}}</option>
+            </select>
+          </div>
+          <div class="form-group col-md-3">
+            <label for="jobs">additional Jobs</label>
+            <select class="form-control" name="jobs" multiple>
+              {% for job in employee.jobs.all %}
+              <option value="id_{{job.pk}}" selected="selected">{{job.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Update</button>
+      </form>
+    </div>
+    {% if employee.password %}
+    <div id="password">
+      <hr>
+      <h3 id="password">Default Password</h3>
+      <div class="input-group">
+        <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
+      </div>
+    </div>
     {% endif %}
-    <div class="input-group" style="padding: 2pt 0;" >
-        <input type="file" class="custom-file-input" name="photo" id="photo" accept="image/*" required>
-        <label class="custom-file-label" for="photo">Choose file</label>
-        <div class="invalid-feedback"> A valid photo is required.</div>
-    </div>
-    <input type="hidden" name="form" value="employee">
-    <button type="submit" class="btn btn-success mb-2">Update</button>
-  </form>
-  <hr style="border-top:2px solid #bbb;">
-  <form id="override-form">
-    {% csrf_token %}
-    <h4>Overrides</h4>
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <lable for="firstname">First Name</lable>
-        <input type="text" class="form-control" name="firstname" value="{{overrides.firstname}}" placeholder="{{employee.givenname}}">
-      </div>
-      <div class="form-group col-md-4">
-        <lable for="lastname">Last Name</lable>
-        <input type="text" class="form-control" name="lastname" value="{{overrides.lastname}}" placeholder="{{employee.surname}}">
-      </div>
-      <div class="form-group col-md-4">
-        <lable for="nickname">Nickname</lable>
-        <input type="text" class="form-control" name="nickname" value="{{overrides.nickname}}">
+    <div id="phone">
+      <hr>
+      <h4>Phone Numbers</h4>
+      <div class='w-75 ml-2'>
+        <div id="phone-header" class="row p-3 mb-2 bg-secondary">
+          <div class="col-md-4">Label</div>
+          <div class="col-md-4">Phone</div>
+          <div class="col-md-2">Primary</div>
+        </div>
+        <div id="phone-end" class="d-none"></div>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group col-md-6">
-        <lable for="username">Username</lable>
-        <input type="text" class="form-control" name="username" value="{{overrides.username}}" placeholder="{{employee.username}}">
-      </div>
-      <div class="form-group col-md-6">
-        <lable for="email_alias">Email Alias</lable>
-        <input type="text" class="form-control" name="email_alias" value="{{overrides.email_alias}}" placeholder="employee.username">
-      </div>
-      <div class="form-group col-md-6">
-        <lable for='designations'>Designations</lable>
-        <input type="text" class="form-control" placeholder="CISSP CPA ..." name="designations" value="{{ overrides.designations }}">
+    <div id="address">
+      <hr>
+      <h4>Address</h4>
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" id="address-new-li">
+          <a class="nav-link active" id="address-new-tab" data-toggle="tab" role="tab"
+            aria-controls="address-new" href="#address-new" aria-selected="true">
+            <i class="fa-solid fa-plus"></i></a>
+        </li>
+      </ul>
+      <div class="tab-content" id="addresses">
+        <div class="tab-pane fade show active" id="address-new" role="tabpanel" 
+        aria-labelledby="address-new-tab">
+          <form id="address-form-0">
+            <div class="form-group">
+              <label for="label">Label</label>
+              <input type="text" class="form-control" name="label" placeholder="Home, Work, etc...">
+            </div>
+            <div class="form-group">
+              <label for="address">Address</label>
+              <input type="text" class="form-control" name="street1" placeholder="123 Main St.">
+              <input type="text" class="form-control" name="street2">
+              <input type="text" class="form-control" name="street3">
+            </div>
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" class="form-control" name="city">
+            </div>
+            <div class="form-group">
+              <label for="state">Province or State</label>
+              <input type="text" class="form-control" name="province">
+            </div>
+            <div class="form-group">
+              <label for="postal_code">Postal Code or ZIP</label>
+              <input type="text" class="form-control" name="postal_code">
+            </div>
+            <div class="form-group">
+              <label for="country">Country</label>
+              <input type="text" class="form-control" name="country">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Add</button>
+          </form>
+        </div>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <label for="_location">Home Building</label>
-        <select name="_location" class="form-control selectpicker" data-style="bg-white" data-live-search="true">
-        {% for location in locations %}
-          <option value="{{location.pk}}"{% if location == overrides.location %} selected{% endif %}>{{location}}</option>
-        {% endfor %}
-        </select>
+    <div id="software">
+      <hr>
+      <h4>Software</h4>
+      <div class='w-75 ml-2'>
+        <div id="software-header" class="row p-3 mb-2 bg-secondary">
+          <div class="col-md-6">Software</div>
+        </div>
+        <div id="software-end" class="d-none"></div>
       </div>
+      <button type="button" class="btn btn-primary mb-2" onclick="add_software()">
+        <i class="fa-solid fa-plus"></i> Add Software</button>
     </div>
-    <input type="hidden" name="form" value="overrides">
-    <button type="submit" class="btn btn-primary mb-2">Update</button>
-  </form>
-  {% if phones or address %}
-  <hr style="border-top:2px solid #bbb;">
-  <h4>Information</h4>
-  <div class="container-fluid">
-    {% if phones %}
-    <p><strong>Phone</strong></p>
-    <ul>
-      {% for phone in phones %}
-      <li>{{ phone.label }} - {{ phone.number }}
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if address %}
-    <p><strong>Address</strong></p>
-    <ul>
-    <li><p>{{ address.label }}</p>
-      <p>{{ address.street1 }}{% if address.street2 %}<br/>
-      {{ address.street2 }}{% endif %}<br />
-      {{ address.city }}, {{ address.province}} {{ address.postal_code}}
-      </li>
-    </ul>
-    {% endif %}
   </div>
-  {% endif %}
-  {% if employee.password %}
-  <hr style="border-top:2px solid #bbb;">
-  <h3 id="password">Default Password</h3>
-  <div class="input-group">
-    <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
-  </div>
-  {% endif %}
-</div>
+  <div id="page-nav" class="list-group col-md-2 order-md-1 mb-2">
+    <a href="#info" class="list-group-item list-group-item-action active">
+      <span class="d-md-inline">Info</span>
+    </a>
+    <a href="#sec-edit" class="list-group-item list-group-item-action">
+      <span class="d-md-inline">Edit</span>
+    </a>
+    {% if employee.password %}
+    <a href="#password" class="list-group-item list-group-item-action">
+      <span class="d-md-inline">Password</span>
+    </a>
+    {% endif %}
+    <a href="#phone" class="list-group-item list-group-item-action">
+      <span class="d-md-inline">Phone Numbers</span>
+    </a>
+    <a href="#address" class="list-group-item list-group-item-action">
+      <span class="d-md-inline">Addresses</span>
+    </a>
+    <a href="#software" class="list-group-item list-group-item-action">
+      <span class="d-md-inline">Software</span>
+    </a>    
 {% endblock %}
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"
+ integrity="sha256-AFAYEOkzB6iIKnTYZOdUf9FFje6lOTYdwRJKwTN5mks="
+ crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js"
+ inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd"
+ crossorigin="anonymous"></script>
 <script>
-<!--
-function validCheck() {
-  var photo = $("#employee-form input[type=file]")[0]
-  if (photo.files > 0) {
-    return photo.checkValidity();
-  }
-  return false
-}
-$(function() {
-  $('#'+employee.location).attr("default", true);
-  $("#employee-form input[type=file]")[0].onchange = validCheck;
-});
-$("#override-form").submit(function(e) {
-  e.preventDefault();
-  form = $(this);
-  data = serialize_form(form);
-  data.push({name:'form',value:'override'});
-  
-  $.ajax({
-    method: "POST",
-    url: location.href,
-    data: data,
-  })
-  .done(function(r) {doneProcess(r,form);})
-  .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-});
-$("#employee-form").submit(function(e) {
-  e.preventDefault();
-  form = $(this);
-  if (validCheck() === false){
-      e.stopPropagation();
-      return false;
-  }
-  
-  const fd = new FromData();
-  file = $(this).querySelector('input[type=file]').files[0]
-  fd.append('form','employee')
-  fd.append('photo',file);
+var select_location_url - "{% url 's2-location-list' %}";
+var select_primary_job_url = "{% url 's2-job-role-list' %}";
+var select_jobs_url = "{% url 's2-job-role-list' %}";
+var phones_url = "{% url 'employee-phones-list' %}";
+var phones_update_url = "{% url 'employee-phones-detail' %}";
+var addresses_url = "{% url 'employee-addresses-list' %}";
+var addresses_update_url = "{% url 'employee-addresses-detail' %}";
+var software_url = "{% url 'employee-tracked-account-list' %}";
+var software_update_url = "{% url 'employee-tracked-account-detail' %}";
+var applications_url = "{% url 's2-software-list' %}";
+var employee_id = {{ employee.pk }};
 
-  $.ajax({
-    method: "POST",
-    url: location.href,
-    data: fd.serialize()
-  })
-  .done(function(data) {doneProcess(data,form);})
-  .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);})
-});
--->
+var employee_import = {
+  "first_name": "{{ employee_import.first_name }}",
+  "middle_name": "{{ employee_import.middle_name }}",
+  "last_name": "{{ employee_import.last_name }}",
+  "suffix": "{{ employee_import.suffix }}",
+  "username": "{{ employee_import.username }}",
+  "email_alias": "{{ employee_import.email_alias }}",
+  "location": "{{ employee_import.location.pk }}",
+  "status": "{{ employee_import.status }}",
+  "primary_job": "{{ employee_import.primary_job.pk }}",
+  "jobs": [
+  {% for job in employee_import.jobs.all %}
+    "{{ job.pk }}",
+  {% endfor %}
+  ]
+};
 </script>
-<script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js" inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd" crossorigin="anonymous"></script>
+<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
+<script src="{% static 'hirs_admin/dist/js/employee.js' %}"></script>
 {% endblock %}
