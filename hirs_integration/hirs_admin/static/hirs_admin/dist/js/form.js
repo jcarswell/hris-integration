@@ -1,7 +1,5 @@
 // Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 // GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
-
-
 function doneProcess(ret_data,focus) {
   $('.is-invalid',focus).removeClass("is-invalid");
   $('.alert').alert('close');
@@ -62,6 +60,31 @@ function serialize_form(f) {
     d.push({name:e.name,value:"off"});
   })
   return d;
+}
+function serialize_json(f) {
+  var ret = {};
+  $(f).find('input').each(function(i,e) {
+    if (e.type == "checkbox" || e.type == "radio") {
+      if (e.checked) {ret[e.name] = true;} else {ret[e.name] = false;}
+    } else if (e.type == "select" || e.type == "select-multiple") {
+      ret[e.name] = [];
+      $(e).find('option:selected').each(function(e,i) {
+        ret[e.name].push(e.value);
+      });
+    } else {
+      ret[e.name] = e.value;
+    }
+  });
+  Object.keys(ret).forEach(function(k) {
+    if (k.endsWith("-id")) {
+      ret['id'] = ret[k];
+      delete ret[k];
+    } else if (k.endsWith("-primary")) {
+      ret['primary'] = ret[k];
+      delete ret[k];
+    }
+  });
+  return JSON.stringify(ret);
 }
 function getCookie(c_name)
 {
