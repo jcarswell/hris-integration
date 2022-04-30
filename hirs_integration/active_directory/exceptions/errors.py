@@ -3,13 +3,5 @@
 
 from hris_integration.exceptions import HrisIntegrationBaseError
 
-class EmployeeBaseError(HrisIntegrationBaseError):
-    pass
-
-
-class ProcessError(EmployeeBaseError):
-    pass
-
-
-class EmployeeNotFound(EmployeeBaseError):
+class ActiveDirectoryError(HrisIntegrationBaseError):
     pass

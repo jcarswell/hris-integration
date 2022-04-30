@@ -3,13 +3,5 @@
 
 from hris_integration.exceptions import HrisIntegrationBaseError
 
-class EmployeeBaseError(HrisIntegrationBaseError):
-    pass
-
-
-class ProcessError(EmployeeBaseError):
-    pass
-
-
-class EmployeeNotFound(EmployeeBaseError):
-    pass
+class UserApplicationError(HrisIntegrationBaseError):
+    """The base exception for which all hris_integration error are derived."""
