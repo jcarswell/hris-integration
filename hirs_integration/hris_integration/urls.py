@@ -48,6 +48,11 @@ urlpatterns = [
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=86400),
          name='swagger'),
     re_path(r'^api/redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='swagger-schema'),
+    path('api/organization/', include('organization.api.urls')),
+    path('api/employee/', include('employee.api.urls')),
+    path('api/smtp/', include('smtp_client.api.urls')),
+    path('api/import/', include('ftp_import.api.urls')),
+    path('api/software/', include('user_applications.api.urls')),
 
     #Admin
     path('admin/', admin.site.urls),
