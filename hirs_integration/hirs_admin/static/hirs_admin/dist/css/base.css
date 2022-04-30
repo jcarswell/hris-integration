@@ -42,3 +42,8 @@
     margin: 0 auto;
 }
 .tox {width: 100%;}
+hr  {
+    border-top: 2px solid #bbb;
+}
+#employee-photo {max-height: 200px;}
+#phones {width:60%;}
