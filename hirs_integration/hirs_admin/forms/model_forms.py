@@ -6,7 +6,6 @@ from hris_integration.forms import Form,MetaBase
 
 from hirs_admin import models
 
-
 class WordList(Form):
     name = _t("Word Expansion Map")
     class Meta(MetaBase):
