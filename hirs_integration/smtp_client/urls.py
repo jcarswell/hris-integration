@@ -7,11 +7,11 @@ from hris_integration.views import FormView,ListView
 from . import forms
 
 urlpatterns = [
-    path('settings/email_templates/<int:id>/',
+    path('email_templates/<int:id>/',
         FormView.as_view(form=forms.EmailTemplate,
         template_name='hirs_admin/tinymce_edit.html'),
         name='email_template_edit'),
-    path('settings/email_templates/',
+    path('email_templates/',
         ListView.as_view(form=forms.EmailTemplate),
         name='email_template'),
 ]
