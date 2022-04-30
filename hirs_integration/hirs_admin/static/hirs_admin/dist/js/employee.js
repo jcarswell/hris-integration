@@ -293,7 +293,7 @@ $('#address-form-0').on('submit', function(e) {
     .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 $('input[name=address-primary]').on("change",function(e) {
-    var f = $(e.currentTarget).closest('.phone-field');
+    var f = $(e.currentTarget).closest('.form');
     $.ajax({
         method: "PATCH",
         url: address_update_url+'/'+f.find('input[name=id]').val(),
