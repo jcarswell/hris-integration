@@ -73,6 +73,7 @@ class EmployeeTrackedAccount(models.Model,ChangeLogMixin):
         if created:
             if instance.software.licensed or instance.software.max_users != 0:
                 instance.software.employees.add(instance.employee)
+                instance.software.save()
 
 pre_save.connect(EmployeeTrackedAccount.pre_save, sender=EmployeeTrackedAccount)
 post_save.connect(EmployeeTrackedAccount.post_save, sender=EmployeeTrackedAccount)
