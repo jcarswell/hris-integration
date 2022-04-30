@@ -4,7 +4,7 @@
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _t
 
-class AdExportConfig(AppConfig):
+class ActiveDirectoryConfig(AppConfig):
     name = 'active_directory'
     verbose_name = _t('Active Directory')
     default_auto_field = 'django.db.models.AutoField'
