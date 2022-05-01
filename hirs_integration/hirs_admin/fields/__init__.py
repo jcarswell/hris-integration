@@ -11,7 +11,8 @@ from distutils.util import strtobool
 from common.functions import FieldConversion
 
 from hirs_admin.models import Setting
-from hirs_admin import validators,widgets
+from hirs_admin import validators
+from hris_integration import widgets
 
 logger = logging.getLogger("hirs_admin.fields")
 
