@@ -25,7 +25,7 @@ class Software(ChangeLogMixin):
     #: bool: If the software is enabled for licensing.
     licensed = models.BooleanField(default=False)
     #: str: The AD OU that the software is associated with.
-    mapped_group = models.models.CharField(max_length=256, blank=True)
+    mapped_group = models.CharField(max_length=256, blank=True)
     #: int: The number of licenses available for this software. 0 = no limit. (default=0)
     max_users = models.IntegerField(default=0)
     #: The employees that have a license for this software.
