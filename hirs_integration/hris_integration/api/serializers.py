@@ -8,7 +8,7 @@ class Select2Meta:
         #: str: The name of the primary key field, defaults to 'id'.
         field_id = 'id'
         #: list: The name of the field(s) to use for the label, must be defined.
-        field_text = None
+        field_text = []
 
         fields = [field_id] + field_text
         read_only_fields = fields
