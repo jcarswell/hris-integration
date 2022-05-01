@@ -9,8 +9,7 @@ from typing import AnyStr, Dict, List, Tuple
 from django.utils import timezone
 from hirs_admin.models import WordList
 from employee.models import Employee,EmployeeImport,EmployeePhone,EmployeeAddress
-from hirs_integration.employee.models import employee
-from hirs_integration.hirs_admin.models import Notifications
+from hirs_admin.models import Notifications
 from organization.models import JobRole, Location, BusinessUnit
 from ftp_import.models import CsvPending
 from django.db.utils import IntegrityError
