@@ -25,7 +25,7 @@ class WidgetClassBase:
 
 
 class Hidden(widgets.Input):
-    template_name = 'hirs_admin/widgets/hidden.html'
+    template_name = 'widgets/hidden.html'
     input_type = 'password'
     
     def __init__(self,attrs=None):
@@ -34,7 +34,7 @@ class Hidden(widgets.Input):
 
 
 class SelectPicker(widgets.Select,WidgetClassBase):
-    template_name = 'hirs_admin/widgets/selectpicker.html'
+    template_name = 'widgets/selectpicker.html'
     base_classes = ['selectpicker']
 
     def __init__(self,attrs=None,choices=()):
@@ -48,7 +48,7 @@ class SelectPicker(widgets.Select,WidgetClassBase):
         return context
 
 class SelectPickerMulti(widgets.SelectMultiple,WidgetClassBase):
-    template_name = 'hirs_admin/widgets/selectpicker.html'
+    template_name = 'widgets/selectpicker.html'
     base_classes = ['selectpicker']
     
     def __init__(self,attrs=None,choices=(),max_opts=None,select_box=True):
