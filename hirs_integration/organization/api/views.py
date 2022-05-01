@@ -9,32 +9,32 @@ from . import serializers
 from organization import models
 
 class S2BusinessUnitView(Select2ViewSet):
-    queryset = models.BusinessUnit.objects.filter(is_delete=False)
+    queryset = models.BusinessUnit.objects.filter(is_deleted=False)
     serializer = serializers.S2BusinessUnitSerializer
 
 
 class BusinessUnitView(ModelViewSet):
-    queryset = models.BusinessUnit.objects.filter(is_delete=False)
+    queryset = models.BusinessUnit.objects.filter(is_deleted=False)
     serializer_class = serializers.BusinessUnitSerializer
 
 
 class S2JobRoleView(Select2ViewSet):
-    queryset = models.JobRole.objects.filter(is_delete=False)
+    queryset = models.JobRole.objects.filter(is_deleted=False)
     serializer = serializers.S2JobRoleSerializer
 
 
 class JobRoleView(ModelViewSet):
-    queryset = models.JobRole.objects.filter(is_delete=False)
+    queryset = models.JobRole.objects.filter(is_deleted=False)
     serializer_class = serializers.JobRoleSerializer
 
 
 class S2LocationView(Select2ViewSet):
-    queryset = models.Location.objects.filter(is_delete=False)
+    queryset = models.Location.objects.filter(is_deleted=False)
     serializer = serializers.S2LocationSerializer
 
 
 class LocationView(ModelViewSet):
-    queryset = models.Location.objects.filter(is_delete=False)
+    queryset = models.Location.objects.filter(is_deleted=False)
     serializer_class = serializers.LocationSerializer
 
 
