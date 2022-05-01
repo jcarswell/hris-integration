@@ -24,6 +24,6 @@ urlpatterns = [
          FormView.as_view(form=forms.ImportedEmployeeView),
          name='employee_imported_edit'),
     path('manual/<int:id>/',
-         views.ManualImport.as_view(),
+         FormView.as_view(form=forms.ManualImportForm),
          name='employee_manual')
 ]
