@@ -24,8 +24,6 @@ class BusinessUnit(MPTTModel,ChangeLogMixin,InactiveMixin):
     organizational unit that is associated with the business unit.
     """
 
-    from employee.models import Employee
-
     class Meta:
         db_table = 'business_unit'
 
@@ -39,7 +37,7 @@ class BusinessUnit(MPTTModel,ChangeLogMixin,InactiveMixin):
     #: str: The Active Directory organizational unit that is associated with the business unit
     ad_ou = models.CharField(max_length=256)
     #: Employee: The Employee that is the manager of the Business Unit
-    manager = models.ForeignKey(Employee,null=True,blank=True, on_delete=models.SET_NULL,
+    manager = models.ForeignKey('employee.Employee',null=True,blank=True, on_delete=models.SET_NULL,
                                 limit_choices_to={'state':True})
 
     def __str__(self) -> str:
