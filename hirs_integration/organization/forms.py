@@ -22,21 +22,21 @@ class GroupMapping(Form):
                                        attrs={'data-live-search':'true','data-style':'bg-white'}),
             'all': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'jobs_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
-            'bu_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
-            'loc_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'business_unit_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
+            'location_not': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'jobs': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
-            'bu': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
-            'loc': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
+            'business_unit': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
+            'location': widgets.SelectPickerMulti(attrs={"class":"form-control"}),
         }
         labels = {
             'dn': _t("AD Group"),
             'all': _t("All Employees"),
             'jobs': _t("Jobs"),
             'jobs_not': _t("Not"),
-            'bu': _t("Business Units"),
-            'bu_not': _t("Not"),
-            'loc': _t("Locations"),
-            'loc_not': _t("Not"),
+            'business_unit': _t("Business Units"),
+            'business_unit_not': _t("Not"),
+            'location': _t("Locations"),
+            'location_not': _t("Not"),
         }
         classes = {
             'dn':'selectpicker',
@@ -49,11 +49,11 @@ class JobRole(Form):
     name = _t("Job Roles")
     class Meta(MetaBase):
         model = models.JobRole
-        fields = ('id','name','bu','seats')
+        fields = ('id','name','business_unit','seats')
         labels= {
             'id': _t("Job Number"),
             'name': _t("Job Name"),
-            'bu': _t("Business Unit"),
+            'business_unit': _t("Business Unit"),
             'seats': _t("Number of Seats")
         }
         disabled = ('id',)
