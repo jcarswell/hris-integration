@@ -142,7 +142,7 @@ class NewEmployeeForm(Form):
     """The Form view that is used to create new employees, this differs from the edit
     view which unlocks all the potentail functionality associated with the employee"""
     class Meta(MetaBase):
-        model = models.EmployeePending
+        model = models.Employee
         fields = ['first_name','middle_name','last_name','suffix','designations','manager',
                   'primary_job','jobs','location','start_date','state','leave','type',
                   'password','photo']
