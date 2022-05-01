@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class ChangeLogMixin(models.Modes):
+class ChangeLogMixin(models.Models):
 
     class Meta:
         abstract = True
