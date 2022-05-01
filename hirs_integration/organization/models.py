@@ -52,7 +52,7 @@ class BusinessUnit(MPTTModel,ChangeLogMixin,InactiveMixin):
         return self.id
 
 
-class JobRole(models.Model,ChangeLogMixin,InactiveMixin):
+class JobRole(ChangeLogMixin,InactiveMixin):
     """The Job roles of the organization"""
     
     class Meta:
@@ -101,7 +101,7 @@ class Location(MPTTModel,ChangeLogMixin,InactiveMixin):
         return self.id
 
 
-class GroupMapping(models.Model,ChangeLogMixin):
+class GroupMapping(ChangeLogMixin):
     """The Mapping table that defines the relationship between the AD groups and each
     of the defined job roles, business units, and locations.
     Each mapping has can either have a negative constraint or a positive constraint or 

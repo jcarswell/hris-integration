@@ -200,7 +200,7 @@ class WordList(models.Model):
     def __str__(self) -> str:
         return f"{self.src} -> {self.replace}"
 
-class Notifications(models.Model,ChangeLogMixin):
+class Notifications(ChangeLogMixin):
     """System Generated Notifications"""
 
     INFO = 3

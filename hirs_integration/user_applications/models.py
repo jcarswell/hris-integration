@@ -5,7 +5,7 @@ from employee.models import Employee
 from hris_integration.models import ChangeLogMixin
 
 
-class Software(models.Model,ChangeLogMixin):
+class Software(ChangeLogMixin):
     """A list of software or applications that one may wish to track for an employee. 
     Each software instance has the ability to limit the total number of licenses
     if that is desired. When licensing is enabled the associated employees are 
@@ -35,7 +35,7 @@ class Software(models.Model,ChangeLogMixin):
         return self.name
 
 
-class EmployeeTrackedAccount(models.Model,ChangeLogMixin):
+class EmployeeTrackedAccount(ChangeLogMixin):
     """A tracking record for an employee and software. On save if the software is licensed
     the post_save method will append the employee to the software's employees field. during
     the pre_save method the availability of licenses will be checked, if the license limit
