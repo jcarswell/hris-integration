@@ -10,6 +10,7 @@ from hris_integration.models import ChangeLogMixin
 from organization.models import JobRole,Location
 from employee.validators import UPNValidator,UsernameValidator
 from warnings import warn
+from django.utils import timezone
 
 logger = logging.getLogger('employee.models.base')
 
@@ -71,7 +72,7 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
         abstract = True
 
     #: datetime: The start date of the employee.
-    start_date = models.DateField(auto_now=True)
+    start_date = models.DateField(default=timezone.now)
 
     #: str: The first name of the employee.
     first_name = models.CharField(max_length=256)
