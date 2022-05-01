@@ -7,7 +7,7 @@ from hris_integration.models import ChangeLogMixin
 
 from .employee import Employee
 
-class EmployeePhone(models.Model,ChangeLogMixin):
+class EmployeePhone(ChangeLogMixin):
     """The phone number(s) for an employee"""
 
     class Meta:
@@ -51,7 +51,7 @@ class EmployeePhone(models.Model,ChangeLogMixin):
 pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
 post_save.connect(EmployeePhone.post_save, sender=EmployeePhone)
 
-class EmployeeAddress(models.Model,ChangeLogMixin):
+class EmployeeAddress(ChangeLogMixin):
     """The address(es) for an employee"""
 
     class Meta:
