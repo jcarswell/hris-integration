@@ -9,7 +9,7 @@ from . import forms
 urlpatterns = [
     path('email_templates/<int:id>/',
         FormView.as_view(form=forms.EmailTemplate,
-        template_name='hirs_admin/tinymce_edit.html'),
+        template_name='smtp_client/tinymce_edit.html'),
         name='email_template_edit'),
     path('email_templates/',
         ListView.as_view(form=forms.EmailTemplate),

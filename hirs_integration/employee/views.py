@@ -19,7 +19,7 @@ logger = logging.getLogger('employee.view')
 class Employee(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Employee Admin'
-    template_name = 'hirs_admin/employee_edit.html'
+    template_name = 'employee_edit.html'
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
@@ -34,7 +34,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         logger.debug(f"Employee ID: {emp_id}")
 
         if emp_id == None:
-            self.template_name = 'hirs_admin/employee_list.html'
+            self.template_name = 'employee_list.html'
             context = self.get_context(**kwargs)
             context['employees'] = models.Employee.objects.all() or None
             return self.render_to_response(context)
