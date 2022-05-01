@@ -1,4 +1,4 @@
-{% extends "hirs_admin/base.html" %}
+{% extends "base/base.html" %}
 {% load i18n static %}
 
 {% block extra_style %}
@@ -32,7 +32,7 @@
 </div>
 {% endblock content %}
 {% block extra_js %}
-{% include 'hirs_admin/components/datatables_scripts.html' %}
+{% include 'components/datatables_scripts.html' %}
 <script type="text/javascript">
 <!--
   $(document).ready(function() {
