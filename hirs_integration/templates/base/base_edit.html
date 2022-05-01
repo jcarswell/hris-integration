@@ -1,10 +1,6 @@
 {% extends "base/base.html" %}
 {% load i18n static %}
 
-{% block extra_style %}
-<link rel="stylesheet" href="{% static 'hirs_admin/dist/css/base.css' %}">
-{% endblock %}
-
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#">
@@ -36,7 +32,7 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
+<script src="{% static 'form.js' %}"></script>
 <script src="https://unpkg.com/bootstrap-show-password@1.2.1/dist/bootstrap-show-password.min.js"
   inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd"
   crossorigin="anonymous"></script>

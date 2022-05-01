@@ -56,7 +56,7 @@
         <div class="form-row">
           <div class="col-md-4 d-flex justify-content-center">
             <img src="{% if employee.photo %}{{ employee.photo }}{% else %}
-            {% static 'hirs_admin/default-user.jpg' %}{% endif %}"
+            {% static 'default-user.jpg' %}{% endif %}"
                 id="employee-photo" class="img-fluid pr-1">
           </div>
           <div class="col-md-8 mb-1">
@@ -292,6 +292,6 @@ var employee_import = {
   ]
 };
 </script>
-<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
-<script src="{% static 'hirs_admin/dist/js/employee.js' %}"></script>
+<script src="{% static 'form.js' %}"></script>
+<script src="{% static 'employee.js' %}"></script>
 {% endblock %}

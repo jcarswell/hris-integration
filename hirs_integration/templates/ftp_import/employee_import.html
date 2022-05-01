@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load static i18n%}
+{% load static i18n %}
 
 {% block page_actions %}
 <div class="btn-toolbar mb-2 mb-md-0">
@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'hirs_admin/dist/js/form.js' %}"></script>
+<script src="{% static 'form.js' %}"></script>
 <script>
 $('form').each(function(i,v) {
   $(this).submit(function(e) {
