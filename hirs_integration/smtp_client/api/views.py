@@ -8,10 +8,10 @@ from . import serializers
 from smtp_client import models
 
 class S2EmailTemplateView(Select2ViewSet):
-    queryset = models.EmailTemplate.objects.all()
+    queryset = models.EmailTemplates.objects.all()
     serializer = serializers.S2EmailTemplateSerializer
 
 
 class EmailTemplateView(ModelViewSet):
-    queryset = models.EmailTemplate.objects.all()
+    queryset = models.EmailTemplates.objects.all()
     serializer_class = serializers.EmailTemplateSerializer

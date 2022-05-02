@@ -8,11 +8,11 @@ from smtp_client import models
 
 class S2EmailTemplateSerializer(Select2Serializer):
     class Meta(Select2Meta):
-        model = models.EmailTemplate
+        model = models.EmailTemplates
         field_id = 'id'
         field_text = ['name']
 
 class EmailTemplateSerializer(ModelSerializer):
     class Meta:
-        model = models.EmailTemplate
+        model = models.EmailTemplates
         fields = '__all__'
