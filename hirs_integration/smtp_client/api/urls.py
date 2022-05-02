@@ -9,8 +9,8 @@ from . import views
 router_s2 = S2Router()
 router = DefaultRouter()
 
-router.register(r'email_template', views.EmailTemplateViewSet)
-router_s2.register(r'email_template', views.S2EmailTemplateViewSet)
+router.register(r'email_template', views.EmailTemplateView)
+router_s2.register(r'email_template', views.S2EmailTemplateView)
 
 app_name = 'smtp_client'
 urls = router_s2.urls + router.urls
