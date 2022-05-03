@@ -281,7 +281,7 @@ class EmployeeManager:
         :rtype: str
         """
 
-        return employee.location.name
+        return self.employee.location.name
 
     @property
     def import_location(self) -> str:
