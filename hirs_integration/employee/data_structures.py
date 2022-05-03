@@ -4,10 +4,9 @@
 from pyad import ADUser
 from datetime import datetime
 
-from hirs_integration.employee.models import employee
-from organization.helpers.group_manager import GroupManager
+from organization.group_manager import GroupManager
 
-from .models import Employee,EmployeeImport,EmployeePhone,EmployeeAddress
+from .models import Employee,EmployeeImport,Phone,Address
 
 class EmployeeManager:
     """
@@ -23,9 +22,9 @@ class EmployeeManager:
     ad_user = None
     #: EmployeeImport: The source HRIS Employee object
     __employee = None
-    #: The QuerySet of the EmployeePhone objects for the employee
+    #: The QuerySet of the Phone objects for the employee
     _qs_phone = None
-    #: The QuerySet of the EmployeeAddress objects for the employee
+    #: The QuerySet of the Address objects for the employee
     _qs_addr = None
     #: bool: True if the employee is imported
     merge = False
@@ -59,8 +58,8 @@ class EmployeeManager:
     def get(self):
         """Get the specific sub-objects for the employee"""
         
-        self._qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
-        self._qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
+        self._qs_phone = Phone.objects.filter(employee=self.__qs_emp)
+        self._qs_addr = Address.objects.filter(employee=self.__qs_emp)
         self.group_manager = GroupManager(self.employee.primary_job,
                                           self.employee.primary_job.business_unit,
                                           self.employee.location)
@@ -124,11 +123,11 @@ class EmployeeManager:
         return None
 
     @property
-    def address(self):
+    def address(self) -> Address:
         """Returns the employees primary or office address
 
         :return: The primary or office address
-        :rtype: EmployeeAddress
+        :rtype: Address
         """
         
         if self._qs_addr is None:
