@@ -7,7 +7,7 @@ from hris_integration.models import ChangeLogMixin
 
 from .employee import Employee
 
-class EmployeePhone(ChangeLogMixin):
+class Phone(ChangeLogMixin):
     """The phone number(s) for an employee"""
 
     class Meta:
@@ -45,13 +45,13 @@ class EmployeePhone(ChangeLogMixin):
     @classmethod
     def post_save(cls, sender, instance, created, raw, using, update_fields, **kwargs):
         if instance.primary:
-            EmployeePhone.objects.filter(employee=instance.employee) \
+            Phone.objects.filter(employee=instance.employee) \
                 .exclude(pk=instance.pk).update(primary=False)
 
-pre_save.connect(EmployeePhone.pre_save, sender=EmployeePhone)
-post_save.connect(EmployeePhone.post_save, sender=EmployeePhone)
+pre_save.connect(Phone.pre_save, sender=Phone)
+post_save.connect(Phone.post_save, sender=Phone)
 
-class EmployeeAddress(ChangeLogMixin):
+class Address(ChangeLogMixin):
     """The address(es) for an employee"""
 
     class Meta:
@@ -92,7 +92,7 @@ class EmployeeAddress(ChangeLogMixin):
     @classmethod
     def post_save(cls, sender, instance, created, raw, using, update_fields, **kwargs):
         if instance.primary:
-            EmployeeAddress.objects.filter(employee=instance.employee) \
+            Address.objects.filter(employee=instance.employee) \
                 .exclude(pk=instance.pk).update(primary=False)
 
-post_save.connect(EmployeeAddress.post_save, sender=EmployeeAddress)
+post_save.connect(Address.post_save, sender=Address)
