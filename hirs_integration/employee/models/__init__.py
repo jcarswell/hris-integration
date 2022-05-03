@@ -2,6 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 from .employee import Employee,EmployeeImport
-from .information import EmployeeAddress,EmployeePhone
+from .information import Address,Phone
 
-__all__ = ('Employee','EmployeeImport','EmployeeAddress','EmployeePhone')
+__all__ = ('Employee','EmployeeImport','Address','Phone')
