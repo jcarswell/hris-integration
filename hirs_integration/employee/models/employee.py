@@ -5,6 +5,7 @@ import logging
 
 from django.db import models
 from django.db.models.signals import post_save,pre_save
+from django.utils import timezone
 from common.functions import password_generator
 from hris_integration.models.encryption import PasswordField
 from time import time
@@ -166,6 +167,8 @@ class Employee(EmployeeBase):
                 instance.username += t[-(20-len(instance.username)):]
                 instance.email_alias = f"{instance._username}{round(time.time())}"[:64]
 
+        if prev_instance != instance:
+            instance.updated_on = timezone.now()
 
         if instance.username is None:
             cls.reset_username(instance)
@@ -227,3 +230,18 @@ class EmployeeImport(EmployeeBase):
 
     def __str__(self):
         return f"{self.id}: {self.givenname} {self.surname}"
+
+    @classmethod
+    def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        if instance.id:
+            try:
+                prev_instance = EmployeeImport.objects.get(id=instance.id)
+            except EmployeeImport.DoesNotExist:
+                prev_instance = None
+        else:
+            prev_instance = None
+
+        if prev_instance and instance != prev_instance:
+            instance.updated_on = timezone.now()
+
+pre_save.connect(EmployeeImport.pre_save, sender=EmployeeImport)
