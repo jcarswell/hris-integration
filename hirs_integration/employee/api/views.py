@@ -9,25 +9,25 @@ from . import serializers
 from employee import models
 
 
-class S2EmployeePhoneView(Select2ViewSet):
-    queryset = models.EmployeePhone.objects.all()
-    serializer = serializers.S2EmployeePhoneSerializer
+class S2PhoneView(Select2ViewSet):
+    queryset = models.Phone.objects.all()
+    serializer = serializers.S2PhoneSerializer
 
 
-class EmployeePhoneView(ModelViewSet):
-    queryset = models.EmployeePhone.objects.all()
-    serializer_class = serializers.EmployeePhoneSerializer
+class PhoneView(ModelViewSet):
+    queryset = models.Phone.objects.all()
+    serializer_class = serializers.PhoneSerializer
     permission_classes = [DjangoModelPermissions,IsAuthenticated]
 
 
-class S2EmployeeAddressView(Select2ViewSet):
-    queryset = models.EmployeeAddress.objects.all()
-    serializer = serializers.S2EmployeeAddressSerializer
+class S2AddressView(Select2ViewSet):
+    queryset = models.Address.objects.all()
+    serializer = serializers.S2AddressSerializer
 
 
-class EmployeeAddressView(ModelViewSet):
-    queryset = models.EmployeeAddress.objects.all()
-    serializer_class = serializers.EmployeeAddressSerializer
+class AddressView(ModelViewSet):
+    queryset = models.Address.objects.all()
+    serializer_class = serializers.AddressSerializer
     permission_classes = [DjangoModelPermissions,IsAuthenticated]
 
 

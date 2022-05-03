@@ -6,29 +6,29 @@ from rest_framework.serializers import ModelSerializer
 
 from employee import models
 
-class S2EmployeePhoneSerializer(Select2Serializer):
+class S2PhoneSerializer(Select2Serializer):
     class Meta(Select2Meta):
-        model = models.EmployeePhone
+        model = models.Phone
         field_id = 'id'
         field_text = ['number']
 
 
-class EmployeePhoneSerializer(ModelSerializer):
+class PhoneSerializer(ModelSerializer):
     class Meta:
-        model = models.EmployeePhone
+        model = models.Phone
         fields = '__all__'
 
 
-class S2EmployeeAddressSerializer(Select2Serializer):
+class S2AddressSerializer(Select2Serializer):
     class Meta(Select2Meta):
-        model = models.EmployeeAddress
+        model = models.Address
         field_id = 'id'
         field_text = ['address','city','province']
 
 
-class EmployeeAddressSerializer(ModelSerializer):
+class AddressSerializer(ModelSerializer):
     class Meta:
-        model = models.EmployeeAddress
+        model = models.Address
         fields = '__all__'
 
 
