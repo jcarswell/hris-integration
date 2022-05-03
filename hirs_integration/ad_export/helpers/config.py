@@ -4,24 +4,20 @@
 import logging
 
 
-from typing import Union,Any
+from typing import Any
 from common.functions import ConfigurationManagerBase
-from django.db.models import Q
 from django.utils.timezone import now
-from hirs_admin.models import (EmployeeAddress,EmployeePhone,Setting,
-                               Employee,EmployeeOverrides,
-                               EmployeePending,Location,GroupMapping)
-from hirs_admin.data_structures import employee_manager
+from employee.models import Employee
+from hirs_admin.models import Setting
+from employee.data_structures import EmployeeManager
 from warnings import warn
 
 from .settings_fields import * # Yes I hate this, deal with it!
-from .group_manager import GroupManager
 
 #CONST REFERENCES
-STAT_LEA = Employee.STAT_LEA
-STAT_TERM = Employee.STAT_TERM
-STAT_ACT = Employee.STAT_ACT
-
+STATE_LEA = Employee.STATE_LEA
+STATE_TERM = Employee.STATE_TERM
+STATE_ACT = Employee.STATE_ACT
 
 logger = logging.getLogger('ad_export.config')
 
@@ -36,78 +32,33 @@ def get_config(category:str ,item:str) -> Any:
     warn("get_config is deprecated and will be removed in a future version",DeprecationWarning)
     return Config()(category,item)
 
-class EmployeeManager(employee_manager.EmployeeManager):
-    def __init__(self,emp_object:Union[Employee,EmployeePending]) -> None:
-        super().__init__(emp_object)
+class EmployeeManager(EmployeeManager):
+    def __init__(self,employee:Employee) -> None:
+        super().__init__(employee)
         self.config = Config()
 
-        self.GroupManager = GroupManager(self.__qs_emp.primary_job,
-                                         self.__qs_emp.primary_job.bu,
-                                         self.__qs_over.location)
-
-    def get(self):
-        """Overriding the base function as we don't wan't to grab guid here"""
-        if isinstance(self.__qs_emp,Employee):
-            self.__qs_over = EmployeeOverrides.objects.get(employee=self.__qs_emp)
-            self.__qs_phone = EmployeePhone.objects.filter(employee=self.__qs_emp)
-            self.__qs_addr = EmployeeAddress.objects.filter(employee=self.__qs_emp)
-        else:
-            self.__qs_over = self.__qs_emp
-            self.__qs_phone = None
-            self.__qs_addr = None
-
-        self._aduser = None
-
     def pre_merge(self) -> None:
-        if EmployeeOverrides.objects.filter(employee=self.__qs_emp).exists:
-            self.__qs_over = EmployeeOverrides.objects.get(employee=self.__qs_emp)
-        else:
-            self.__qs_over = EmployeeOverrides()
-            self.__qs_over.employee = self.__qs_emp
-
-        if self.__qs_emp.givenname != self.__emp_pend.firstname:
-            self.__qs_over.firstname = self.__emp_pend.firstname
-
-        if self.__qs_emp.surname != self.__emp_pend.lastname:
-            self.__qs_over.lastname = self.__emp_pend.lastname
-
-        if self.__emp_pend.designation != self.__qs_over.designations:
-            self.__qs_over.designations = self.__emp_pend.designation
-
-        if self.__emp_pend.photo:
-            self.__qs_emp.photo = self.__emp_pend.photo
-
-        if self.__qs_emp.location.pk != self.__emp_pend.location.pk:
-            self.__qs_over.location = self.__emp_pend.location
-
-        if self.__emp_pend.password:
-            self.__qs_emp.password = self.__emp_pend.password
-
-        if self.__emp_pend.guid:
-            self.__qs_emp.guid = self.__emp_pend.guid
-
-        self.__qs_over.save()
-
-        #Ensure we set the username and password post override save to preserve the values
-        self.__qs_emp._username == self.__emp_pend._username
-        self.__qs_emp._email_alias = self.__emp_pend._email_alias
+        #TODO: is this needed?
+        pass
 
     def groups_add(self) -> list:
-        if self.__qs_emp.leave:
-            return self.GroupManager.groups_leave + self.GroupManager.add_groups
-        elif not self.__qs_emp.state:
+        if self.employee.leave:
+            return self.group_manager.groups_leave + self.group_manager.add_groups
+        elif not self.employee.state:
             return []
         else:
-            return self.GroupManager.add_groups
+            return self.group_manager.add_groups
 
     def groups_remove(self) -> list:
-        if self.__qs_emp.leave:
-            return self.GroupManager.remove_groups
-        elif not self.__qs_emp.state:
+        if self.employee.leave:
+            return self.group_manager.remove_groups
+        elif not self.employee.state:
             return []
         else:
-            return self.GroupManager.groups_leave + self.GroupManager.remove_groups
+            return self.group_manager.groups_leave + self.group_manager.remove_groups
         
+    def get_guid(self):
+        return None
 
     @property
     def add_groups(self) -> list[str]:
@@ -167,7 +118,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
         # if terminated(Exclude Terminated) is False and status = Terminated == True 
         #   or
         # if user status is not Terminated
-        if (employee.status == Employee.STAT_TERM and not terminated) or employee.status != Employee.STAT_TERM:
+        if (employee.status == Employee.STATE_TERM and not terminated) or employee.status != Employee.STATE_TERM:
             try:
                 output.append(EmployeeManager(employee))
             except Exception as e:
@@ -177,28 +128,15 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     if delta:
         lastsync = Config()(CONFIG_CAT,CONFIG_LAST_SYNC)
         logger.debug(f"Last sync date {lastsync}")
-        emps = Employee.objects.filter(updated_on__gt=lastsync)
-        emp_pend = EmployeePending.objects.filter(updated_on__gt=lastsync)
+        employees = Employee.objects.filter(updated_on__gt=lastsync)
     else:
-        emps = Employee.objects.all()
-        emp_pend = EmployeePending.objects.all()
+        employees = Employee.objects.all()
 
-    logger.debug(f"Got {len(emps)} Employees and {len(emp_pend)} Pending Employees")
+    logger.debug(f"Got {len(employees)} Employees")
 
-    for employee in emps:
+    for employee in employees:
         add_emp(employee)
 
-    for employee in emp_pend:
-        add_emp(employee)
-        if output[-1].merge:
-            logger.info(f"{output[-1]}, to be merged")
-            for x in range(len(output)-1):
-                if output[x].id == output[-1].id:
-                    logger.debug(f"Found employee entry for {output[-1]}, removing duplicate")
-                    output.pop(x)
-                    break
-
-    logger.debug(f"Returning {len(output)} Employees")
     return output
 
 def base_dn() -> str:
@@ -207,11 +145,8 @@ def base_dn() -> str:
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
     users = Employee.objects.filter(_username__startswith=username)
-    users_pend = EmployeePending.objects.filter(_username__startswith=username)
     output = []
     for employee in users:
-        output.append(EmployeeManager(employee))
-    for employee in users_pend:
         output.append(EmployeeManager(employee))
 
     return output
