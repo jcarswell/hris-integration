@@ -8,7 +8,7 @@ import json
 from typing import AnyStr, Dict, List, Tuple
 from django.utils import timezone
 from hirs_admin.models import WordList
-from employee.models import Employee,EmployeeImport,EmployeePhone,EmployeeAddress
+from employee.models import Employee,EmployeeImport,Phone,Address
 from hirs_admin.models import Notifications
 from organization.models import JobRole, Location, BusinessUnit
 from ftp_import.models import CsvPending
@@ -363,6 +363,9 @@ class BaseImport():
             for u in Employee.objects.filter(primary_job=job):
                 u.updated_on = timezone.now()
                 u.save()
+            for u in EmployeeImport.objects.filter(primary_job=job):
+                u.updated_on = timezone.now()
+                u.save()
 
         return job
 
@@ -424,6 +427,9 @@ class BaseImport():
         if not new and changed:
             for job in JobRole.objects.filter(bu=bu):
                 for u in Employee.objects.filter(primary_job=job):
+                    u.updated_on = timezone.now()
+                    u.save()
+                for u in EmployeeImport.objects.filter(primary_job=job):
                     u.updated_on = timezone.now()
                     u.save()
 
@@ -548,8 +554,8 @@ class EmployeeForm(BaseImport):
         """The main save logic for an already existing employee"""
 
         changed = False
-        if employee.is_matched:
-            mutable_employee = employee.employee
+        if self.employee.is_matched:
+            mutable_employee = self.employee.employee
         else:
             mutable_employee = Employee()
         for key,value in self.kwargs.items():
@@ -676,25 +682,25 @@ class EmployeeForm(BaseImport):
             self.employee.is_matched = False
             self.employee.save()
 
-    def _get_phone(self) -> EmployeePhone:
-        """Attempts to get the EmployeePhone object for the employee. If one does not exist,
+    def _get_phone(self) -> Phone:
+        """Attempts to get the Phone object for the employee. If one does not exist,
         a new one will be created with the base fields set. If one exists, it will be returned
         else a exception will be raised, while we cowardly refuse to create a new object.
 
-        :raises EmployeePhone.MultipleObjectsReturned: If more than one phone number is found
-        :return: A new or existing EmployeePhone object for the Employee
-        :rtype: EmployeePhone
+        :raises Phone.MultipleObjectsReturned: If more than one phone number is found
+        :return: A new or existing Phone object for the Employee
+        :rtype: Phone
         """
 
         if self.mutable_employee:
-            phones_no = EmployeePhone.objects.filter(employee=self.mutable_employee)
+            phones_no = Phone.objects.filter(employee=self.mutable_employee)
         else:
             return KeyError("No mutable employee")
 
         if len(phones_no) > 1:
-            raise EmployeePhone.MultipleObjectsReturned
+            raise Phone.MultipleObjectsReturned
         elif len(phones_no) < 1:
-            addr = EmployeePhone()
+            addr = Phone()
             addr.employee = self.mutable_employee
             return addr
         else:
@@ -709,7 +715,7 @@ class EmployeeForm(BaseImport):
 
         try:
             phone = self._get_phone()
-        except EmployeePhone.MultipleObjectsReturned:
+        except Phone.MultipleObjectsReturned:
             logger.warning("More than one phone number exists. Cowardly not doing anything")
             return
         except KeyError:
@@ -726,20 +732,20 @@ class EmployeeForm(BaseImport):
             phone.primary = False
             phone.save()
 
-    def _get_address(self) -> EmployeeAddress:
+    def _get_address(self) -> Address:
         """similar to _get_phone, but for addresses. This method also filters based on the 
         "Imported Address" label, so it should always return a single address new or existing.
 
-        :raises EmployeeAddress.MultipleObjectsReturned: If more than one address is found
-        :return: A new or existing EmployeeAddress object for the Employee
-        :rtype: EmployeeAddress
+        :raises Address.MultipleObjectsReturned: If more than one address is found
+        :return: A new or existing Address object for the Employee
+        :rtype: Address
         """
 
-        addrs = EmployeeAddress.objects.filter(Q(employee=self.mutable_employee) & Q(label="Imported Address"))
+        addrs = Address.objects.filter(Q(employee=self.mutable_employee) & Q(label="Imported Address"))
         if len(addrs) > 1:
-            raise EmployeeAddress.MultipleObjectsReturned
+            raise Address.MultipleObjectsReturned
         elif len(addrs) < 1:
-            addr = EmployeeAddress()
+            addr = Address()
             addr.employee = self.mutable_employee
             addr.label = 'Imported Address'
             return addr
@@ -755,7 +761,7 @@ class EmployeeForm(BaseImport):
 
         try:
             address = self._get_address()
-        except EmployeeAddress.MultipleObjectsReturned:
+        except Address.MultipleObjectsReturned:
             logger.warning("More than one address exists. Cowardly not doing anything")
 
         for key,value in self.kwargs.items():
