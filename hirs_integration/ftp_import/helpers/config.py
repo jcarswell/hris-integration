@@ -9,6 +9,7 @@ from typing import Any
 from warnings import warn
 from hirs_admin.models import Setting
 from common.functions import ConfigurationManagerBase
+from warnings import warn
 
 from .text_utils import safe
 from .settings_fields import *
@@ -32,10 +33,10 @@ class CsvSetting():
     def get(self) -> None:
         fields = {}
         for row in Setting.o2.get_by_path(GROUP_MAP):
-            if row.catagory not in fields:
-                fields[row.catagory] = deepcopy(IMPORT_DEFAULTS)
+            if row.category not in fields:
+                fields[row.category] = deepcopy(IMPORT_DEFAULTS)
             if row.item in FIELD_ITEMS:
-                fields[row.catagory][row.item] = row.value
+                fields[row.category][row.item] = row.value
 
         for field in fields:
             if field not in self.fields.keys():
@@ -71,7 +72,7 @@ class CsvSetting():
 
             else:
                 warn(f"{arg} is already defined")
-                logger.warning(f"Attempted to create existing CSV Feild {arg}")
+                logger.warning(f"Attempted to create existing CSV Field {arg}")
 
         self.get()
         logger.debug(f"New Fields: {self.fields}")
@@ -99,7 +100,7 @@ class CsvSetting():
 
         else:
             warn(f"{field} is already defined")
-            logger.warning(f"Attempted to create existing CSV Feild {field}")
+            logger.warning(f"Attempted to create existing CSV Field {field}")
             return False
 
     def get_by_map_val(self,map_to:str) -> str:
@@ -113,10 +114,11 @@ def get_fields() -> dict:
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
-    catagory_list = SETTINGS_CATAGORIES
+    category_list = SETTINGS_CATAGORIES
     fixtures = CONFIG_DEFAULTS
     Setting = Setting
 
-def get_config(catagory:str ,item:str) -> Any:
-    """Now depricated use Config instead to manage the value"""
-    return Config()(catagory,item)
+def get_config(category:str ,item:str) -> Any:
+    """Now deprecated use Config instead to manage the value"""
+    warn(f"get_config is deprecated use Config instead to manage the value",DeprecationWarning)
+    return Config()(category,item)
