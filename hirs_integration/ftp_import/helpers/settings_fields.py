@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _t
 #CONSTANTS
 ## Config Groups
 GROUP_CONFIG = 'ftp_import_config'
-GROUP_MAP = 'ftp_import_feild_mapping'
+GROUP_MAP = 'ftp_import_field_mapping'
 
 ## Config Catagories
 CAT_SERVER = 'server'
