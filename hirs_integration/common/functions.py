@@ -13,8 +13,9 @@ from django.db.utils import ProgrammingError
 from warnings import warn
 from django.conf import settings
 from random import choice
+from importlib import import_module
 
-from .exceptions import FixturesError,SettingsError
+from .exceptions import FixturesError,SettingsError,SetupError
 
 logger = logging.getLogger('common functions')
 
@@ -56,65 +57,120 @@ def configuration_fixtures(group:str,config:dict,Setting) -> None:
 
         return new
 
-    for catagory,items in config.items():
+    for category,items in config.items():
         for item,config in items.items():
-            add_fixture(catagory,item,config)
+            add_fixture(category,item,config)
 
 
 class ConfigurationManagerBase:
+    """The base class for accessing user configurable settings."""
+
+    from hirs_admin.models import Setting
+    #: str: The group for this instance.
     root_group = None
-    catagory_list = None
+    #: str: the categories valid for this instance.
+    category_list = None
+    #: str: The field class definitions, used to define valid fields and the defaults for each.
     fixtures = None
+    #: FieldConversion: The field manager for the field currently queried.
     field = None
+    #: Setting: The currently loaded field.
     __setting__ = None
-    Setting = None
-    
+    #: models.Model: the Settings Model
+    Setting = import_module("hris_admin","models").Setting
+
     def __init__(self) -> None:
+        """
+        The init methods checks to ensure that the root_group, category_list and fixtures are set.
+
+        :raises SetupError: When the root_group, category_list or fixtures are not set.
+        """
         if not isinstance(self.root_group,str):
-            raise TypeError(f"Expected str for root_group got {self.root_group.__class__.__name__}")
-        if not isinstance(self.catagory_list,tuple):
-            raise TypeError(f"Expected tuple for catagory_list got {self.catagory_list.__class__.__name__}")
+            raise SetupError(f"Expected str for root_group got {self.root_group.__class__.__name__}")
+        if not isinstance(self.category_list,tuple):
+            raise SetupError(f"Expected tuple for category_list got {self.category_list.__class__.__name__}")
         if not isinstance(self.fixtures,dict):
-            raise TypeError(f"Expected dict for fixtures got {self.fixtures.__class__.__name__}")
+            raise SetupError(f"Expected dict for fixtures got {self.fixtures.__class__.__name__}")
 
-    def validate(self,catagory:str ,item:str) -> str:
-        if catagory not in self.catagory_list:
-            raise ValidationError(f"Catagory '{catagory}' is not valid for this module")
-        if item not in self.fixtures[catagory].keys():
-            raise ValidationError(f"Item '{catagory}/{item}' is not a valid combination or valid for this module")
+    def validate(self,category:str ,item:str) -> bool:
+        """
+        Validates that the category and item are valid.
 
-    def get(self, catagory:str ,item:str) -> str:
-        self.validate(catagory,item)
+        :param category: the category to which the item belongs.
+        :type category: str
+        :param item: the field name to validate
+        :type item: str
+        :raises ValidationError: If the category or item are not valid.
+        :return: True if an exception is not raised.
+        :rtype: bool
+        """
 
-        qs = self.Setting.o2.get_by_path(self.root_group,catagory,item)
+        if category not in self.category_list:
+            raise ValidationError(f"Category '{category}' is not valid for this module")
+        if item not in self.fixtures[category].keys():
+            raise ValidationError(f"Item '{category}/{item}' is not a valid combination"
+                                  " or valid for this module")
+        return True
+
+    def get(self, category:str ,item:str) -> None:
+        """
+        Gets the value of the field and initialized the field manager.
+
+        :param category: the category to which the item belongs.
+        :type category: str
+        :param item: the field to retrieve
+        :type item: str
+        :raises FixturesError: If the category or item are valid but could not be retrieved
+            even after attempting to re-import the fixture configuration.
+        :raises SettingsError: If more than on result is returned for the query.
+        """
+
+        self.validate(category,item)
+
+        qs = self.Setting.o2.get_by_path(self.root_group,category,item)
         if len(qs) == 0:
             configuration_fixtures(self.root_group,self.fixtures,self.Setting)
-            qs = self.Setting.o2.get_by_path(self.root_group,catagory,item)
+            qs = self.Setting.o2.get_by_path(self.root_group,category,item)
             if not len(qs):
-                raise FixturesError(f"installation of fixtures failed. Unable to load '{catagory}/{item}'")
+                raise FixturesError(f"installation of fixtures failed. Unable to load '{category}/{item}'")
         if len(qs) != 1:
-            raise SettingsError(f"mulitple results returned for {catagory}/{item}",len(qs))
+            raise SettingsError(f"multiple results returned for {category}/{item}",len(qs))
 
         self.__setting__ = qs[0]
         self.get_field()
         self.field(self.__setting__.value)
 
-    def __call__(self, catagory:str ,item:str) -> str:
-        self.get(catagory,item)
+    def __call__(self, category:str ,item:str) -> Any:
+        """
+        A wrapper for get but returns the value of the field.
+
+        :param category: the category to which the item belongs.
+        :type category: str
+        :param item: the field to retrieve
+        :type item: str
+        :return: The parsed value of the field.
+        :rtype: Any
+        """
+
+        self.get(category,item)
         return self.value
     
     def get_field(self):
+        """Initializes the field manager. based on the field type."""
         self.field = FieldConversion(self.__setting__.field_properties.get("type","CharField"))
     
     @property
     def value(self):
+        """The parsed value of the field."""
         return self.field.value
 
     @value.setter
     def value(self,value):
+        """Sets the value of the field."""
         self.field.value = value
 
     def save(self):
+        """Saves the field to the database."""
         self.__setting__.value = str(self.field)
         self.__setting__.save()
 
