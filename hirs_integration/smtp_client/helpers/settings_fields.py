@@ -10,7 +10,7 @@ GROUP_CONFIG = 'outbound_email'
 CAT_CONFIG = 'server_configuration'
 CAT_EMAIL = 'email_options'
 
-CATAGORY_SETTINGS = (CAT_CONFIG,CAT_EMAIL)
+CATEGORY_SETTINGS = (CAT_CONFIG,CAT_EMAIL)
 
 ## Config Fields
 SERVER_SERVER = 'smtp_server'
