@@ -23,7 +23,7 @@ CONFIG_PATH  = 'executable_path'
 CONFIG_EXEC = 'executable_name'
 EMPLOYEE_EMAIL_DOMAIN = 'email_domain'
 EMPLOYEE_SUPER_DESIGNATIONS = 'Supervisor Designations'
-CONFIG_LAST_SYNC = 'last_sycronization_run'
+CONFIG_LAST_SYNC = 'last_synchronization_run'
 CONFIG_BOOL_EXPORT = 'bool_export_format'
 COREPOINT_FIELDS = ['map_Employee_no','map_Full_Name','map_Last_Name','map_First_Name',
                     'map_SITE_CODE','map_Middle_Name','map_Street_addr','map_Street',
