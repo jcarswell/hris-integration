@@ -23,7 +23,7 @@ logger = logging.getLogger('ad_export.config')
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
-    catagory_list = CATEGORY_SETTINGS
+    category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
     Setting = Setting
 
@@ -140,7 +140,7 @@ def get_employees(delta:bool =True,terminated:bool =False) -> list[EmployeeManag
     return output
 
 def base_dn() -> str:
-    from hirs_admin.helpers import config
+    from active_directory.helpers import config
     return config.Config()(config.CONFIG_CAT,config.BASE_DN)
 
 def fuzzy_employee(username:str) -> list[EmployeeManager]:
