@@ -70,7 +70,7 @@ class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
     category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
+
 
 def get_config(category:str ,item:str) -> Any:
     """Now deprecated use Config instead to manage the value"""

@@ -4,7 +4,6 @@
 import logging
 
 from typing import Any
-from hirs_admin.models import Setting
 from common.functions import ConfigurationManagerBase
 from warnings import warn
 
@@ -16,7 +15,6 @@ class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
     category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
 
     def get_category(self,category:str) -> dict:
         output = {}

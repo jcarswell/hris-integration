@@ -8,7 +8,6 @@ from typing import Any
 from common.functions import ConfigurationManagerBase
 from django.utils.timezone import now
 from employee.models import Employee
-from hirs_admin.models import Setting
 from employee.data_structures import EmployeeManager
 from warnings import warn
 
@@ -25,7 +24,6 @@ class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
     category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
 
 def get_config(category:str ,item:str) -> Any:
     """Now depreciated use Config instead to manage the value"""

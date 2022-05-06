@@ -5,18 +5,18 @@ import logging
 
 from typing import Any
 from common.functions import ConfigurationManagerBase
+from warnings import warn
 
-from hirs_admin.models import Setting
 from .settings_fields import *
 
 logger = logging.getLogger('active_directory.config')
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
-    catagory_list = CATEGORY_SETTINGS
+    category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
 
 def get_config(category:str ,item:str) -> Any:
     """Now deprecated use Config instead to manage the value"""
+    warn("get_config is deprecated and will be removed in a future version",DeprecationWarning)
     return Config()(category,item)
