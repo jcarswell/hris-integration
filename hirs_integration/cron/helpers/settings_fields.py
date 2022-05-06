@@ -10,7 +10,7 @@ GROUP_JOBS =  'cron_jobs'
 ## Config Catagories
 CONFIG_CAT = 'configuration'
 
-CATAGORY_SETTINGS = (CONFIG_CAT,)
+CATEGORY_SETTINGS = (CONFIG_CAT,)
 
 ## Config Fields
 CONFIG_ENABLED = 'enabled'
