@@ -14,3 +14,7 @@ class FixturesError(CommonError):
 
 class SettingsError(CommonError):
     """Error thrown when there is an issue with the settings data"""
+
+
+class SetupError(CommonError,UnboundLocalError):
+    """Error thrown when there is an issue with the setup data"""
