@@ -9,9 +9,9 @@ class Command(BaseCommand):
     requires_system_checks = []
     
     def handle(self, *args, **kwargs):
-        from hirs_admin.models import Setting
+        from settings.models import Setting
         from ftp_import.helpers import settings 
-        print("Clearing all ftp import fields")
+        self.stdout.write(self.style.NOTICE("Clearing all ftp import fields"))
         for f in Setting.o2.get_by_path(settings.MAP_GROUP):
-            print(f"[VERBOSE] Deleting {f.setting}")
+            self.stdout.write(self.style.NOTICE(f"[VERBOSE] Deleting {f.setting}"))
             f.delete()
