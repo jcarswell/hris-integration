@@ -6,6 +6,7 @@ import importlib
 import logging
 
 from random import choice
+from pathlib import Path
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.management import call_command
@@ -68,8 +69,10 @@ def setup(service=False,username:str ='admin',email:str ='admin@example.com',pas
             pass
 
     from ftp_import.csv import CsvImport
-    with open(str(settings.BASE_DIR) + '\\ftp_csv_headers.csv', 'r') as f:
-        CsvImport(f)
+    ftp_headers = Path(settings.BASE_DIR, 'ftp_csv_headers.csv')
+    if ftp_headers.exists():
+        with open(ftp_headers, 'r') as f:
+            CsvImport(f)
 
     if service:
         import cron
