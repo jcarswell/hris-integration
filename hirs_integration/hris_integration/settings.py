@@ -65,11 +65,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'mptt',
+    'settings',
     'hirs_admin',
+    'active_directory',
+    'extras',
     'cron',
     'ftp_import',
     'ad_export',
-    'smtp_client'
+    'smtp_client',
+    'organization',
+    'employee',
+    'user_applications',
+    'drf_yasg'
 ]
 if hasattr(config, 'ADDITIONAL_APPS'):
     INSTALLED_APPS += config.ADDITIONAL_APPS
@@ -88,10 +97,17 @@ if hasattr(config, 'ADDITIONAL_MIDDLEWARE'):
 
 ROOT_URLCONF = 'hris_integration.urls'
 
+STATICFILES_DIRS = [
+    Path(BASE_DIR, "static-core",'js'),
+    Path(BASE_DIR, "static-core",'css'),
+    Path(BASE_DIR, "static-core",'img'),
+    ('docs', Path(BASE_DIR, "static-core",'docs')),
+]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [Path(BASE_DIR,'/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
