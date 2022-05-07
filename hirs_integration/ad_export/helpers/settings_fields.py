@@ -1,8 +1,6 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
-from django.utils.translation import gettext_lazy as _t
-
 ## Config Groups
 GROUP_CONFIG = 'ad_export'
 
