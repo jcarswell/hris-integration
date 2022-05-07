@@ -73,7 +73,8 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
 
     #: datetime: The start date of the employee.
     start_date = models.DateField(default=timezone.now)
-
+    #: datetime: The date and time the record was last updated. this cannot use auto_now_add
+    updated_on = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     #: str: The first name of the employee.
     first_name = models.CharField(max_length=256)
     #: str: The last name of the employee.
@@ -88,9 +89,11 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
                              blank=True)
     #: str: The employees Primary Job Role.
     primary_job = models.ForeignKey(JobRole, null=True, blank=True,
-                                    on_delete=models.SET_NULL)
+                                    on_delete=models.SET_NULL,
+                                    related_name=f"employee.{__name__}.primary_job+")
     #: ManyToManyField: Any jobs that the employee is cross-trained into.
-    jobs = models.ManyToManyField(JobRole, blank=True)
+    jobs = models.ManyToManyField(JobRole, blank=True,
+                                  related_name=f"employee.{__name__}.jobs+")
     #: ForeignKey: The location of the employee.
     location = models.ForeignKey(Location, null=True, blank=True, on_delete=models.SET_NULL)
 
