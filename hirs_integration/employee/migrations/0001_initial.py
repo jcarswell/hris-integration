@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('hirs_admin','0032_pre_migration_employee'),
     ]
 
     operations = [

@@ -5,14 +5,14 @@ from django.db import migrations
 logger = logging.getLogger('employee.migrations')
 
 def migrate_employees(apps,schema_editor):
-    orig_employee = apps.get_model('employee','Employee')
-    orig_employee_override = apps.get_model('employee','EmployeeOverride')
+    orig_employee = apps.get_model('hirs_admin','Employee')
+    orig_employee_override = apps.get_model('hirs_admin','EmployeeOverride')
     orig_address = apps.get_model('hirs_admin','EmployeeAddress')
     orig_phone = apps.get_model('hirs_admin','EmployeePhone')
     employee = apps.get_model('employee','Employee')
     employee_import = apps.get_model('employee','EmployeeImport')
-    address = apps.get_model('hirs_admin','Address')
-    phone = apps.get_model('hirs_admin','Phone')
+    address = apps.get_model('employee','Address')
+    phone = apps.get_model('employee','Phone')
     location = apps.get_model('organization','Location')
     jobs = apps.get_model('organization','Job')
 
@@ -102,7 +102,7 @@ def migrate_employees(apps,schema_editor):
         del new
 
 def migrate_pending(apps,schema_editor):
-    orig_employee_pending = apps.get_model('employee','EmployeePending')
+    orig_employee_pending = apps.get_model('hirs_admin','EmployeePending')
     employee = apps.get_model('employee','Employee')
     employee_import = apps.get_model('employee','EmployeeImport')
     location = apps.get_model('organization','Location')
@@ -165,7 +165,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('employee', '0002_initial'),
-        ('hirs_admin', '0031_updated_csv_settings'),
     ]
 
     operations = [
