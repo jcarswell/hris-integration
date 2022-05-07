@@ -1,7 +1,7 @@
 import logging
 
 from django.db import migrations
-from common.functions import configuration_fixtures
+from settings.config_manager import configuration_fixtures
 
 logger = logging.getLogger('hirs_admin.Migrations')
 
