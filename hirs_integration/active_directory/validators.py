@@ -13,7 +13,7 @@ from .helpers.config import CONFIG_CAT,BASE_DN,get_config
 from .query import Query
 from pyad import ADUser
 
-logger = logging.getLogger('helpers.adtools')
+logger = logging.getLogger('active_directory.validators')
 
 __all__ = ('DnValidator','ad_groups','ad_ous')
 
