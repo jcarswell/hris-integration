@@ -7,5 +7,14 @@ from .exceptions import RenderError, FixturesError, SettingsError, SetupError
 __all__ = ('SettingsConfig','setup','RenderError','FixturesError','SettingsError','SetupError')
 
 def setup():
-    """No setup tasks required for this module"""
-    pass
+    """Import all setting_fields from installed apps."""
+    from importlib import import_module
+    from django.conf import settings
+    from settings.config_manager import configuration_fixtures
+
+    for app in settings.INSTALLED_APPS:
+        try:
+            module = import_module(app, "helpers.settings_fields")
+            configuration_fixtures(module.GROUP_CONFIG,module.CONFIG_DEFAULTS)
+        except ModuleNotFoundError:
+            pass
