@@ -27,6 +27,8 @@ class Employee(EmployeeBase):
 
     #: int: The primary key for the employee. This does not represet the employee id
     id = models.AutoField(primary_key=True)
+    #: int: The Employee ID for the employee.
+    employee_id = models.IntegerField(blank=True,null=True,unique=True)
     #: bool: If this model has a matched EmployeeImport record.
     is_imported = models.BooleanField(default=False)
     #: bool: If the employee has been exported to Active Directory. Used for filtering.
@@ -243,5 +245,9 @@ class EmployeeImport(EmployeeBase):
 
         if prev_instance and instance != prev_instance:
             instance.updated_on = timezone.now()
+
+        if instance.employee and instance.employee.employee_id != instance.id:
+            instance.employee.employee_id = instance.id
+            instance.employee.save()
 
 pre_save.connect(EmployeeImport.pre_save, sender=EmployeeImport)
