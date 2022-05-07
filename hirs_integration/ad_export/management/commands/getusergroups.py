@@ -29,60 +29,37 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **kwargs):
-        emps = self.get_emps(kwargs['id'],kwargs['username'],kwargs['emailalias'])
-        for e in emps:
+        for e in self.get_employees(kwargs['id'],kwargs['username'],kwargs['emailalias']):
             self.stdout.write(self.style.SUCCESS(str(e)))
-            self.stdout.write(self.style.NOTICE('Adding Groups'))
+            self.stdout.write(self.style.NOTICE('Member of Groups'))
             self.stdout.writelines(e.groups_add())
-            self.stdout.write(self.style.WARNING('Removing Groups'))
+            self.stdout.write(self.style.WARNING('Removed from Groups'))
             self.stdout.writelines(e.groups_remove())
 
-    def get_emps(self,ids=None,users=None,aliases=None):
+    def get_employees(self,ids=None,users=None,aliases=None):
         from ad_export.helpers import config
-        from hirs_admin.models import Employee,EmployeePending
-        emps = []
+        from employee.models import Employee
+        employees = []
 
         if ids:
             for id in ids:
                 try:
-                    emps.append(
-                        config.EmployeeManager(Employee.objects.get(pk=id))
-                    )
+                    employees.append(config.EmployeeManager(Employee.objects.get(employee_id=id)))
                 except Employee.DoesNotExist:
                     self.stdout.write(self.style.ERROR(f"No employee with id {id}"))
 
         if users:
             for user in users:
-                emp = None
                 try:
-                    emp = Employee.objects.get(_username=user)
+                    employees.append(config.EmployeeManager(Employee.objects.get(username=user)))
                 except Employee.DoesNotExist:
-                    try:
-                        emp = EmployeePending.objects.get(_username=user)
-                    except EmployeePending.DoesNotExist:
-                        self.stderr.write(self.style.ERROR(f"No username found: {user}"))
-
-                if isinstance(emp,(EmployeePending,Employee)):
-                    emps.append(config.EmployeeManager(emp))
-                else:
-                    for e in emp:
-                        emps.append(config.EmployeeManager(e))
+                    self.stdout.write(self.style.ERROR(f"No employee with username {user}"))
 
         if aliases:
             for alias in aliases:
-                emp = None
                 try:
-                    emp = Employee.objects.get(_email_alias=alias)
+                    employees.append(config.EmployeeManager(Employee.objects.get(email_alias=alias)))
                 except Employee.DoesNotExist:
-                    try:
-                        emp = EmployeePending.objects.get(_email_alias=alias)
-                    except EmployeePending.DoesNotExist:
-                        self.stderr.write(self.style.ERROR(f"No username found: {alias}"))
+                    self.stderr.write(self.style.ERROR(f"No employee with alias: {alias}"))
 
-                if isinstance(emp,(EmployeePending,Employee)):
-                    emps.append(config.EmployeeManager(emp))
-                else:
-                    for e in emp:
-                        emps.append(config.EmployeeManager(e))
-
-        return emps
+        return employees
