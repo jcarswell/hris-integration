@@ -22,7 +22,7 @@ class GetADUser(BaseExport):
                 logger.warning(f"caught error updating employee: {e}")
 
 def forward_func(apps, schema_editor):
-    GetADUser()
+    pass
 
 def reverse_func(apps, schema_editor):
     pass
