@@ -2,9 +2,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 from .apps import SettingsConfig
-from .exceptions import RenderError
+from .exceptions import RenderError, FixturesError, SettingsError, SetupError
 
-__all__ = ('SettingsConfig','setup','RenderError')
+__all__ = ('SettingsConfig','setup','RenderError','FixturesError','SettingsError','SetupError')
 
 def setup():
     """No setup tasks required for this module"""

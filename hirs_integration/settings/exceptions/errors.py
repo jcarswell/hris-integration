@@ -11,3 +11,15 @@ class RenderError(SettingsBaseError):
     """Thrown when the system encouters an error with rendering a
         portion of a page."""
     pass
+
+
+class FixturesError(SettingsBaseError):
+    """Error thrown during installation or retrival of fixtures"""
+
+
+class SettingsError(SettingsBaseError):
+    """Error thrown when there is an issue with the settings data"""
+
+
+class SetupError(SettingsBaseError,UnboundLocalError):
+    """Error thrown when there is an issue with the setup data"""

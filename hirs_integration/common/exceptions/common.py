@@ -6,15 +6,3 @@ from hris_integration.exceptions import HrisIntegrationBaseError
 
 class CommonError(HrisIntegrationBaseError):
     """The base exception for which all common exceptions are derived."""
-
-
-class FixturesError(CommonError):
-    """Error thrown during installation or retrival of fixtures"""
-
-
-class SettingsError(CommonError):
-    """Error thrown when there is an issue with the settings data"""
-
-
-class SetupError(CommonError,UnboundLocalError):
-    """Error thrown when there is an issue with the setup data"""
