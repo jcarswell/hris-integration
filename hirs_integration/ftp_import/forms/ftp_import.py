@@ -11,7 +11,6 @@ from settings.models import WordList
 from employee.models import Employee,EmployeeImport,Phone,Address
 from extras.models import Notification
 from organization.models import JobRole, Location, BusinessUnit
-from ftp_import.models import CsvPending
 from django.db.utils import IntegrityError
 from django.db.models import Q
 from common.functions import get_model_pk_name
@@ -44,7 +43,6 @@ class BaseImport():
        - Employee object is initialized either with the existing object or an empty object
        - The status field from the import is re-mapped to the expected model value
        - If this is a "new" Employee the save attribute is set
-       - csv_pending is initialized with the kwargs and employee id
     """
 
     mutable_employee = None
@@ -107,11 +105,6 @@ class BaseImport():
                 self.save_user = False
                 logger.info(f"Employee {self.employee} is already pending")
                 Stats.pending_users.append(f"{self.employee}")
-
-            if self.save_user:
-                self.csv_pending = CsvPending()
-                self.csv_pending.emp_id = self.employee_id
-                self.csv_pending.row_data = json.dumps(kwargs)
 
     def fuzz_pending(self) -> tuple:
         """
