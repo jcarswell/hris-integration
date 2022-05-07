@@ -5,7 +5,6 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": "C:\\Users\\jcarswell\\Python39-32\\python.exe",
 		"git.ignoreLimitWarning": true,
 		"files.associations": {
 			"**/*.html": "html",
