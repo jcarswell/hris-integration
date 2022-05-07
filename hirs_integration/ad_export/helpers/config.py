@@ -5,7 +5,7 @@ import logging
 
 
 from typing import Any
-from common.functions import ConfigurationManagerBase
+from settings.config_manager import ConfigurationManagerBase
 from django.utils.timezone import now
 from employee.models import Employee
 from employee.data_structures import EmployeeManager

@@ -7,8 +7,8 @@ from distutils.util import strtobool
 from copy import deepcopy
 from typing import Any
 from warnings import warn
-from hirs_admin.models import Setting
-from common.functions import ConfigurationManagerBase
+from settings.models import Setting
+from settings.config_manager import ConfigurationManagerBase
 from warnings import warn
 
 from .text_utils import safe

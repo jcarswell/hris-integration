@@ -4,7 +4,7 @@
 import logging
 
 from typing import Any
-from common.functions import ConfigurationManagerBase
+from settings.config_manager import ConfigurationManagerBase
 from warnings import warn
 
 from .settings_fields import *

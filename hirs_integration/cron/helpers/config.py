@@ -4,8 +4,8 @@
 import logging
 
 from typing import Any
-from hirs_admin.models import Setting
-from common.functions import ConfigurationManagerBase,FieldConversion
+from settings.models import Setting
+from settings.config_manager import ConfigurationManagerBase,FieldConversion
 from warnings import warn
 
 from .data_structures import CronJob
@@ -18,7 +18,6 @@ ITEM_STATE = 'status'
 ITEM_JOBS = (ITEM_ARGS,ITEM_PATH,ITEM_SCHEDULE,ITEM_STATE)
 
 logger = logging.getLogger('cron.config_helper')
-
 
 def get_jobs(keep_disabled:bool =False) -> dict:
     jobs = Setting.o2.get_by_path(GROUP_JOBS)
