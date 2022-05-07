@@ -9,11 +9,11 @@ def setup():
     """Imports the data folder in to the database"""
     import csv
     import os
-    from . import models
+    from .models import world_data
 
     for file in os.listdir(os.path.join(os.path.dirname(__file__), 'data')):
-        if file.endswith('.csv') and hasattr(models, file.split('.')[0]):
-            model = getattr(models, file.split('.')[0])
+        if file.endswith('.csv') and hasattr(world_data, file.split('.')[0]):
+            model = getattr(world_data, file.split('.')[0])
             with open(os.path.join(os.path.dirname(__file__), 'data', file), 'r') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
