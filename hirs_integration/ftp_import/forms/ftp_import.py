@@ -5,11 +5,11 @@ import datetime
 import logging
 import json
 
-from typing import AnyStr, Dict, List, Tuple
+from typing import Dict, List
 from django.utils import timezone
-from hirs_admin.models import WordList
+from settings.models import WordList
 from employee.models import Employee,EmployeeImport,Phone,Address
-from hirs_admin.models import Notifications
+from extras.models import Notification
 from organization.models import JobRole, Location, BusinessUnit
 from ftp_import.models import CsvPending
 from django.db.utils import IntegrityError
@@ -17,7 +17,7 @@ from django.db.models import Q
 from common.functions import get_model_pk_name
 
 from ftp_import.helpers import config
-from ftp_import.helpers.text_utils import int_or_str,clean_phone,fuzz_name,parse_date
+from ftp_import.helpers.text_utils import int_or_str,fuzz_name,parse_date
 from ftp_import.helpers.stats import Stats
 
 __all__ = ('form','PendingImport')
