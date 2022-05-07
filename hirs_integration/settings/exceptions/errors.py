@@ -3,11 +3,11 @@
 
 from hris_integration.exceptions import HrisIntegrationBaseError
 
-class HrisAdminBaseError(HrisIntegrationBaseError):
+class SettingsBaseError(HrisIntegrationBaseError):
     pass
 
 
-class RenderError(HrisAdminBaseError):
+class RenderError(SettingsBaseError):
     """Thrown when the system encouters an error with rendering a
         portion of a page."""
     pass

@@ -11,10 +11,10 @@ from distutils.util import strtobool
 from common.functions import FieldConversion
 
 from hirs_admin.models import Setting
-from hirs_admin import validators
+from hris_integration import validators
 from hris_integration import widgets
 
-logger = logging.getLogger("hirs_admin.fields")
+logger = logging.getLogger("settings.fields")
 
 def SettingFieldGenerator(setting:Setting):
     def clean_kwargs(kwargs:dict, extra:list =None) -> dict:
