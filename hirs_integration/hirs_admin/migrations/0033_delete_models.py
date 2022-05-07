@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('employee', '0003_migrate_data'),
         ('organization', '0001_initial'),
-        ('hirs_admin', '0031_updated_csv_settings'),
+        ('hirs_admin', '0032_pre_migration_employee'),
     ]
 
     operations = [
