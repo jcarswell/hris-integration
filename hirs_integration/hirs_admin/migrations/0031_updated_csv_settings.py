@@ -38,7 +38,7 @@ def forward_func(apps, schema_editor):
             setting.setting = new_path
             setting.save()
         except Setting.DoesNotExist:
-            logger.warn(f"Failed to update setting {old_path}")
+            logger.debug(f"Failed to update setting {old_path}")
 
 
 def reverse_func(apps, schema_editor):
