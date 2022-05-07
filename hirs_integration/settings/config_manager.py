@@ -1,12 +1,12 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
-from importlib import import_module
 from typing import Any
 
 from .helpers.field_manager import FieldConversion
 from .exceptions import SetupError, FixturesError, SettingsError
 from .validators import ValidationError
+from .models import Setting as S
 
 def configuration_fixtures(group:str,config:dict,Setting=None) -> None:
     """
@@ -21,7 +21,7 @@ def configuration_fixtures(group:str,config:dict,Setting=None) -> None:
     """
 
     if Setting is None:
-        Setting = import_module("settings","models").Setting
+        Setting = S
     
     def add_fixture(c,i,value:dict):
         PATH = group + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
@@ -57,7 +57,7 @@ class ConfigurationManagerBase:
     #: Setting: The currently loaded field.
     __setting__ = None
     #: models.Model: the Settings Model
-    Setting = import_module("settings","models").Setting
+    Setting = S
 
     def __init__(self) -> None:
         """
