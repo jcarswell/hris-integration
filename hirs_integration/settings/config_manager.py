@@ -6,9 +6,9 @@ from typing import Any
 from .helpers.field_manager import FieldConversion
 from .exceptions import SetupError, FixturesError, SettingsError
 from .validators import ValidationError
-from .models import Setting as S
+from .models import Setting
 
-def configuration_fixtures(group:str,config:dict,Setting=None) -> None:
+def configuration_fixtures(group:str,config:dict) -> None:
     """
     Parse the passed configuration into Settings objects.
 
@@ -20,9 +20,6 @@ def configuration_fixtures(group:str,config:dict,Setting=None) -> None:
     :type Setting: Setting
     """
 
-    if Setting is None:
-        Setting = S
-    
     def add_fixture(c,i,value:dict):
         PATH = group + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
 
@@ -57,7 +54,6 @@ class ConfigurationManagerBase:
     #: Setting: The currently loaded field.
     __setting__ = None
     #: models.Model: the Settings Model
-    Setting = S
 
     def __init__(self) -> None:
         """
@@ -107,10 +103,10 @@ class ConfigurationManagerBase:
 
         self.validate(category,item)
 
-        qs = self.Setting.o2.get_by_path(self.root_group,category,item)
+        qs = Setting.o2.get_by_path(self.root_group,category,item)
         if len(qs) == 0:
-            configuration_fixtures(self.root_group,self.fixtures,self.Setting)
-            qs = self.Setting.o2.get_by_path(self.root_group,category,item)
+            configuration_fixtures(self.root_group,self.fixtures)
+            qs = Setting.o2.get_by_path(self.root_group,category,item)
             if not len(qs):
                 raise FixturesError(f"installation of fixtures failed. Unable to load '{category}/{item}'")
         if len(qs) != 1:
