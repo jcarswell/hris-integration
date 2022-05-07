@@ -11,7 +11,7 @@ CAT_CONFIG = 'configuration'
 CAT_EXPORT = 'field_mappings'
 CAT_EMPLOYEE = 'export_config'
 
-CATAGORY_SETTINGS = (CAT_CONFIG,CAT_EXPORT,CAT_EMPLOYEE)
+CATEGORY_SETTINGS = (CAT_CONFIG,CAT_EXPORT,CAT_EMPLOYEE)
 
 ## Config Fields
 CONFIG_MODEL_FORM = 'model_export_form'

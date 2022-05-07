@@ -5,10 +5,11 @@ import logging
 import re
 
 from typing import Any
-from hirs_admin.data_structures import EmployeeManager
-from hirs_admin.models import Setting,Employee
 from django.utils.timezone import now
-from common.functions import ConfigurationManagerBase
+from employee.data_structures import EmployeeManager
+from employee.models import Employee
+from settings.models import Setting
+from settings.config_manager import ConfigurationManagerBase
 from warnings import warn
 
 from .settings_fields import * # Yes I hate this, deal with it!
@@ -17,13 +18,13 @@ logger = logging.getLogger('corepoint_export.config')
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
-    catagory_list = CATAGORY_SETTINGS
+    category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
 
-def get_config(catagory:str ,item:str) -> Any:
+def get_config(category:str ,item:str) -> Any:
     """Now deprecated use Config instead to manage the value"""
-    return Config()(catagory,item)
+    warn("get_config is deprecated and will be removed in a future version",DeprecationWarning)
+    return Config()(category,item)
 
 class CPEmployeeManager(EmployeeManager):
     @property
