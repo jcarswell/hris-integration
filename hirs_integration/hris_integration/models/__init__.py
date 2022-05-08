@@ -1,1 +1,1 @@
-from .base import ChangeLogMixin
+from .base import ChangeLogMixin, InactiveMixin

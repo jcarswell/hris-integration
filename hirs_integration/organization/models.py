@@ -3,21 +3,8 @@
 
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
-from hris_integration.models import ChangeLogMixin
+from hris_integration.models import ChangeLogMixin, InactiveMixin
 from warnings import warn
-
-
-class InactiveMixin(models.Model):
-    """Defines a common set of fields to enable de-activation and soft-deleting"""
-
-    class Meta:
-        abstract = True
-
-    #: bool: Whether the object is active or not
-    is_inactive = models.BooleanField(default=False)
-    #: bool: Whether the object is soft-deleted or not
-    is_deleted = models.BooleanField(default=False)
-
 
 class BusinessUnit(MPTTModel,ChangeLogMixin,InactiveMixin):
     """The Business Units of the organization and the active directory 
