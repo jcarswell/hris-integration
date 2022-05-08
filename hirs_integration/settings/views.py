@@ -15,7 +15,7 @@ from django.template import loader
 from .validators import ValidationError, setting_parse
 from . import models
 from .fields import SettingFieldGenerator
-from .forms import SettingForm
+from .forms.settings_base import Form
 from .exceptions import RenderError
 
 logger = logging.getLogger('settings.view')
@@ -111,7 +111,7 @@ class SettingSubView():
                             form_fields[id] = item
                             values[id] = self.fields[id].value
 
-                    self.items[group][cname]["_FORM_"] = SettingForm(data=values,
+                    self.items[group][cname]["_FORM_"] = Form(data=values,
                                                               field_order=sorted(form_fields.keys()),
                                                               **form_fields)
 
