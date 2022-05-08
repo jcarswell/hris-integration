@@ -6,5 +6,7 @@ class Migration(migrations.Migration):
         ('hirs_admin', '0031_updated_csv_settings'),
     ]
     operations = [
-        migrations.AlterModelTable('hirs_employee', 'employee'),
+        migrations.AlterModelTable(name='Employee', table='hirs_employee'),
+        migrations.AlterModelTable(name='Setting', table='hirs_setting'),
+        migrations.AlterModelTable(name="WordList", table="hirs_wordlist"),
     ]

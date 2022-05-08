@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
         ('employee', '0003_migrate_data'),
         ('organization', '0001_initial'),
         ('hirs_admin', '0032_pre_migration_employee'),
+        ('settings', '0001_initial'),
     ]
 
     operations = [
@@ -117,5 +118,11 @@ class Migration(migrations.Migration):
         ),
         migrations.DeleteModel(
             name='Location',
+        ),
+        migrations.DeleteModel(
+            name='Setting',
+        ),
+        migrations.DeleteModel(
+            name='WordList',
         ),
     ]

@@ -25,10 +25,10 @@ location_mapping = {
 def migrate_data(apps,schema_editor):
     b = apps.get_model('hirs_admin','BusinessUnit')
     l = apps.get_model('hirs_admin','Location')
-    j = apps.get_model('hirs_admin','Job')
+    j = apps.get_model('hirs_admin','JobRole')
     business_unit = apps.get_model('organization','BusinessUnit')
     location = apps.get_model('organization','Location')
-    job = apps.get_model('organization','Job')
+    job = apps.get_model('organization','JobRole')
     
     for o in b.objects.all():
         d = {}
@@ -52,8 +52,8 @@ def migrate_data(apps,schema_editor):
         job.objects.create(**d)
 
 def migrate_group_mapping(apps,schema_editor):
-    g = apps.get_model('hirs_admin','Group')
-    group = apps.get_model('organization','Group')
+    g = apps.get_model('hirs_admin','GroupMapping')
+    group = apps.get_model('organization','GroupMapping')
     for o in g.objects.all():
         group.objects.create()
 

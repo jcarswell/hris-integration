@@ -6,7 +6,7 @@ logger = logging.getLogger('employee.migrations')
 
 def migrate_employees(apps,schema_editor):
     orig_employee = apps.get_model('hirs_admin','Employee')
-    orig_employee_override = apps.get_model('hirs_admin','EmployeeOverride')
+    orig_employee_override = apps.get_model('hirs_admin','EmployeeOverrides')
     orig_address = apps.get_model('hirs_admin','EmployeeAddress')
     orig_phone = apps.get_model('hirs_admin','EmployeePhone')
     employee = apps.get_model('employee','Employee')
@@ -14,7 +14,7 @@ def migrate_employees(apps,schema_editor):
     address = apps.get_model('employee','Address')
     phone = apps.get_model('employee','Phone')
     location = apps.get_model('organization','Location')
-    jobs = apps.get_model('organization','Job')
+    jobs = apps.get_model('organization','JobRole')
 
     for e in orig_employee.objects.all():
         emp = {
@@ -106,7 +106,7 @@ def migrate_pending(apps,schema_editor):
     employee = apps.get_model('employee','Employee')
     employee_import = apps.get_model('employee','EmployeeImport')
     location = apps.get_model('organization','Location')
-    jobs = apps.get_model('organization','Job')
+    jobs = apps.get_model('organization','JobRole')
 
     for e in orig_employee_pending.objects.all():
         emp = {

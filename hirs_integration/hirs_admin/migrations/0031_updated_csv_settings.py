@@ -24,17 +24,17 @@ def forward_func(apps, schema_editor):
     for old_path, new_path in SETTING_MIGRATIONS.items():
         if new_path is None:
             try:
-                setting = Setting.objects.get(setting=old_path)
+                setting = Setting.o2.get(setting=old_path)
                 setting.delete()
             except Setting.DoesNotExist:
                 pass
         else:
             try:
                 if len(new_path.split('/')) == 1:
-                    for setting in Setting.objects.filter(setting__startswith=old_path):
+                    for setting in Setting.o2.filter(setting__startswith=old_path):
                         setting.setting = "/".join([new_path, setting.setting.split('/')[-1]])
                         setting.save()
-                setting = Setting.objects.get(setting=old_path)
+                setting = Setting.o2.get(setting=old_path)
                 setting.setting = new_path
                 setting.save()
             except Setting.DoesNotExist:
