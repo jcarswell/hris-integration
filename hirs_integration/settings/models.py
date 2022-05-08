@@ -59,8 +59,8 @@ class Setting(models.Model):
     #: bool: Whether the value is encrypted in the database or stored in plaintext
     hidden = models.BooleanField(default=False)
 
-    o2 = SettingsManager()
-    objects = o2
+    objects = SettingsManager()
+    o2 = objects
 
     @property
     def value(self) -> str:
