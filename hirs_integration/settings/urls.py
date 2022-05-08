@@ -9,13 +9,13 @@ from . import views
 from . import forms
 
 urlpatterns = [
-    path('settings/config/',
+    path('config/',
          views.Settings.as_view(),
          name='settings'),
-    path('settings/patterns/',
+    path('patterns/',
          ListView.as_view(form=forms.WordList),
          name='patterns'),
-    path('settings/patterns/<int:id>/',
+    path('patterns/<int:id>/',
          FormView.as_view(form=forms.WordList),
          name='patterns_edit'),
 ]
