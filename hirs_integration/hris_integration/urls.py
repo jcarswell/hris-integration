@@ -15,6 +15,7 @@ from organization import urls as organization_urls
 from smtp_client import urls as smtp_client_urls
 from ftp_import import urls as ftp_import_urls
 from user_applications import urls as user_applications_urls
+from settings import urls as settings_urls
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -41,6 +42,7 @@ urlpatterns = [
     path('smtp/', include(smtp_client_urls)),
     path('import/', include(ftp_import_urls)),
     path('software/', include(user_applications_urls)),
+    path('settings/', include(settings_urls)),
 
     #API
     re_path(r'^api/swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=86400),
