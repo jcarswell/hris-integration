@@ -64,9 +64,9 @@ def setup(service=False,username:str ='admin',email:str ='admin@example.com',pas
         try:
             importlib.import_module(app).setup()
         except ImportError:
-            pass
+            logger.debug(f'Unable to import {app}')
         except AttributeError:
-            pass
+            logger.debug(f'No setup function for {app}')
 
     from ftp_import.csv import CsvImport
     ftp_headers = Path(settings.BASE_DIR, 'ftp_csv_headers.csv')
