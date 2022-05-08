@@ -55,7 +55,7 @@ def setup(service=False,username:str ='admin',email:str ='admin@example.com',pas
     try:
         logger.debug(f'creating admin user {username} with email {email} and password {password}')
         pw = create_admin(username,email,password)
-        logger.info('Admin password: ',pw)
+        logger.info(f'Admin password: {pw}')
     except ValueError:
         logger.warn('Admin user already exists')
         pw = None
