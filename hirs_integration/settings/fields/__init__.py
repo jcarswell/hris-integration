@@ -8,11 +8,11 @@ from django.forms.fields import (CharField,RegexField,BooleanField,ChoiceField,
                                  IntegerField,FloatField,DecimalField,DateField,
                                  DateTimeField)
 from distutils.util import strtobool
-from common.functions import FieldConversion
-
-from hirs_admin.models import Setting
-from hris_integration import validators
+from common import validators
 from hris_integration import widgets
+
+from settings.helpers.field_manager  import FieldConversion
+from settings.models import Setting
 
 logger = logging.getLogger("settings.fields")
 
