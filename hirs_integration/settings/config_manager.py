@@ -37,8 +37,8 @@ def configuration_fixtures(group:str,config:dict) -> None:
         return new
 
     for category,items in config.items():
-        for item,config in items.items():
-            add_fixture(category,item,config)
+        for item,iconfig in items.items():
+            add_fixture(category,item,iconfig)
 
 class ConfigurationManagerBase:
     """The base class for accessing user configurable settings."""
