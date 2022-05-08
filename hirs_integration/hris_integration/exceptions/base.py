@@ -3,3 +3,6 @@
 
 class HrisIntegrationBaseError(Exception):
     """The base exception for which all hris_integration error are derived."""
+
+class SetupError(HrisIntegrationBaseError):
+    """Something went wrong during setup."""
