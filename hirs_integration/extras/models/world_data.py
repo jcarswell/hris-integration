@@ -36,7 +36,7 @@ class State(models.Model):
     data_targets = [
         ('name', 'name', str),
         ('state_code', 'code', str),
-        ('country_id', 'country', get_country),
+        ('country_code', 'country', get_country),
         ('type', 'type', str),        
     ]
 
