@@ -4,7 +4,7 @@
 from django.utils.translation import gettext_lazy as _t
 from hris_integration.forms import Form,MetaBase
 
-from hirs_admin import models
+from settings import models
 
 class WordList(Form):
     name = _t("Word Expansion Map")
