@@ -3,7 +3,8 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
   <!-- Brand Logo -->
   <a href="/" class="brand-link">
-    <img src="{{ site.logo |default:"https://static.evrazplace.com/logos/REAL-WHITE-RGB.png" }}" alt="The Regina Exhibition Association Ltd Logo" class="brand-image">
+    <img src="{{ site.logo |default:"https://static.evrazplace.com/logos/REAL-WHITE-RGB.png" }}"
+         alt="The Regina Exhibition Association Ltd Logo" class="brand-image">
     <span class="brand-text font-weight-light">{{ site.name | default:"HRIS Sync" }}</span>
   </a>
 
@@ -12,7 +13,8 @@
     <!-- Sidebar user panel (optional) -->
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
       <div class="image">
-        <img src="{% static 'default-user.jpg' %}" class="img-circle elevation-2" alt="User Image">
+        <img src="{% static 'default-user.jpg' %}" class="img-circle elevation-2"
+             alt="User Image">
       </div>
       <div class="info">
         <a href="#" class="d-block">
@@ -20,17 +22,15 @@
           </a>
       </div>
     </div>
-
     <!-- Sidebar Menu -->
     <nav class="mt-2">
-      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-        <!-- Add icons to the links using the .nav-icon class
-              with font-awesome or any other icon font library -->
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+          data-accordion="false">
         <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
             <i class="nav-icon fas fa-users"></i>
             <p>
-              Employeess and Roles
+              Employees
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
@@ -42,15 +42,15 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="{% url 'pending' %}" class="nav-link">
+              <a href="{% url 'employee_imported_list' %}" class="nav-link">
                 <i class="far fa-user nav-icon"></i>
-                <p>Pending Employees</p>
+                <p>Synced Employees</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="{% url 'jobs' %}" class="nav-link">
-                <i class="fas fa-hat-cowboy-side nav-icon"></i>
-                <p>Job Roles</p>
+              <a href="{% url 'import_pending' %}" class="nav-link">
+                <i class="fas fa-file-import"></i>
+                <p>Pending Import</p>
               </a>
             </li>
           </ul>
@@ -59,11 +59,17 @@
           <a role="button" class="nav-link">
             <i class="nav-icon fas fa-briefcase"></i>
             <p>
-              Business Admin
+              Organization Setup
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'jobs' %}" class="nav-link">
+                <i class="fas fa-hat-cowboy-side nav-icon"></i>
+                <p>Job Roles</p>
+              </a>
+            </li>
             <li class="nav-item">
               <a href="{% url 'business_units' %}" class="nav-link">
                 <i class="fas fa-sitemap nav-icon"></i>
@@ -72,35 +78,42 @@
             </li>
             <li class="nav-item">
               <a href="{% url 'location' %}" class="nav-link">
-                <i class="far fa-building nav-icon"></i>
+                <i class="fas fa-building nav-icon"></i>
                 <p>Locations</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'group_mappings' %}" class="nav-link">
+                <i class="fas fa-globe nav-icon"></i>
+                <p>AD Group Mapping</p>
               </a>
             </li>
           </ul>
         </li>
         <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
-            <i class="nav-icon fas fa-sync-alt"></i>
+            <i class="nav-icon fas fa-address-card"></i>
             <p>
-              Import/Export
+              User Applications
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="{% url 'pending_import' %}" class="nav-link">
-                <i class="fas fa-exclamation-circle nav-icon"></i>
-                <p>Pending Import</p>
+              <a href="{% url 'software' %}" class="nav-link">
+                <i class="fas fa-compact-disc nav-icon"></i>
+                <p>Applications</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="{% url 'actions' %}" class="nav-link">
-                <i class="fas fa-meteor nav-icon"></i>
-                <p>Actions</p>
+              <a href="{% url 'accounts' %}" class="nav-link">
+                <i class="fas fa-address-card nav-icon"></i>
+                <p>Instances</p>
               </a>
             </li>
           </ul>
         </li>
+        {% block extra_nav %}{% endblock %}
         <li class="nav-item has-treeview menu-open">
           <a role="button" class="nav-link">
             <i class="nav-icon fas fa-cog"></i>
@@ -109,18 +122,11 @@
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
-          {% block extra_nav %}{% endblock %}
           <ul class="nav nav-treeview">
             <li class="nav-item">
               <a href="{% url 'settings' %}" class="nav-link">
                 <i class="fas fa-cogs nav-icon"></i>
                 <p>Settings</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="{% url 'group_mappings' %}" class="nav-link">
-                <i class="fas fa-globe"></i>
-                <p>AD Group Mappings</p>
               </a>
             </li>
             <li class="nav-item">
