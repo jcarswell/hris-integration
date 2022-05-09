@@ -17,7 +17,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOG_DIR = Path(str(BASE_DIR) + '\\logs\\')
+LOG_DIR = Path(BASE_DIR, "logs")
 VERSION = '0.3.0-dev'
 
 if os.getenv('CONFIG_PATH'):
@@ -107,7 +107,7 @@ STATICFILES_DIRS = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [Path(BASE_DIR,'/templates')],
+        'DIRS': [Path(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
