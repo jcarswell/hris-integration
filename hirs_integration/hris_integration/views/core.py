@@ -97,7 +97,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         try:
             pk = kwargs['id']
         except KeyError:
-            pk = None
+            pk = 0
 
         self._model = self.form._meta.model
         self.fields = self.form.base_fields.keys()
