@@ -9,8 +9,16 @@ class Command(BaseCommand):
     requires_system_checks = []
     
     def add_arguments(self,parser):
-        parser.add_argument('--service',action='store_true',help="install the cron job service")
+        parser.add_argument('--service',action='store_true',
+                            help="Install the cron job service")
+        parser.add_argument('--username',type=str,
+                            help="Admin account username. Defaults to 'admin'")
+        parser.add_argument('--email',type=str,
+                            help="Admin account email. Defaults to 'admin@example.com'")
+        parser.add_argument('--password',type=str,
+                            help="Admin account password. Defaults to randomly generated password")
     
     def handle(self, *args, **kwargs):
         from setup import django
-        django.setup(kwargs['service'])
+        setup_args = {k:v for k,v in kwargs.items() if v is not None and k in ['service','username','email','password']}
+        django.setup(**setup_args)
