@@ -30,7 +30,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('accounts/login/',
-         auth_views.LoginView.as_view(template_name='hirs_admin/login.html'),
+         auth_views.LoginView.as_view(template_name='login.html'),
          name='login'),
     path('accounts/logout/',
          auth_views.LogoutView.as_view(),
