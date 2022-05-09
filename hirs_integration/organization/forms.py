@@ -58,13 +58,15 @@ class JobRole(Form):
         }
         disabled = ('id',)
         classes = {
-            'bu':'selectpicker',
+            'business_unit':'selectpicker',
         }
         required = ('id','name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['bu'].widget.attrs.update({'data-live-search': 'true','data-style':'bg-white'})
+        self.fields['business_unit'].widget.attrs.update({
+                                                'data-live-search': 'true',
+                                                'data-style':'bg-white'})
 
 
 class BusinessUnit(Form):
