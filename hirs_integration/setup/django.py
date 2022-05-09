@@ -13,16 +13,18 @@ from django.core.management import call_command
 
 logger = logging.getLogger('Django Setup Module')
 
-def create_admin(username:str ='admin',email:str ='admin@example.com',password:str =None) -> str:
+def create_admin(username:str ='admin',email:str ='admin@example.com',
+                 password:str =None) -> str:
     username = username or 'admin'
     email = email or 'admin@example.com'
 
     qs_email = User.objects.filter(email=email)
     qs_user = User.objects.filter(username=username)
-    if len(qs_email) +len(qs_user) == 0:
-        logger.debug(f'Creating admin user {username} with email {email}')
-        pw = password or "".join(choice(string.ascii_letters + string.digits) for char in range(24))
-        logger.debug('with password: ',pw)
+    if len(qs_email) + len(qs_user) == 0:
+        logger.debug(f"Creating admin user {username} with email {email}")
+        pw = password or "".join(choice(string.ascii_letters + string.digits)
+                                 for char in range(24))
+        logger.debug(f"with password: {pw}")
         User.objects.create_superuser(username, email=email, password=pw)
         return pw
     else:
@@ -30,11 +32,12 @@ def create_admin(username:str ='admin',email:str ='admin@example.com',password:s
                          "already exists")
    
 
-def setup(service=False,username:str ='admin',email:str ='admin@example.com',password:str = None):
+def setup(service=False,username:str ='admin',
+          email:str ='admin@example.com',password:str = None):
     """Once a config file has been created, this function will setup run all the needed
-    functions to ensure that the system is ready to roll. This starts by running the migrations,
-    creating an admin user, then running any additions configuration needed for the
-    installed apps.
+    functions to ensure that the system is ready to roll. This starts by running the
+    migrations, creating an admin user, then running any additions configuration needed
+    for the installed apps.
 
     This can be executed as a management command, and run as part of the initail setup or
     as part of the upgrade process.
@@ -53,7 +56,8 @@ def setup(service=False,username:str ='admin',email:str ='admin@example.com',pas
     call_command('collectstatic',interactive=False)
 
     try:
-        logger.debug(f'creating admin user {username} with email {email} and password {password}')
+        logger.debug(f"Creating admin user {username} with email {email}"
+                     f"and password {password}")
         pw = create_admin(username,email,password)
         logger.info(f'Admin password: {pw}')
     except ValueError:
