@@ -16,7 +16,7 @@ logger = logging.getLogger('hris_integration.views.core')
 
 class ListView(TemplateResponseMixin, LoggedInView):
     form = None
-    template_name = 'hirs_admin/base_list.html'
+    template_name = 'base/base_list.html'
     http_method_names = ['get', 'head', 'options', 'trace']
 
     def setup(self, request, *args, **kwargs):
@@ -41,7 +41,7 @@ class ListView(TemplateResponseMixin, LoggedInView):
         context = self.get_context(**kwargs)
 
         #theres no pk in the request so return the list view
-        self.template_name = 'hirs_admin/base_list.html'
+        self.template_name = 'base/base_list.html'
 
         labels = []
         for field in self.fields:
@@ -80,7 +80,7 @@ class ListView(TemplateResponseMixin, LoggedInView):
 
 class FormView(TemplateResponseMixin, LoggedInView):
     form = None
-    template_name = 'hirs_admin/base_edit.html'
+    template_name = 'base/base_edit.html'
     enable_delete = True
     edit_postfix = '_edit'
 
@@ -126,7 +126,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
 
         if self._form == None:
             #theres no pk in the request so return the list view
-            self.template_name = 'hirs_admin/base_list.html'
+            self.template_name = 'base/base_list.html'
 
             labels = []
             for field in self.fields:

@@ -15,7 +15,7 @@ class Index(TemplateResponseMixin, LoggedInView):
 class JobActions(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Job Actions'
-    template_name = 'actions.html'
+    template_name = 'hirs_admin/actions.html'
 
     def get(self, request, *args, job:str =None, **kwargs):
         return self.render_to_response(self.get_context(**kwargs))

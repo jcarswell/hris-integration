@@ -23,7 +23,7 @@ def handler500(request,exception:str = None):
     return Error(request,500,exception)
 
 def Error(request,code:int,detail:str,template:str =None):
-    base_template = "hirs_admin/error.html"
+    base_template = "error.html"
     if code == "303":
         return permission_denied(request,detail)
     if template:

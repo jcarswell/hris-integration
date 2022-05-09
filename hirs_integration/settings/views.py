@@ -119,7 +119,7 @@ class Settings(TemplateResponseMixin, LoggedInView):
     """User Configurable Settings"""
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Settings'
-    template_name = 'settings.html'
+    template_name = 'settings/settings.html'
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):

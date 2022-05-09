@@ -23,7 +23,7 @@ logger = logging.getLogger('ftp_import.view')
 class PendingEmployeeImportView(TemplateResponseMixin, LoggedInView):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     page_title = 'Pending Employee Imports'
-    template_name = 'employee_import.html'
+    template_name = 'ftp_import/employee_import.html'
 
     @method_decorator(csrf_protect)
     def dispatch(self, request, *args, **kwargs):
