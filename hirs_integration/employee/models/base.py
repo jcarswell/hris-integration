@@ -71,6 +71,10 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
     class Meta:
         abstract = True
 
+    class MPTTMeta:
+        parent_attr = 'manager'
+        order_insertion_by = ['first_name']
+
     #: datetime: The start date of the employee.
     start_date = models.DateField(default=timezone.now)
     #: datetime: The date and time the record was last updated. this cannot use auto_now_add
