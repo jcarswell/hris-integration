@@ -125,16 +125,16 @@ class Employee(EmployeeBase):
         for x in range(0,10):
             upn = UPNValidator(instance.first_name,instance.last_name,x)
             upn.clean()
-            if upn.upn == instance.email_alias:
+            if upn.username == instance.email_alias:
                 return
             if upn.is_valid():
                 try:
-                    e = cls.objects.get(email_alias=upn.upn)
+                    e = cls.objects.get(email_alias=upn.username)
                     if e.id == instance.id:
                         return
 
                 except Employee.DoesNotExist:
-                    instance.email_alias = upn.upn
+                    instance.email_alias = upn.username
                     return
 
         raise ValueError("Could not generate a unique username")
