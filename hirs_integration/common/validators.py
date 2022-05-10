@@ -16,7 +16,9 @@ logger = logging.getLogger('common.validators')
 
 ## Dynamically import all validators from installed apps
 __ALL_APPS__ = []
-for app in INSTALLED_APPS:
+
+apps = INSTALLED_APPS + ["hris_integration"]
+for app in apps:
     try:
         module = importlib.import_module(app + ".validators")
         if hasattr(module,'__all__'):
