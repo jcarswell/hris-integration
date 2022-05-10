@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic.base import TemplateResponseMixin
 from hris_integration.views import LoggedInView
 from common.functions import model_to_choices, pk_to_name, name_to_pk
-from hris_integration.widgets import SelectPicker
+from extras.widgets import SelectPicker
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.http import HttpResponseBadRequest,JsonResponse

@@ -3,7 +3,7 @@
 
 from django.utils.translation import gettext_lazy as _t
 from hris_integration.forms import Form
-from hris_integration import widgets
+from extras import widgets
 from active_directory import validators
 from common.functions import model_to_choices
 

@@ -6,7 +6,7 @@ import logging
 from django import forms
 from common.functions import model_to_choices,name_to_pk
 from django.utils.safestring import mark_safe
-from hris_integration import widgets
+from extras import widgets
 from hris_integration.forms import Form,MetaBase
 from django.utils.translation import gettext_lazy as _t
 from organization.models import JobRole,Location

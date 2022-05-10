@@ -9,7 +9,7 @@ from django.forms.fields import (CharField,RegexField,BooleanField,ChoiceField,
                                  DateTimeField)
 from distutils.util import strtobool
 from common import validators
-from hris_integration import widgets
+from extras import widgets
 
 from settings.helpers.field_manager  import FieldConversion
 from settings.models import Setting

@@ -4,7 +4,7 @@
 from django.utils.translation import gettext_lazy as _t
 from django.forms.widgets import Select
 from hris_integration.forms import Form,MetaBase
-from hris_integration import widgets
+from extras import widgets
 from active_directory import validators
 
 from . import models
