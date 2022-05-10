@@ -84,7 +84,7 @@ class SettingSubView():
             for category in catagories:
                 if category[0]+category[-1] != "__":
                     try:
-                        t = loader.get_template('hirs_admin/components/form.html')
+                        t = loader.get_template('components/form.html')
                     except loader.TemplateDoesNotExist as e:
                         raise RenderError("Unable to load form template",e)
                     c = {
