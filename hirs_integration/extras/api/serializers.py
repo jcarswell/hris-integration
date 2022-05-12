@@ -6,7 +6,7 @@ from rest_framework.serializers import ModelSerializer
 
 from extras import models
 
-class S2Countries(Select2Serializer):
+class S2CountriesSerializer(Select2Serializer):
     class Meta(Select2Meta):
         model = models.Country
         field_id = 'id'
