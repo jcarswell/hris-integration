@@ -8,14 +8,7 @@ from django.contrib.auth import views as auth_views
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-
-from hirs_admin import urls as hris_admin_urls
-from employee import urls as employee_urls
-from organization import urls as organization_urls
-from smtp_client import urls as smtp_client_urls
-from ftp_import import urls as ftp_import_urls
-from user_applications import urls as user_applications_urls
-from settings import urls as settings_urls
+from .api.views import APIRootView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -36,13 +29,13 @@ urlpatterns = [
          auth_views.LogoutView.as_view(),
          name='logout'),
 
-    path('', include(hris_admin_urls)),
-    path('organization/', include(organization_urls)),
-    path('employee/', include(employee_urls)),
-    path('smtp/', include(smtp_client_urls)),
-    path('import/', include(ftp_import_urls)),
-    path('software/', include(user_applications_urls)),
-    path('settings/', include(settings_urls)),
+    path('', include('hirs_admin.urls')),
+    path('organization/', include('organization.urls')),
+    path('employee/', include('employee.urls')),
+    path('smtp/', include('smtp_client.urls')),
+    path('import/', include('ftp_import.urls')),
+    path('software/', include('user_applications.urls')),
+    path('settings/', include('settings.urls')),
 
     #API
     re_path(r'^api/swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=86400),
@@ -50,7 +43,9 @@ urlpatterns = [
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=86400),
          name='swagger'),
     re_path(r'^api/redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='swagger-schema'),
+    path('api/',APIRootView.as_view(), name='api-root'),
     path('api/employee/', include('employee.api.urls')),
+    path('api/extras/', include('extras.api.urls')),
     path('api/organization/', include('organization.api.urls')),
     path('api/import/', include('ftp_import.api.urls')),
     path('api/software/', include('user_applications.api.urls')),
