@@ -3,10 +3,20 @@
 
 from hris_integration.api.viewsets import Select2ViewSet
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.routers import APIRootView
 from rest_framework.permissions import DjangoModelPermissions, IsAdminUser, IsAuthenticated
 
 from . import serializers
 from employee import models
+
+class EmployeeRootView(APIRootView):
+    def get_view_name(self):
+        return 'Employee'
+
+
+class EmployeeS2RootView(APIRootView):
+    def get_view_name(self):
+        return '_S2_Employee'
 
 
 class S2PhoneView(Select2ViewSet):
