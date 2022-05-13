@@ -6,8 +6,9 @@ from hris_integration.api.routers import HrisRouter
 from . import views
 
 router = HrisRouter()
+router.APIRootView = views.FTPImportRootView
 
 router.register(r'file-tracking', views.FileTrackingView)
 
-app_name = 'ftp_import'
+app_name = 'ftp_import_api'
 urlpatterns = router.urls
