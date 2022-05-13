@@ -20,7 +20,7 @@ class SMTPS2RootView(APIRootView):
 
 class S2EmailTemplateView(Select2ViewSet):
     queryset = models.EmailTemplates.objects.all()
-    serializer = serializers.S2EmailTemplateSerializer
+    serializer_class = serializers.S2EmailTemplateSerializer
 
 
 class EmailTemplateView(ModelViewSet):

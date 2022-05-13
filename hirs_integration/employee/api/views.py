@@ -21,29 +21,29 @@ class EmployeeS2RootView(APIRootView):
 
 class S2PhoneView(Select2ViewSet):
     queryset = models.Phone.objects.all()
-    serializer = serializers.S2PhoneSerializer
+    serializer_class = serializers.S2PhoneSerializer
 
 
 class PhoneView(ModelViewSet):
     queryset = models.Phone.objects.all()
     serializer_class = serializers.PhoneSerializer
-    permission_classes = [DjangoModelPermissions,IsAuthenticated]
+    permission_classes = [DjangoModelPermissions|IsAuthenticated]
 
 
 class S2AddressView(Select2ViewSet):
     queryset = models.Address.objects.all()
-    serializer = serializers.S2AddressSerializer
+    serializer_class = serializers.S2AddressSerializer
 
 
 class AddressView(ModelViewSet):
     queryset = models.Address.objects.all()
     serializer_class = serializers.AddressSerializer
-    permission_classes = [DjangoModelPermissions,IsAuthenticated]
+    permission_classes = [DjangoModelPermissions|IsAuthenticated]
 
 
 class S2EmployeeView(Select2ViewSet):
     queryset = models.Employee.objects.all()
-    serializer = serializers.S2EmployeeSerializer
+    serializer_class = serializers.S2EmployeeSerializer
 
 
 class EmployeeView(ModelViewSet):
@@ -54,7 +54,7 @@ class EmployeeView(ModelViewSet):
 
 class S2EmployeeImportView(Select2ViewSet):
     queryset = models.EmployeeImport.objects.all()
-    serializer = serializers.S2EmployeeImportSerializer
+    serializer_class = serializers.S2EmployeeImportSerializer
 
 
 class EmployeeImportView(ModelViewSet):

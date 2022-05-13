@@ -20,7 +20,7 @@ class ExtrasS2RootView(APIRootView):
 
 class S2Countries(Select2ViewSet):
     queryset = models.Country.objects.all()
-    serializer = serializers.S2CountriesSerializer
+    serializer_class = serializers.S2CountriesSerializer
 
 
 class CountriesView(ReadOnlyModelViewSet):
@@ -30,7 +30,7 @@ class CountriesView(ReadOnlyModelViewSet):
 
 class S2States(Select2ViewSet):
     queryset = models.State.objects.all()
-    serializer = serializers.S2StatesSerializer
+    serializer_class = serializers.S2StatesSerializer
 
 
 class StatesView(ReadOnlyModelViewSet):

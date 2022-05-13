@@ -21,7 +21,7 @@ class OrganizationS2RootView(APIRootView):
 
 class S2BusinessUnitView(Select2ViewSet):
     queryset = models.BusinessUnit.objects.filter(is_deleted=False)
-    serializer = serializers.S2BusinessUnitSerializer
+    serializer_class = serializers.S2BusinessUnitSerializer
 
 
 class BusinessUnitView(ModelViewSet):
@@ -31,7 +31,7 @@ class BusinessUnitView(ModelViewSet):
 
 class S2JobRoleView(Select2ViewSet):
     queryset = models.JobRole.objects.filter(is_deleted=False)
-    serializer = serializers.S2JobRoleSerializer
+    serializer_class = serializers.S2JobRoleSerializer
 
 
 class JobRoleView(ModelViewSet):
@@ -41,7 +41,7 @@ class JobRoleView(ModelViewSet):
 
 class S2LocationView(Select2ViewSet):
     queryset = models.Location.objects.filter(is_deleted=False)
-    serializer = serializers.S2LocationSerializer
+    serializer_class = serializers.S2LocationSerializer
 
 
 class LocationView(ModelViewSet):
