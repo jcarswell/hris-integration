@@ -16,6 +16,6 @@ class Select2ViewSet(ModelViewSet):
         """Return the permissions for the viewset."""
 
         if self.action == 'list':
-            return [DjangoModelPermissions]
+            return [DjangoModelPermissions()]
         else:
-            return [NoAccess]
+            return [NoAccess()]
