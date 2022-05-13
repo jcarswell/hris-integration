@@ -1,46 +1,58 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
-from rest_framework.routers import Route,DynamicRoute,SimpleRouter
+from rest_framework.routers import Route,DefaultRouter
+import logging
 
-class S2Router(SimpleRouter):
+logger = logging.getLogger("api.router")
+
+class HrisRouter(DefaultRouter):
+
+    def register(self, prefix:str, viewset, basename:str =None):
+        """use _ in the name instead of -"""
+
+        if basename is None:
+            basename = self.get_default_basename(viewset)
+
+        basename = basename.replace('-','_')
+
+        logger.debug(f"Registering ({prefix}, {viewset}, {basename})")
+        self.registry.append((prefix, viewset, basename))
+
+        # invalidate the urls cache
+        if hasattr(self, '_urls'):
+            del self._urls
+
+
+class S2Router(HrisRouter):
     """A simplified router for select2 ajax calls. based on the Django REST Framework
     readonly router example."""
-
-    #: str: The leading prefix to use for the select2 ajax calls.
-    prefix = '_s2'
 
     routes = [
         Route(
             url=r'^{prefix}$',
             mapping={'get': 'list'},
-            name='{basename}-list',
+            name='s2_{basename}-list',
             detail=False,
             initkwargs={'suffix': 'List'}
         ),
-        Route(
-            url=r'^{prefix}/{lookup}$',
-            mapping={'get': 'retrieve'},
-            name='{basename}-detail',
-            detail=True,
-            initkwargs={'suffix': 'Detail'}
-        ),
-        DynamicRoute(
-            url=r'^{prefix}/{lookup}/{url_path}$',
-            name='{basename}-{url_name}',
-            detail=True,
-            initkwargs={}
-        )
     ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prefix = getattr(kwargs, "prefix", "_s2")
 
-    def register(self, prefix, viewset, base_name=None):
+    def register(self, prefix:str, viewset, basename:str =None):
         """Register a viewset with a prefix."""
 
-        if base_name is None:
-            base_name = 's2-' + self.get_default_basename(viewset)
+        if basename is None:
+            basename = self.get_default_basename(viewset)
 
-        self.registry.append((f"{self.prefix}/{prefix}", viewset, base_name))
+        basename = basename.replace('-','_')
+
+        logger.debug(f"Registering ({prefix}, {viewset}, {basename})")
+        self.registry.append((prefix, viewset, basename))
+
+        # invalidate the urls cache
+        if hasattr(self, '_urls'):
+            del self._urls
