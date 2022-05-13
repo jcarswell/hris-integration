@@ -4,9 +4,20 @@
 from hris_integration.api.viewsets import Select2ViewSet
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
+from rest_framework.routers import APIRootView
 
 from . import serializers
 from user_applications import models
+
+class UserApplicationsRootView(APIRootView):
+    def get_view_name(self):
+        return 'User Applications'
+
+
+class UserApplicationsS2RootView(APIRootView):
+    def get_view_name(self):
+        return '_S2_User_Applications'
+
 
 class S2Software(Select2ViewSet):
     queryset = models.Software.objects.all()
