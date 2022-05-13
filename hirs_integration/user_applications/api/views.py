@@ -16,7 +16,7 @@ class UserApplicationsRootView(APIRootView):
 
 class UserApplicationsS2RootView(APIRootView):
     def get_view_name(self):
-        return '_S2_User_Applications'
+        return 'User Applications Select2'
 
 
 class S2Software(Select2ViewSet):

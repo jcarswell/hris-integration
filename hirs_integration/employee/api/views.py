@@ -16,7 +16,7 @@ class EmployeeRootView(APIRootView):
 
 class EmployeeS2RootView(APIRootView):
     def get_view_name(self):
-        return '_S2_Employee'
+        return 'Employee Select2'
 
 
 class S2PhoneView(Select2ViewSet):

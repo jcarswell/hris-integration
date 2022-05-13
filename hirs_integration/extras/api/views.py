@@ -15,7 +15,7 @@ class ExtrasRootView(APIRootView):
 
 class ExtrasS2RootView(APIRootView):
     def get_view_name(self):
-        return '_S2_Extras'
+        return 'Extras Select2'
 
 
 class S2Countries(Select2ViewSet):
