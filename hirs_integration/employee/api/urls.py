@@ -6,7 +6,7 @@ from hris_integration.api.routers import HrisRouter
 from . import views
 
 router = HrisRouter()
-router.APIRootView = views.EmployeeS2RootView
+router.APIRootView = views.EmployeeRootView
 
 router.register(r'phone_number', views.PhoneView)
 router.register(r'address', views.AddressView)
