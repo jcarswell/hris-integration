@@ -51,6 +51,7 @@ class S2EmployeeImportSerializer(Select2Serializer):
         model = models.EmployeeImport
         field_id = 'id'
         field_text = ['id','first_name','last_name']
+        field_text_format = "{id}: {first_name} {last_name}"
 
 
 class  EmployeeImportSerializer(ModelSerializer):
