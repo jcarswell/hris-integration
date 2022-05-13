@@ -3,10 +3,21 @@
 
 from hris_integration.api.viewsets import Select2ViewSet
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.routers import APIRootView
 
 from . import serializers
 
 from organization import models
+
+class OrganizationRootView(APIRootView):
+    def get_view_name(self):
+        return 'Organization'
+
+
+class OrganizationS2RootView(APIRootView):
+    def get_view_name(self):
+        return 'Organization Select2'
+
 
 class S2BusinessUnitView(Select2ViewSet):
     queryset = models.BusinessUnit.objects.filter(is_deleted=False)
