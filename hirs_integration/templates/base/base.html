@@ -50,7 +50,7 @@
     </div>
 {% endblock body %}
 {% block modal %}
-<div class="modal d-none" tabindex="-1" role="dialog" id="modal-default">
+<div class="modal" tabindex="-1" role="dialog" id="modal-default" style="display: none;">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -62,6 +62,7 @@
       {% block modal_body %}{% endblock%}
     </div>
   </div>
+</div>
 {% endblock %}
 {% block base_js %}
 {% include 'components/scripts.html' %}
