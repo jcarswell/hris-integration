@@ -37,11 +37,11 @@ class EmployeeState(models.Model):
     @property
     def status(self):
         if self.state and self.leave:
-            return self.STAT_LEA
+            return self.STATE_LEA
         elif self.state:
-            return self.STAT_ACT
+            return self.STATE_ACT
         else:
-            return self.STAT_TERM
+            return self.STATE_TERM
 
     @status.setter
     def status(self,new_status):
@@ -50,15 +50,15 @@ class EmployeeState(models.Model):
             self.leave = not bool(new_status)
             self.state = bool(new_status)
         elif isinstance(new_status,str) and new_status.lower() in [self.STATE_ACT,self.STATE_LEA,self.STATE_TERM]:
-            if new_status.lower() == self.STAT_LEA:
+            if new_status.lower() == self.STATE_LEA:
                 logger.debug(f"Setting to Leave")
                 self.leave = True
                 self.state = True
-            elif new_status.lower() == self.STAT_TERM:
+            elif new_status.lower() == self.STATE_TERM:
                 logger.debug(f"Setting to Terminated")
                 self.leave = True
                 self.state = False
-            elif new_status.lower() == self.STAT_ACT:
+            elif new_status.lower() == self.STATE_ACT:
                 logger.debug(f"Setting to Active")
                 self.leave = False
                 self.state = True
