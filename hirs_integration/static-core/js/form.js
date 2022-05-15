@@ -103,7 +103,7 @@ function getCookie(c_name)
             c_start = c_start + c_name.length + 1;
             c_end = document.cookie.indexOf(";", c_start);
             if (c_end == -1) c_end = document.cookie.length;
-            return unescape(document.cookie.substring(c_start,c_end));
+            return decodeURI(document.cookie.substring(c_start,c_end));
         }
     }
     return "";
