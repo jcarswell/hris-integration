@@ -15,21 +15,20 @@ class Software(Form):
 
     class Meta:
         model = models.Software
-        fields = ['name','description','licensed','mapped_group','max_users','employees']
-        disabled = ('employees')
+        fields = ['name','description','licensed','mapped_group','max_users']
         labels = {
             'name': _t('Name'),
             'description': _t('Description'),
             'licensed': _t('Licensed'),
             'mapped_group': _t('Mapped Group'),
             'max_users': _t('Max Users'),
-            'employees': _t('Active Employees'),
         }
         widgets = {
             'licensed': widgets.CheckboxInput(attrs={"class":"form-control"}),
             'mapped_group': widgets.SelectPicker(choices=validators.ad_groups(),
                                                  attrs={'data-live-search':'true','data-style':'bg-white'}),                         
         }
+
 
 class EmployeeTrackedAccount(Form):
     name = _t("Employee Tracked Accounts")
