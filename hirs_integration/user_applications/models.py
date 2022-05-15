@@ -61,7 +61,7 @@ class EmployeeTrackedAccount(ChangeLogMixin):
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         if not isinstance(instance.software, Software):
-            raise ValidationError("employee must be an instance of Employee")
+            raise ValidationError("software must be set")
 
         if instance.software.licensed or instance.software.max_users != 0:
             if (len(EmployeeTrackedAccount.objects.filter(software=instance.software)) 
