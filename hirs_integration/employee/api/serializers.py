@@ -43,7 +43,8 @@ class EmployeeSerializer(ModelSerializer):
     class Meta:
         model = models.Employee
         fields = '__all__'
-        read_only_fields = ['id','is_imported','is_export_ad','guid','password']
+        read_only_fields = ['id','is_imported','is_export_ad','guid',
+                            'password','employee_id']
 
 
 class S2EmployeeImportSerializer(Select2Serializer):
