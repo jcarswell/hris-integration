@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
 from django.utils.translation import gettext_lazy as _t
-from hris_integration.forms import Form
+from hris_integration.forms import Form,MetaBase
 from extras import widgets
 from active_directory import validators
 from common.functions import model_to_choices
@@ -13,7 +13,7 @@ class Software(Form):
     name = _t("Software")
     list_fields = ['name','licensed','max_users']
 
-    class Meta:
+    class Meta(MetaBase):
         model = models.Software
         fields = ['name','description','licensed','mapped_group','max_users']
         labels = {
@@ -34,7 +34,7 @@ class EmployeeTrackedAccount(Form):
     name = _t("Employee Tracked Accounts")
     list_fields = ['employee','software','expire_date']
 
-    class Meta:
+    class Meta(MetaBase):
         model = models.EmployeeTrackedAccount
         fields = ['employee','software','notes','expire_date']
         disabled = ('employee','software')
