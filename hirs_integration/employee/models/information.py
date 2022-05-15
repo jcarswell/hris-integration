@@ -64,15 +64,15 @@ class Address(ChangeLogMixin):
     #: str: The street address
     street1 = models.CharField(max_length=128)
     #: str: The street address
-    street2 = models.CharField(max_length=128)
+    street2 = models.CharField(max_length=128,blank=True,null=True)
     #: str: The street address
-    street3 = models.CharField(max_length=128)
+    street3 = models.CharField(max_length=128,blank=True,null=True)
     #: str: The city
     city = models.CharField(max_length=128)
     #: str: The province
     province = models.CharField(max_length=128)
     #: str: The postal code
-    postal_code = models.CharField(max_length=10)
+    postal_code = models.CharField(max_length=10,blank=True,null=True)
     #: str: The country
     country = models.CharField(max_length=128)
     #: bool: True if this is the primary address
