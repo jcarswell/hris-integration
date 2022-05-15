@@ -52,20 +52,27 @@ function do_delete() {
   .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 }
 function serialize_form(f) {
-  d=$(f).serializeArray();
-  $("input:disabled",f).each(function(i,e) {
-    d.push({name:e.name,value:e.value});
-  })
-  $("input[type=checkbox]:not(:checked)",f).each(function(i,e) {
-    d.push({name:e.name,value:"off"});
-  })
-  return d;
+  var ret = []
+  $(f).find('input').each(function(i,e) {
+    if (e.type == "checkbox" || e.type == "radio") {
+      ret.push({name:e.name,value:e.checked});
+    } else if (e.type == "select" || e.type == "select-multiple") {
+      var selected = []
+      $(e).find('option:selected').each(function(e,i) {
+        selected.push(e.value);
+      });
+      ret.push({name:e.name,value:selected});
+    } else {
+      ret.push({name:e.name,value:e.value});
+    }
+  });
+  return ret
 }
 function serialize_json(f) {
   var ret = {};
   $(f).find('input').each(function(i,e) {
     if (e.type == "checkbox" || e.type == "radio") {
-      if (e.checked) {ret[e.name] = true;} else {ret[e.name] = false;}
+      ret[e.name] = e.checked;
     } else if (e.type == "select" || e.type == "select-multiple") {
       ret[e.name] = [];
       $(e).find('option:selected').each(function(e,i) {
