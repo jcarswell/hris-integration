@@ -36,6 +36,30 @@ function createAlert() {
 </div>`
   $('#alert-container').html(alertBody);
 }
+function alert_success(msg) {
+  createAlert()
+  $(".alert").addClass('alert-success');
+  $("#alert-inner").html("<strong>Success:</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
+function alert_success(msg,head) {
+  createAlert()
+  $(".alert").addClass('alert-success');
+  $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
+function alert_error(msg) {
+  createAlert()
+  $(".alert").addClass('alert-danger');
+  $("#alert-inner").html("<strong>Error:</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
+function alert_error(msg,head) {
+  createAlert()
+  $(".alert").addClass('alert-danger');
+  $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
 function is_new() {
   if (isNaN(get_id())) {return undefined;}
   else if (get_id() > 0) {return false;}
@@ -91,7 +115,7 @@ function serialize_json(f) {
       delete ret[k];
     }
   });
-  return JSON.stringify(ret);
+  return ret
 }
 function getCookie(c_name)
 {
