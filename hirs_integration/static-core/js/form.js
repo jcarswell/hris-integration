@@ -10,12 +10,10 @@ function doneProcess(ret_data,focus) {
       ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
     }
     if (Array.isArray(ret_data['errors'])) {
-      $('#alert-inner').html(ret_data['errors'].join('<br>'));
+      alert_error(ret_data['errors'].join('<br>'));
     } else if (typeof ret_data.errors === "string") {
-      $('#alert-inner').html(ret_data['errors']);
+      alert_error(ret_data['errors']);
     }
-    $('.alert').addClass("alert-danger");
-    $('#alert-container').removeClass('d-none')
   } else {
     $('button:submit',focus).removeClass('btn-primary').removeClass('btn-danger').addClass('btn-success');
     $('#alert-container').addClass("d-none");
@@ -23,7 +21,7 @@ function doneProcess(ret_data,focus) {
 }
 function errorProcess(jqXHR,status,error,focus) {
   $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-  createAlert(error,status)
+  alert_error(error,status)
 }
 function createAlert() {
   var alertBody = `<div class="alert" role="alert">
