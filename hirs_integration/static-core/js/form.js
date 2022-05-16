@@ -23,9 +23,7 @@ function doneProcess(ret_data,focus) {
 }
 function errorProcess(jqXHR,status,error,focus) {
   $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
-  $('#alert-container').removeClass('d-none');
-  $(".alert").addClass('alert-danger');
-  $("#alert-inner").html("<strong>"+status+":</strong> "+error);
+  createAlert(error,status)
 }
 function createAlert() {
   var alertBody = `<div class="alert" role="alert">
@@ -57,6 +55,18 @@ function alert_error(msg) {
 function alert_error(msg,head) {
   createAlert()
   $(".alert").addClass('alert-danger');
+  $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
+function alert_warn(msg) {
+  createAlert()
+  $(".alert").addClass('alert-warning');
+  $("#alert-inner").html("<strong>Error:</strong><br>"+msg);
+  $('#alert-container').removeClass('d-none');
+}
+function alert_warn(msg,head) {
+  createAlert()
+  $(".alert").addClass('alert-warning');
   $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
   $('#alert-container').removeClass('d-none');
 }
