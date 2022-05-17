@@ -32,41 +32,28 @@ function createAlert() {
 </div>`
   $('#alert-container').html(alertBody);
 }
-function alert_success(msg) {
-  createAlert()
-  $(".alert").addClass('alert-success');
-  $("#alert-inner").html("<strong>Success:</strong><br>"+msg);
-  $('#alert-container').removeClass('d-none');
-}
 function alert_success(msg,head) {
+  if (head === undefined) {head = "Success:";}
   createAlert()
   $(".alert").addClass('alert-success');
   $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
   $('#alert-container').removeClass('d-none');
-}
-function alert_error(msg) {
-  createAlert()
-  $(".alert").addClass('alert-danger');
-  $("#alert-inner").html("<strong>Error:</strong><br>"+msg);
-  $('#alert-container').removeClass('d-none');
+  setTimeout(function(){$('#alert-container').addClass('d-none');},3500);
 }
 function alert_error(msg,head) {
+  if (head === undefined) {head = "Error:";}
   createAlert()
   $(".alert").addClass('alert-danger');
   $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
-  $('#alert-container').removeClass('d-none');
-}
-function alert_warn(msg) {
-  createAlert()
-  $(".alert").addClass('alert-warning');
-  $("#alert-inner").html("<strong>Error:</strong><br>"+msg);
   $('#alert-container').removeClass('d-none');
 }
 function alert_warn(msg,head) {
+  if (head === undefined) {head = "Warning:";}
   createAlert()
   $(".alert").addClass('alert-warning');
   $("#alert-inner").html("<strong>"+head+"</strong><br>"+msg);
   $('#alert-container').removeClass('d-none');
+  setTimeout(function(){$('#alert-container').addClass('d-none');},10000);
 }
 function is_new() {
   if (isNaN(get_id())) {return undefined;}
