@@ -99,10 +99,11 @@ function serialize_json(f,base_data) {
     }
   });
   $(f).find('select').each(function(i,e) {
-    ret[e.name] = [];
-    $(e).find(':selected').each(function(i,e) {
-      ret[e.name].push(e.value);
+    var selected = []
+    $(e).find(':selected').each(function(i,s) {
+      selected.push(s.value);
     });
+    ret[e.name] = selected;
   });
   Object.keys(ret).forEach(function(k) {
     if (k.endsWith("-id")) {
