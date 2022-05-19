@@ -75,15 +75,16 @@ function serialize_form(f) {
   $(f).find('input').each(function(i,e) {
     if (e.type == "checkbox" || e.type == "radio") {
       ret.push({name:e.name,value:e.checked});
-    } else if (e.type == "select" || e.type == "select-multiple") {
-      var selected = []
-      $(e).find('option:selected').each(function(e,i) {
-        selected.push(e.value);
-      });
-      ret.push({name:e.name,value:selected});
     } else {
       ret.push({name:e.name,value:e.value});
     }
+  });
+  $(f).find('select').each(function(i,e) {
+    var selected = []
+    $(e).find(':selected').each(function(e,i) {
+      selected.push(e.value);
+    });
+    ret.push({name:e.name,value:selected});
   });
   return ret
 }
@@ -93,14 +94,15 @@ function serialize_json(f,base_data) {
   $(f).find('input').each(function(i,e) {
     if (e.type == "checkbox" || e.type == "radio") {
       ret[e.name] = e.checked;
-    } else if (e.type == "select" || e.type == "select-multiple") {
-      ret[e.name] = [];
-      $(e).find('option:selected').each(function(e,i) {
-        ret[e.name].push(e.value);
-      });
     } else {
       ret[e.name] = e.value;
     }
+  });
+  $(f).find('select').each(function(i,e) {
+    ret[e.name] = [];
+    $(e).find(':selected').each(function(i,e) {
+      ret[e.name].push(e.value);
+    });
   });
   Object.keys(ret).forEach(function(k) {
     if (k.endsWith("-id")) {
