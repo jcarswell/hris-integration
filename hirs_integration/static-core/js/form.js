@@ -87,8 +87,9 @@ function serialize_form(f) {
   });
   return ret
 }
-function serialize_json(f) {
+function serialize_json(f,base_data) {
   var ret = {};
+  if (base_data !== undefined) {ret = JSON.parse(JSON.stringify(base_data));}
   $(f).find('input').each(function(i,e) {
     if (e.type == "checkbox" || e.type == "radio") {
       ret[e.name] = e.checked;
