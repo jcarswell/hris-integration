@@ -21,18 +21,22 @@ class ExtrasS2RootView(APIRootView):
 class S2Countries(Select2ViewSet):
     queryset = models.Country.objects.all()
     serializer_class = serializers.S2CountriesSerializer
+    filterset_fields = ['name','code']
 
 
 class CountriesView(ReadOnlyModelViewSet):
     queryset = models.Country.objects.all()
     serializer_class = serializers.CountriesSerializer
+    filterset_fields = ['name','code']
 
 
 class S2States(Select2ViewSet):
     queryset = models.State.objects.all()
     serializer_class = serializers.S2StatesSerializer
+    filterset_fields = ['country','type','name','code']
 
 
 class StatesView(ReadOnlyModelViewSet):
     queryset = models.State.objects.all()
     serializer_class = serializers.StatesSerializer
+    filterset_fields = ['country','type','name','code']

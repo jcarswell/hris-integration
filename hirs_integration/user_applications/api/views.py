@@ -22,17 +22,20 @@ class UserApplicationsS2RootView(APIRootView):
 class S2Software(Select2ViewSet):
     queryset = models.Software.objects.all()
     serializer_class = serializers.s2SoftwareSerializer
+    filterset_fields = ['name','licensed']
 
 class Software(ModelViewSet):
     queryset = models.Software.objects.all()
     serializer_class = serializers.SoftwareSerializer
     read_only_fields = ['id']
+    filterset_fields = ['name','licensed']
     permission_classes = [DjangoModelPermissions|IsAuthenticated]
 
 
 class S2EmployeeTrackedAccount(Select2ViewSet):
     queryset = models.EmployeeTrackedAccount.objects.all()
     serializer_class = serializers.S2EmployeeTrackedAccountSerializer
+    filterset_fields = ['software','employee','expire_date']
 
 
 class EmployeeTrackedAccount(ModelViewSet):
@@ -40,3 +43,4 @@ class EmployeeTrackedAccount(ModelViewSet):
     serializer_class = serializers.EmployeeTrackedAccountSerializer
     read_only_fields = ['id']
     permission_classes = [DjangoModelPermissions|IsAuthenticated]
+    filterset_fields = ['software','employee','expire_date']
