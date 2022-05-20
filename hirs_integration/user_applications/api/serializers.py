@@ -24,7 +24,7 @@ class S2EmployeeTrackedAccountSerializer(Select2Serializer):
     class Meta(Select2Meta):
         model = models.EmployeeTrackedAccount
         field_id = 'id'
-        field_text = ['username']
+        field_text = ['software']
 
 
 class EmployeeTrackedAccountSerializer(ModelSerializer):
