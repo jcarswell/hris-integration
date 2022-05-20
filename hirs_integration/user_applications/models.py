@@ -35,7 +35,7 @@ class Software(ChangeLogMixin):
         return self.name
 
 
-class EmployeeTrackedAccount(ChangeLogMixin):
+class Account(ChangeLogMixin):
     """A tracking record for an employee and software. On save if the software is licensed
     the post_save method will append the employee to the software's employees field. during
     the pre_save method the availability of licenses will be checked, if the license limit
@@ -43,13 +43,15 @@ class EmployeeTrackedAccount(ChangeLogMixin):
     """
 
     class Meta:
-        db_table = 'employee_tracked_account'
+        db_table = 'software-account'
 
     id = models.AutoField(primary_key=True)
     #: Employee: The employee linked to this tracking instance.
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,
+                                 blank=False, null=False)
     #: Software: The software related to the tracking instance.
-    software = models.ForeignKey(Software, on_delete=models.CASCADE)
+    software = models.ForeignKey(Software, on_delete=models.CASCADE,
+                                 blank=False, null=False)
     #: str: Notes related to this specific tracking instance.
     notes = models.TextField(blank=True)
     #: date: The date that the license/allocation expires.    
@@ -60,11 +62,11 @@ class EmployeeTrackedAccount(ChangeLogMixin):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
-        if not isinstance(instance.software, Software):
-            raise ValidationError("software must be set")
 
-        if instance.software.licensed or instance.software.max_users != 0:
-            if (len(EmployeeTrackedAccount.objects.filter(software=instance.software)) 
+        if (hasattr(instance,'software') 
+            and isinstance(instance.software,Software) 
+            and (instance.software.licensed or instance.software.max_users != 0)):
+            if (len(Account.objects.filter(software=instance.software)) 
                 >= instance.software.max_users):
                 raise ValidationError("Software already has maximum number of users")
 
@@ -75,5 +77,5 @@ class EmployeeTrackedAccount(ChangeLogMixin):
                 instance.software.employees.add(instance.employee)
                 instance.software.save()
 
-pre_save.connect(EmployeeTrackedAccount.pre_save, sender=EmployeeTrackedAccount)
-post_save.connect(EmployeeTrackedAccount.post_save, sender=EmployeeTrackedAccount)
+#pre_save.connect(Account.pre_save, sender=Account)
+post_save.connect(Account.post_save, sender=Account)

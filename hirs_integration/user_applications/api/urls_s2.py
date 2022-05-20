@@ -9,7 +9,7 @@ router_s2 = S2Router()
 router_s2.APIRootView = views.UserApplicationsS2RootView
 
 router_s2.register(r'software', views.S2Software)
-router_s2.register(r'accounts', views.S2EmployeeTrackedAccount)
+router_s2.register(r'accounts', views.S2Account)
 
 app_name = "user_applications_s2"
 urlpatterns = router_s2.urls

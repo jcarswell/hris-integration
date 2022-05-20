@@ -32,15 +32,15 @@ class Software(ModelViewSet):
     permission_classes = [DjangoModelPermissions|IsAuthenticated]
 
 
-class S2EmployeeTrackedAccount(Select2ViewSet):
-    queryset = models.EmployeeTrackedAccount.objects.all()
-    serializer_class = serializers.S2EmployeeTrackedAccountSerializer
+class S2Account(Select2ViewSet):
+    queryset = models.Account.objects.all()
+    serializer_class = serializers.S2AccountSerializer
     filterset_fields = ['software','employee','expire_date']
 
 
-class EmployeeTrackedAccount(ModelViewSet):
-    queryset = models.EmployeeTrackedAccount.objects.all()
-    serializer_class = serializers.EmployeeTrackedAccountSerializer
+class Account(ModelViewSet):
+    queryset = models.Account.objects.all()
+    serializer_class = serializers.AccountSerializer
     read_only_fields = ['id']
     permission_classes = [DjangoModelPermissions|IsAuthenticated]
     filterset_fields = ['software','employee','expire_date']

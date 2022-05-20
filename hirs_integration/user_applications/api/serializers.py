@@ -20,15 +20,16 @@ class SoftwareSerializer(ModelSerializer):
         read_only_fields = ['id']
 
 
-class S2EmployeeTrackedAccountSerializer(Select2Serializer):
+class S2AccountSerializer(Select2Serializer):
     class Meta(Select2Meta):
-        model = models.EmployeeTrackedAccount
+        model = models.Account
         field_id = 'id'
         field_text = ['software']
 
 
-class EmployeeTrackedAccountSerializer(ModelSerializer):
+class AccountSerializer(ModelSerializer):
     class Meta:
-        model = models.EmployeeTrackedAccount
+        model = models.Account
         fields = '__all__'
         read_only_fields = ['id']
+        depth = 1

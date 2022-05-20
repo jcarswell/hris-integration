@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='EmployeeTrackedAccount',
+            name='Account',
             fields=[
                 ('updated_on', models.DateTimeField(auto_now_add=True, null=True)),
                 ('created_on', models.DateTimeField(auto_now=True, null=True)),
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ('software', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user_applications.software')),
             ],
             options={
-                'db_table': 'employee_tracked_account',
+                'db_table': 'software-account',
             },
         ),
     ]

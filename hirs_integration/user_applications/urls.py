@@ -14,9 +14,9 @@ urlpatterns = [
          ListView.as_view(form=forms.Software),
          name='software'),
     path('accounts/<int:id>/',
-         FormView.as_view(form=forms.EmployeeTrackedAccount),
+         FormView.as_view(form=forms.Account),
          name='accounts_edit'),
     path('accounts/',
-         ListView.as_view(form=forms.EmployeeTrackedAccount),
+         ListView.as_view(form=forms.Account),
          name='accounts'),
 ]

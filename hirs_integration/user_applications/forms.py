@@ -30,12 +30,12 @@ class Software(Form):
         }
 
 
-class EmployeeTrackedAccount(Form):
-    name = _t("Employee Tracked Accounts")
+class Account(Form):
+    name = _t("Employee Accounts")
     list_fields = ['employee','software','expire_date']
 
     class Meta(MetaBase):
-        model = models.EmployeeTrackedAccount
+        model = models.Account
         fields = ['employee','software','notes','expire_date']
         disabled = ('employee','software')
         labels = {

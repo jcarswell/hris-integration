@@ -9,7 +9,7 @@ router = HrisRouter()
 router.APIRootView = views.UserApplicationsRootView
 
 router.register(r'software', views.Software)
-router.register(r'accounts', views.EmployeeTrackedAccount)
+router.register(r'accounts', views.Account)
 
 app_name = "user_applications_api"
 urlpatterns = router.urls
