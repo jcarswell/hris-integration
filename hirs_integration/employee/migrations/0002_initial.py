@@ -60,4 +60,12 @@ class Migration(migrations.Migration):
             name='employee',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='employee.employee'),
         ),
+        migrations.AlterUniqueTogether(
+            name='address',
+            unique_together={('employee', 'label')},
+        ),
+        migrations.AlterUniqueTogether(
+            name='phone',
+            unique_together={('employee', 'label')},
+        ),
     ]

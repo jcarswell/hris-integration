@@ -12,6 +12,7 @@ class Phone(ChangeLogMixin):
 
     class Meta:
         db_table = 'phone_number'
+        unique_together = ('employee','label')
 
     #: Employee: The employee this phone number belongs to
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
@@ -56,6 +57,7 @@ class Address(ChangeLogMixin):
 
     class Meta:
         db_table = 'address'
+        unique_together = ('employee','label')
 
     #: Employee: The employee this address belongs to
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
