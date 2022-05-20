@@ -23,7 +23,7 @@ class S2AddressSerializer(Select2Serializer):
     class Meta(Select2Meta):
         model = models.Address
         field_id = 'id'
-        field_text = ['address','city','province']
+        field_text = ['street1','city','province']
 
 
 class AddressSerializer(ModelSerializer):
