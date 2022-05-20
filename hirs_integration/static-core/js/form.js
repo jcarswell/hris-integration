@@ -86,6 +86,9 @@ function serialize_form(f) {
     });
     ret.push({name:e.name,value:selected});
   });
+  $(f).find('textarea').each(function(i,e) {
+    ret.push({name:e.name,value:e.value});
+  });
   return ret
 }
 function serialize_json(f,base_data) {
@@ -104,6 +107,9 @@ function serialize_json(f,base_data) {
       selected.push(s.value);
     });
     ret[e.name] = selected;
+  });
+  $(f).find('textarea').each(function(i,e) {
+    ret[e.name] = e.value;
   });
   Object.keys(ret).forEach(function(k) {
     if (k.endsWith("-id")) {
