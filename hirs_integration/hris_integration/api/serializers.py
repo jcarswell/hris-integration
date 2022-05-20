@@ -29,7 +29,8 @@ class Select2Serializer(ModelSerializer):
             logger.debug(f"formatting output with fields: {fields}")
             ret["text"] = self.Meta.field_text_format.format(**fields)
         else:
-            ret["text"] = " ".join([getattr(instance, field) for field in self.Meta.field_text])
+            ret["text"] = " ".join([str(getattr(instance, field))
+                                    for field in self.Meta.field_text])
         return ret
 
     def get_field_names(self, declared_fields, info):
