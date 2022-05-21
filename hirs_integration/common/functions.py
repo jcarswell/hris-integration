@@ -13,7 +13,12 @@ def pk_to_name(pk:int) -> str:
     return f"id_{pk}"
 
 def name_to_pk(name:str) -> int:
-    return int(name[3:])
+    if isinstance(name,int):
+        return name
+    elif isinstance(name,str):
+        return int(name.replace("id_",""))
+    else:
+        raise TypeError(f"Expected str got \"{name.__class__.__name__}\"")
 
 def model_to_choices(data,none:bool =False):
     output = []
