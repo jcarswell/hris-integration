@@ -1,99 +1,152 @@
 const phoneTemplate = (phone) => {
-    return `<div class="row mb-1 phone-field" id="phone-${phone.id}">
-      <input type="hidden" name="id" value="${phone.id}"/>
-      <input type="text" name="label" value="${phone.label}" class="col-md-4"/>
-      <input type="text" name="number" value="${phone.number}"
-      onkeypress="return is_num_key(event,this)" class="col-md-4"/>
-      <input type="radio" name="phone-primary" class="col-md-2"/>
-      <div class="col-md-2 phone-actions d-flex flex-row">
-        <button type="button" class="btn btn-danger" onclick="delete_phone(${phone.id})"
-          name="delete">
-          <ion-icon name="trash"></ion-icon></button>
-      </div>
+    return `<div class="tab-pane fade" id="phone-${phone['id']}"
+    role="tabpanel" aria-labelledby="phone-${phone['id']}-tab">
+      <form id="phone-form-${phone['id']}" class="phone-form">
+        <input type="hidden" name="id" value="${phone['id']}"/>
+        <div class="form-row">
+          <div class="form-group col-md-5">
+            <label for="label">Label</label>
+            <input type="text" name="label" value="${phone['label']}" class="form-control"
+                   required/>
+          </div>
+          <div class="form-group col-md-5">
+            <label for="number">Number</label>
+            <input type="text" name="number" value="${phone['number']}" required
+                   onkeypress="return is_num_key(event,this)" class="form-control"/>
+          </div>
+          <div class="form-group col-md-2">
+            <label for="primary">Primary</label>
+            <input type="checkbox" name="primary" class="form-control"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <button type="submit" class="btn btn-primary mb-2">Update</button>
+          <button type="button" class="btn btn-danger mb-2" onclick="delete_phone(${phone['id']})">
+            <ion-icon name="trash"></ion-icon></i></button>
+        </div>
+      </form>
     </div>`
 };
-const phoneUpdateButton = (id) => {
-    return `<button type="button" class="btn btn-primary" onclick="update_phone(${id})" name="update"> 
-      <ion-icon name="add"></ion-icon></button>`
+const phoneTabTemplate = (phone) => {
+    return `<li class="nav-item">
+    <a class="nav-link" id="phone-${phone['id']}-tab" data-toggle="tab" role="tab"
+      aria-controls="phone-${phone['id']}" href="#phone-${phone['id']}" aria-selected="true">
+      ${phone['label']}</a>
+    </li>`
 };
-const phoneNewTemplate = `<div class="row mb-1 phone-field" id="phone-0">
-      <input type="hidden" name="id" value="0"/>
-      <input type="text" name="label" class="col-md-4"/>
-      <input type="text" name="number" onkeypress="return is_num_key(event,this)" 
-        class="col-md-4"/>
-      <div class="col-md-2 phone-actions d-flex flex-row">
-        <button type="button" class="btn btn-primary" onclick="update_phone(0)" name="update">
-          <ion-icon name="add"></ion-icon></button>
-      </div>
-    </div>`;
+const phoneFormBase = {
+    'label': '',
+    'phone': '',
+    'primary': false
+};
 const addressTemplate = (address) => {
-    return `<div class="tab-pane fade show active" id="address-${address.id}" role="tabpanel" 
-    aria-labelledby="address-new-tab">
-      <form id="address-form-${address.id}">
+    return `<div class="tab-pane fade" id="address-${address['id']}"
+    role="tabpanel" aria-labelledby="address-${address['id']}-tab">
+      <form id="address-form-${address['id']}" class="address-form">
+        <input type="hidden" name="id" value="${address['id']}"/>
         <div class="form-group">
           <label for="label">Label</label>
-          <input type="text" class="form-control" name="label" value="${address.label}">
+          <input type="text" class="form-control" name="label" value="${address['label']}"
+                 required>
         </div>
         <div class="form-group">
-            <label for="address-primary">Primary</label>
-            <input type="radio" name="address-primary" class="col-md-2"/>
+            <label for="primary">Primary</label>
+            <input type="checkbox" name="primary" class="col-md-2"/>
         <div class="form-group">
           <label for="address">Address</label>
-          <input type="text" class="form-control" name="street1" value="${address.street1}">
-          <input type="text" class="form-control" name="street2" value="${address.street2}">
-          <input type="text" class="form-control" name="street3" value="${address.street3}">
+          <input type="text" class="form-control" name="street1" 
+                 value="${address['street1']}" required>
+          <input type="text" class="form-control" name="street2" 
+                 value="${address['street2']}">
+          <input type="text" class="form-control" name="street3" 
+                 value="${address['street3']}">
         </div>
         <div class="form-group">
           <label for="city">City</label>
-          <input type="text" class="form-control" name="city" value="${address.city}">
+          <input type="text" class="form-control" name="city" value="${address['city']}"
+                 required>
         </div>
         <div class="form-group">
-          <label for="state">Province or State</label>
-          <input type="text" class="form-control" name="province" value="${address.city}">
+          <label for="state">State or Province</label>
+          <input type="text" class="form-control" name="province" 
+                 value="${address['province']}" required>
         </div>
         <div class="form-group">
           <label for="postal_code">Postal Code or ZIP</label>
           <input type="text" class="form-control" name="postal_code" 
-            value="${address.postal_code}">
+            value="${address['postal_code']}" required>
         </div>
         <div class="form-group">
           <label for="country">Country</label>
-          <input type="text" class="form-control" name="country" value="${address.country}">
+          <input type="text" class="form-control" name="country"
+                 value="${address['country']}" required>
+        </div>
+        <div class="row">
+          <button type="submit" class="btn btn-primary mb-2">Update</button>
+          <button type="button" class="btn btn-danger mb-2" onclick="delete_address(${address['id']})">
+            <ion-icon name="trash"></ion-icon></i></button>
         </div>
       </form>
-      <div class="row">
-        <button type="submit" class="btn btn-primary mb-2" onclick="update_address(${address.id})">
-          Update</button>
-        <button type="button" class="btn btn-danger mb-2" onclick="delete_address(${address.id})">
-          <ion-icon name="trash"></ion-icon></i></button>
-      </div>
     </div>`
+};
+const addressTabTemplate = (address) => {
+    return `<li class="nav-item">
+    <a class="nav-link" id="address-${address['id']}-tab" data-toggle="tab" role="tab"
+      aria-controls="address-${address['id']}" href="#address-${address['id']}" aria-selected="true">
+      ${address['label']}</a>
+    </li>`
+};
+const addressFormBase = {
+    'label': '',
+    'street1': '',
+    'street2': '',
+    'street3': '',
+    'city': '',
+    'province': '',
+    'postal_code': '',
+    'country': '',
+    'primary': false
 };
 const softwareTemplate = (software) => {
     return `<div class="modal-body">
-    <form id="software-form-${software.id}">
-        <input type="hidden" name="id" value="${software.id}"/>
+    <form id="software-form-${software['id']}">
+        <input type="hidden" name="id" value="${software['id']}"/>
         <div class="form-group">
             <label for="software">Software</label>
-            <input type="text" class="form-control" name="software"
-                value="${software.software}" disabled>
+            <select name="software" class="form-control" disabled>
+                <option value="${software['software']['id']}" selected>
+                    ${software['software']['name']}</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="notes">Notes</label>
-            <textarea class="form-control" name="notes" rows="3">${software.notes}</textarea>
+            <textarea class="form-control" name="notes" rows="3">${software['notes']}</textarea>
         </div>
         <div class="form-group">
             <label for="expiry_date">Expiry</label>
             <input type="date" class="form-control" name="expiry_date">
         </div>
     </form>
+    </div>
+    <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
+    <button type="button" class="btn btn-primary" onclick="update_software(this)">Save</button>
+    <button type="button" class="btn btn-danger" onclick="delete_software(this)">Delete</button>
     </div>`
 };
+const softwareListTemplate = (software) => {
+    return `<button id="software-${software['id']}" type="button"
+                    class="list-group-item list-group-item-action"
+                    onclick="edit_software(${software['id']})">
+                    ${software['software']['name']}
+            </button>`
+}
 const softwareNewTemplate = `<div class="modal-body">
     <form id="software-form-0">
         <div class="form-group">
             <label for="software">Software</label>
-            <select class="form-control" name="software" required></select>
+            <select class="form-control" name="software" required>
+            </select>
         </div>
         <div class="form-group">
             <label for="notes">Notes</label>
@@ -104,19 +157,26 @@ const softwareNewTemplate = `<div class="modal-body">
             <input type="date" class="form-control" name="expiry_date">
         </div>
     </form>
-    </div>`;
-const modalActionsSoftware = `<div class="modal-footer">
+    </div>
+    <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
     <button type="button" class="btn btn-primary" onclick="update_software(this)">Save</button>
-    <button type="button" class="btn btn-danger" onclick="delete_software(this)">Delete</button>
     </div>`;
-function valid_photo_check() {
-    var photo = $("input[type=file]")[0]
-    if (photo.files.length == 0 && photo.checkValidity === false) {
+const softwareFormBase = {
+    'software': '',
+    'notes': '',
+    'expiry_date': ''
+};
+const selectTemplate = (row) => {
+    return `<option value="${row['id']}">${row['text']}</option>`;
+}
+function valid_photo_check(e) {
+    var photo = e.currentTarget;
+    if (photo.files.length == 0 && photo.checkValidity() === false) {
         return false;
     }
     if (photo.files[0].size > 5000000) {
-        $(photo).closest("form-group").find(".invalid-feedback")
+        $(photo).closest(".custom-file").find(".invalid-feedback")
         .removeClass("d-none")
         .text("File size must be less than 5MB");
         return false;
@@ -126,254 +186,241 @@ function valid_photo_check() {
     } else if (photo.files[0].type === 'image/png') {
         return true;
     } else {
-        $(photo).closest("form").find(".invalid-feedback")
+        $(photo).closest(".custom-file").find(".invalid-feedback")
         .removeClass("d-none")
         .text("File type must be jpeg or png");
         return false;
     }
 }
-$('input[type=file]').on("change",function() {valid_photo_check()});
+$('input[type=file]').on("change",function(e) {
+    if (valid_photo_check(e)) {
+        $(e.currentTarget).closest(".custom-file").find(".invalid-feedback")
+        .addClass("d-none")
+        .text("");
+        $(e.currentTarget).closest(".custom-file").find(".custom-file-label")
+        .text(e.currentTarget.files[0].name);
+        let reader = new FileReader();
+        reader.onload = function(e){
+            $('#employee-photo').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(this.files[0]);
+    }
+});
 function is_num_key(e,f) {
     if (f.value.length === 10) {return false;}
     if (e.key.match("[0-9]")) {return true;}
     else {return false;}
 }
-function revert_field(e) {
-    $('input[name="'+e+'"]').val(employee_import.e);
-}
-function add_phone() {
-    $($('.phone-field', '#phones').last())
-        .after(phoneNewTemplate);
-    $('#addphone').remove();
-}
 function get_phones() {
     $.ajax({
-        url: phones_url,
+        url: phones_url +'?employee='+employee_id,
         type: 'GET',
         dataType: 'json'
     })
     .done(function(data) {
         if (Object.keys(data).length > 0) {
-            Object.keys(data).forEach(function(k,i) {
-                $("#phone-end").before(phoneTemplate(data[k]));
-                if (data[k].primary) {
-                    $('input[name="phone-primary"]', '#phone-'+data[k].id).prop('checked', true);
+            data.forEach(function(phone) {
+                $("#phone-new").before(phoneTemplate(phone));
+                $("#phone-new-li").before(phoneTabTemplate(phone));
+                if (phone['primary']) {
+                    $('#phone-'+phone['id']+'-tab').tab('show');
+                    $('#phone-'+phone['id']).find('input[name=primary]').prop('checked', true);
                 }
             });
-            $($('.btn-danger','#phones').last())
-            .after('<button id="addphone" type="button" class="btn btn-primary" onclick="add_phone()"> \n\
-                <ion-icon name="add"></ion-icon></button>');
-            $('#phone-end').remove();
         }
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
+    .fail(function(jqXHR,status,error) {
+        alert_error("There was an error loading the page, please refresh.");
+    });
+    setTimeout(function() {
+        $('.phone-form').on('submit', function(e) {submit_phone(e);});
+    },500);
 }
 function delete_phone(id) {
+    if ($('input[name="primary"]', '#phone-'+id).prop('checked')) {
+        alert_error("Cannot delete primary phone number");
+        return;
+    }
     $.ajax({
-        url: phones_update_url+'/'+id,
+        url: phones_url+id+'/',
         type: 'DELETE',
         dataType: 'json'
     })
     .done(function(data) {
         $('#phone-'+id).remove();
+        $('#phone-'+id+'-tab').remove();
+        $('.nav-tabs a:first','#phone').tab('show');
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
+    .fail(function(jqXHR,status,error) {alert_error("Failed to delete address ", error);});
 }
-$('.phone-field input[type=text]').on("change",function(e) {
-    console.log("Trigger phone change")
-    f = $(e.currentTarget).closest('.phone-field');
-
-    if (f.children('input[name=label]').val() == '') {
-        f.children('input[name=label]').addClass('is-invalid');
-        return false;
+function submit_phone(e) {
+    e.preventDefault();
+    var data = serialize_json(e.currentTarget, phoneFormBase);
+    var id = $(e.currentTarget).find('input[name=id]');
+    var url = phones_url;
+    var method = 'POST';
+    console.log(id)
+    if (id.length > 0) {
+        method = 'PUT';
+        url += id[0].value+'/';
     } else {
-        f.children('input[name=label]').removeClass('is-invalid');
-    }
-    if (f.children('button[name=update]').length === 0) {
-        $('button',f).before(phoneUpdateButton(f.find('input[name=id]').val()));
-    }
-});
-function update_phone(id) {
-    f = $('#phone-'+id);
-    var data = {}
-    var url = phones_update_url+'/'+id;
-    var method = 'PUT';
-    f.children('input').not('input:radio').each(function(i,e) {
-        data[e.name] = f.value;
-    });
-    if (id == 0) {
         delete data['id'];
-        url = phones_url;
-        method = 'POST';
+        data['primary'] = false;
     }
+    data['employee'] = employee_id;
     $.ajax({
         method: method,
         url: url,
         data: data,
-    })
-    .done(function(r) {
-        if (r["status"] == "success") {
-            f.replaceWith(phoneTemplate(r));
-            $($('.phone-actions').last())
-            .after('<button id="addphone" type="button" class="btn btn-primary" onclick="add_phone()">\n\
-                <ion-icon name="add"></ion-icon></button>\n');          
-        } else {
-            $(this).addClass('is-invalid');
-            alert('Error' + r.message);
-        }
-    })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-}
-$('input[name=phone-primary]').on("change",function(e) {
-    var f = $(e.currentTarget).closest('.phone-field');
-    $.ajax({
-        method: "PATCH",
-        url: phones_update_url+'/'+f.find('input[name=id]').val(),
-        data: JSON.parse({id: f.attr('id'), primary: true}),
         dataType: 'json'
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-})
+    .done(function(res) {
+        if (method === 'POST') {
+            $("#phone-new").before(phoneTemplate(res));
+            $("#phone-new-li").before(phoneTabTemplate(res));
+            $("#phone-new").find("input").each(function(i,e) {e.value="";});     
+            $('#phone-'+res['id']+'-tab').tab('show');
+        } else {
+            $("#phone-" + id).html(phoneTemplate(res));
+            $(e.currentTarget).find('submit').addClass('btn-success').removeClass('btn-primary');
+            setTimeout(function() {
+                $(e.currentTarget).find('submit').addClass('btn-primary').removeClass('btn-success');
+            },25000);
+        }
+        if (res['primary']) {
+            $("input[name=primary]", '#phones').prop('checked', false);
+            $("input[name=primary]", '#phones-'+res['id']).prop('checked', true);
+        }
+    })
+    .fail(function(jqXHR,status,error) {alert_error("Failed to update/create phone ",error);});
+}
 function get_addresses() {
     $.ajax({
-        url: addresses_url,
+        url: address_url +'?employee='+employee_id,
         type: 'GET',
         dataType: 'json'
     })
     .done(function(data) {
         if (Object.keys(data).length > 0) {
             data.forEach(function(address) {
-                $("#address-new").before(softwareTemplate(address));
-                if (address.primary) {
-                    $('input[name="address-primary"]', '#address-'+address.id).prop('checked', true);
+                $("#address-new").before(addressTemplate(address));
+                $("#address-new-li").before(addressTabTemplate(address))
+                if (address['primary']) {
+                    $('#address-'+address['id']+'-tab').tab('show');
+                    $('#address-'+address['id']).find('input[name=primary]').prop('checked', true);
                 }
             });
-        } else {
-            add_phone();
         }
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-};
-function update_address(id) {
-    var data = serialize_json($('address-' + id));
-    $.ajax({
-        method: "PUT",
-        url: addresses_update_url +'/'+ data['id'],
-        data: data,
-        dataType: 'json'
+    .fail(function(jqXHR,status,error) {
+        alert_error("There was an error loading the page, please refresh.");
     });
-}
+    setTimeout(function() {
+        $('.address-form').on('submit', function(e){submit_address(e);});
+    },500);
+};
 function delete_address(id) {
+    if ($('input[name="primary"]', '#address-'+id).prop('checked')) {
+        alert_error("Cannot delete primary address");
+        return;
+    }
     $.ajax({
-        url: addresses_update_url+'/'+id,
-        type: 'DELETE',
-        dataType: 'json'
+        url: address_url + id + '/',
+        type: 'DELETE'
     })
     .done(function(data) {
         $('#address-'+id).remove();
+        $('#address-'+id+'-tab').remove();
+        $('.nav-tabs a:first','#address').tab('show');
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
+    .fail(function(jqXHR,status,error) {alert_error("Failed to delete address",error);});
 }
-$('#address-form-0').on('submit', function(e) {
+function submit_address(e) {
     e.preventDefault();
-    var data = serialize_json(this);
-    delete data['id'];
+    var data = serialize_json(e.currentTarget, addressFormBase);
+    var id = $(e.currentTarget).find('input[name=id]');
+    var url = address_url;
+    var method = 'POST';
+    if (id.length > 0) {
+        method = 'PUT';
+        url += id[0].value+'/';
+    } else {
+        delete data['id'];
+        data['primary'] = false;
+    }
+    data['employee'] = employee_id;
     $.ajax({
-        method: "POST",
-        url: address_url,
+        method: method,
+        url: url,
         data: data,
         dataType: 'json'
     })
-    .done(function(r) {
-        doneProcess(r, this);
-        if (r["status"] == "success") {
-            $(this).children('input').reset();
+    .done(function(res) {
+        if (method === 'POST') {
+            $("#address-new").before(addressTemplate(res));
+            $("#address-new-li").before(addressTabTemplate(res));
+            $("#address-new").find("input").each(function(i,e) {e.value="";});
+            $('#address-'+res['id']+'-tab').tab('show');
+        } else {
+            $("#address-" + id).html(addressTemplate(res));
+            $(e.currentTarget).find('submit').addClass('btn-success').removeClass('btn-primary');
+            setTimeout(function() {
+                $(e.currentTarget).find('submit').addClass('btn-primary').removeClass('btn-success');
+            },25000);
+        }
+        if (res['primary']) {
+            $("input[name=primary]", '#addresses').prop('checked', false);
+            $("input[name=primary]", '#addresses-'+res['id']).prop('checked', true);
         }
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-});
-$('input[name=address-primary]').on("change",function(e) {
-    var f = $(e.currentTarget).closest('.form');
-    $.ajax({
-        method: "PATCH",
-        url: address_update_url+'/'+f.find('input[name=id]').val(),
-        data: JSON.parse({id: f.attr('id'), primary: true}),
-        dataType: 'json'
-    })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-})
+    .fail(function(jqXHR,status,error) {alert_error("Failed to update/create address ",error);});
+}
+function strip_id(t) {
+    return Number(t.replace(/id_/g, ''));
+}
 var software = {}
 function get_software() {
     $.ajax({
-        url: software_url,
+        url: accounts_url +'?employee='+employee_id,
         type: 'GET',
         dataType: 'json'
     })
     .done(function(data) {
-        if (Object.keys(data).length > 0) {
-            $('#software-end').html('<button id="delete-me" class="d-none"/>');
+        if (Object.keys(data).length) {
             data.forEach(function(i) {
-                software[i.id] = i;
-                $("#delete-me").before('<button id="software-${i.id}" type="button" ' +
-                    'class="list-group-item list-group-item-action" '+
-                    'onclick="edit_software(${i.id})">${i.name}</button>');
+                software[i['id']] = i;
+                $("#software-list").append(softwareListTemplate(i));
             });
-            $('#delete-me').remove();
-            $('#software-end').attr('class','list-group')
-        } else {
-            add_phone();
         }
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
-};
+    .fail(function(jqXHR,status,error) {
+        alert_error("There was an error loading the page, please refresh.");
+    });
+}
 function edit_software(id) {
     $('.modal-header').after(softwareTemplate(software[id]));
     $('.modal-title').text('Edit Software');
-    $('.modal-body').after(modalActionsSoftware);
     $("#modal-default").modal('show');
 }
 function add_software() {
     $('.modal-header').after(softwareNewTemplate);
     $('.modal-title').text('Add Software');
-    $('.modal-body').after(modalActionsSoftware);
-    $('#software-form-0 input[type=select]').select2({
-      placeholder: 'Select a software',
-      ajax: {
-        url: select_software_url,
-        dataType: 'json',
-        delay: 250,
-        data: function (params) {
-          return {
-            q: params.term, // search term
-            page: params.page
-          };
-        },
-        processResults: function (data, params) {
-          params.page = params.page || 1;
-          return {
-            results: data.results,
-            pagination: {
-            more: (params.page * 30) < data.total_count
-            }
-          };
-        },
-        cache: true
-      },
-      escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
-      minimumInputLength: 1,
-      theme: 'bootstrap4'
-    });
+    populate_select('software');
+    $("option[value='false']").remove();
     $("#modal-default").modal('show');
 }
 function update_software(e) {
-    var data = serialize_json($(e).closest('.modal-content').find('form')[0]);
-    var url = software_update_url +'/'+ data['id'];
-    var method = 'PUT';
-    if (data['id'] == '0') {
-        delete data['id'];
-        url = software_url;
-        method = 'POST';
+    var f = $(e).closest('.modal-content').find('form')[0];
+    var data = serialize_json(f, softwareFormBase);
+    var id = $(f).find('input[name=id]');
+    var url = accounts_url;
+    var method = 'POST';
+    if (id.length > 0) {
+        method = 'PUT';
+        url += id[0].value + '/';
     }
+    data['software'] = strip_id(data['software'][0]);
+    data['employee'] = employee_id;
     $.ajax({
         method: method,
         url: url,
@@ -381,24 +428,26 @@ function update_software(e) {
         dataType: 'json'
     })
     .done(function(r) {
-        if (r["status"] == "success") {
-            $(e).closest('.modal').modal('hide');
+        if (method === 'POST') {
+            $("#software-list").append(softwareListTemplate(i));
+            software[r['id']] = r;
         }
-        if (data['id'] == '0') {
-            $('#software-end').last(softwareTemplate(r));
-            software[r.id] = r;
-        }
+        $(e).closest('.modal').modal('hide');
     })
-    .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
+    .fail(function(jqXHR,status,error) {alert_error("Failed to update software ",error);});
 }
 function delete_software(e) {
     var id = $(e).closest('.modal-content').find('id')[0].val();
     $.ajax({
         method: 'DELETE',
-        url: software_update_url +'/'+ id,
+        url: software_url + id + '/',
         dataType: 'json'
     })
 }
+$(".modal").on("hidden.bs.modal", function() {
+    $('.modal-body').remove();
+    $('.modal-footer').remove();
+})
 $("#employee-form input[type=file]").on("change",function(e) {
     form = $(e.currentTarget).closest('form');
     if (validCheck() === false) {
@@ -415,7 +464,7 @@ $("#employee-form input[type=file]").on("change",function(e) {
         r.readAsDataURL(this.files[0]);
     }
 })
-$("form",'.container').on("submit",function(e) {
+$("#edit").on("submit",function(e) {
     e.preventDefault();
     form = $(this);
     data = serialize_form(form);
@@ -429,45 +478,45 @@ $("form",'.container').on("submit",function(e) {
     .done(function(r) {doneProcess(r,form);})
     .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
-$(document).on("ready",function () {
-    ['location','primary_job','jobs'].forEach(function(e) {
-        t = $("#" + field);
-        t.select2({
-        ajax: {
-            url: $("select_" + field + "_url"),
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-            return {
-                q: params.term, // search term
-                page: params.page
-            };
-            },
-            processResults: function (data, params) {
-            params.page = params.page || 1;
-            return {
-                results: data.results,
-                pagination: {
-                more: (params.page * 30) < data.total_count
-                }
-            };
-            },
-            cache: true
-        },
-        escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
-        minimumInputLength: 1,
-        theme: 'bootstrap4'
-        });
+function revert_field(e) {
+    $('input[name="'+e+'"]').val(employee_import.e);
+}
+function employee_undo() {
+    if (employee_import === false) {return}
+    Objects.keys(employee_import).forEach(function(e) {
+        t = $('input[name=' + e + ']');
+        if (t.val() != employee_import.e) {
+            t.after('<div class="input-group-append"> \n\
+                 <button class="btn btn-outline-secondary" type="button" onclick="revert_field(' + e + ')"> \n\
+                 <i class="fa-solid fa-angles-down"></i></button></div>');
+        }
     });
-    employee_import.forEach(function(e,i) {
-       t = $('input[name=' + e + ']');
-       if (t.val() != employee_import.e) {
-           t.after('<div class="input-group-append"> \n\
-                <button class="btn btn-outline-secondary" type="button" onclick="revert_field(' + e + ')"> \n\
-                <i class="fa-solid fa-angles-down"></i></button></div>');
-       }
+}
+function populate_select(field,url) {
+    var s = [];
+    var select = $('select[name='+field+']');
+    if (url === undefined) {
+        url = window["select_" + field + "_url"];
+    }
+    $(select).find('option').each(function (i,f) {s.push(f.value);});
+    $.ajax({
+        method: "GET",
+        url: url,
+        dataType: 'json'
+    })
+    .done(function(res) {
+        if (res.length > 0) {
+            res.forEach(function (e,i) {
+                if (s.indexOf(e['id']) === -1) {select.append(selectTemplate(e));}
+            });
+        }
+    })
+    .fail(function(jqXHR,status,error) {
+        alert_error("There was an error loading the page, please refresh." + error);
     });
-    get_phones();
-    get_addresses();
-    get_software();
-});
+    $(select).selectpicker({
+        style: '',
+        styleBase: 'form-control'
+    });
+    setTimeout(function(){$(select).selectpicker('refresh');},200);
+}
