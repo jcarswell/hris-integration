@@ -81,8 +81,8 @@ function serialize_form(f) {
   });
   $(f).find('select').each(function(i,e) {
     var selected = []
-    $(e).find(':selected').each(function(e,i) {
-      selected.push(e.value);
+    $(e).find(':selected').each(function(i,s) {
+      selected.push(s.value);
     });
     ret.push({name:e.name,value:selected});
   });
