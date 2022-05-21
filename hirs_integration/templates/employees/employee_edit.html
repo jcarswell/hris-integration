@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load static i18n mppt_tags %}
+{% load static i18n mptt_tags rest_framework %}
 
 {% block extra_style %}
 <link rel="stylesheet"
@@ -13,7 +13,7 @@
     <i class="fas fa-arrow-circle-left"></i> Back</a>
   {% if employee.is_imported is False %}
   <a class="btn btn-md btn-danger" style="margin:0 2pt;" id="btn_delete" onclick="do_delete()">
-    <i class="fas fa-trash-alt"></i> Delete</a>  {% endif %}
+    <i class="fas fa-trash-alt"></i> Delete</a>
   {% endif %}
   {% block toolbar %}{% endblock %}
 <div>
@@ -21,239 +21,264 @@
 
 {% block content %}
 <div id="alert-container" class="row d-none"></div>
-  <div data-bs-spy="scroll" data-bs-target="#page-nav" data-bs-offset="0" tabindex="0" 
-    class="container col-md-10 order-md-2">
-    <div id="info">
-      <h2 id="employee">{{ employee_import.pk }} - {{ employee_import.first_name }} 
-        {%if employee_import.middle_name %}{{ employee_import.middle_name }} {% endif %}
-        {{ employee_import.last_name }}
-        {% if employee_import.suffix %} {{ employee_import.suffix }}{% endif %}
-      </h2>
-      <div class="row">
-        <p class='col-sm'><strong>Status</strong><br>
-        {% if employee.status == employee.STAT_LEA %}
-        <span class="text-warning">On Leave</span>
-        {% elif employee.status == employee.STAT_TERM %}
-        <span class="text-danger">Terminated</span>
-        {% else %}
-        <span class="text-success">Active</span>
-        {% endif %}</p>
-        <p class='col-sm'><strong>Given Name</strong><br>
-        {{ employee_import.first_name }}</p>
-        <p class='col-sm'><strong>Surname</strong><br>
-        {{ employee_import.last_name }}</p>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-10 order-md-4">
+      <div id="info">
+        {% if employee.is_imported %}
+        <h2 id="employee">{{ employee_import.pk }} - {{ employee_import.first_name }} 
+          {%if employee_import.middle_name %}{{ employee_import.middle_name }} {% endif %}
+          {{ employee_import.last_name }}
+          {% if employee_import.suffix %} {{ employee_import.suffix }}{% endif %}
+        </h2>
+        {% endif %}
+        <div class="row">
+          <p class='col-sm'><strong>Status</strong><br>
+          {% if employee.status == employee.STATE_LEA %}
+          <span class="text-warning">On Leave</span>
+          {% elif employee.status == employee.STATE_TERM %}
+          <span class="text-danger">Terminated</span>
+          {% else %}
+          <span class="text-success">Active</span>
+          {% endif %}</p>
+          {% if employee.manager.id %}
+          <p class='col-sm'><strong>Manager</strong><br>
+          <a href="{% url 'employee_edit' id=employee.manager.id %}" target="_blank">
+            {{ employee.manager.first_name }} {{ employee.manager.last_name }}</a></p>
+          {% endif %}
+        </div>
+        <div class="row" id="org_structure">
+          {% full_tree_for_model employee.Employee as node %}
+        </div>
       </div>
-      <div class="row" id="org_structure">
-        {% full_tree_for_model employee.Employee as node %}
-      </div>
-    </div>
-    <div id="sec-edit">
-      <hr>
-      <h4>Edit</h4>
-      <form id="edit">
-        {% csrf_token %}
-        <input type="hidden" name="id" value="{{ employee.pk }}">
-        <div class="form-row">
-          <div class="col-md-4 d-flex justify-content-center">
-            <img src="{% if employee.photo %}{{ employee.photo }}{% else %}
-            {% static 'default-user.jpg' %}{% endif %}"
-                id="employee-photo" class="img-fluid pr-1">
-          </div>
-          <div class="col-md-8 mb-1">
-            <div class="custom-file" style="padding: 2pt 0;" >
-              <input type="file" class="custom-file-input" name="photo" accept="image/jpeg,image/png">
-              <label class="custom-file-label" for="photo">Choose file</label>
-              <div class="invalid-feedback"> A valid photo is required.</div>
+      <div id="sec-edit">
+        <hr>
+        <h4>Edit</h4>
+        <form id="edit">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ employee.pk }}">
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="first_name">First Name</label>
+              <input type="text" class="form-control" name="first_name" 
+              value="{{employee.first_name}}" required>
+              <div class="invalid-feedback d-none"></div>
+            </div>
+            <div class="form-group col-md-3">
+              <label for="middle_name">Middle Name</label>
+              <input type="text" class="form-control" name="middle_name"
+                value="{{employee.middle_name}}">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="last_name">Last Name</label>
+              <input type="text" class="form-control" name="last_name"
+                value="{{employee.last_name}}" required>
+            </div>
+            <div class="form-group col-md-1">
+              <label for="suffix">Suffix</label>
+              <input type="text" class="form-control" name="suffix"
+                value="{{employee.suffix}}">
             </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <lable for="first_name">First Name</lable>
-            <input type="text" class="form-control" name="first_name" 
-              value="{{employee.first_name}}" required>
-            <div class="invalid-feedback d-none"></div>
-          </div>
-          <div class="form-group col-md-3">
-            <lable for="middle_name">Middle Name</lable>
-            <input type="text" class="form-control" name="middle_name"
-              value="{{employee.middle_name}}">
-          </div>
-          <div class="form-group col-md-4">
-            <lable for="last_name">Last Name</lable>
-            <input type="text" class="form-control" name="last_name"
-              value="{{employee.last_name}}" required>
-          </div>
-          <div class="form-group col-md-1">
-            <lable for="suffix">Suffix</lable>
-            <input type="text" class="form-control" name="suffix"
-              value="{{employee.suffix}}">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-4">
-            <lable for="username">Username</lable>
-            <input type="text" class="form-control" name="username" 
-              value="{{employee.username}}">
-          </div>
-          <div class="form-group col-md-4">
-            <lable for="email_alias">Email Alias</lable>
-            <input type="text" class="form-control" name="email_alias"
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="username">Username</label>
+              <input type="text" class="form-control" name="username" 
+                value="{{employee.username}}">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="email_alias">Email Alias</label>
+              <input type="text" class="form-control" name="email_alias"
               value="{{employee.email_alias}}">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="nickname">Nickname</label>
+              <input type="text" class="form-control" name="nickname"
+                value="{{employee.nickname}}">
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <lable for="nickname">Nickname</lable>
-            <input type="text" class="form-control" name="nickname"
-              value="{{employee.nickname}}">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <lable for='designations'>Designations</lable>
-            <input type="text" class="form-control" placeholder="CISSP CPA ..." 
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for='designations'>Designations</label>
+              <input type="text" class="form-control" placeholder="CISSP CPA ..." 
               name="designations" value="{{ employee.designations }}">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="location">Home Building</label>
+              <select name="location" class="form-control" required>
+                <option value="id_{{employee.location.pk}}">{{employee.location.name}}</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group col-md-6">
-            <label for="location" style="font-weight:400;margin-bottom:0em;">Home Building</label>
-            <select name="location" class="form-control" required>
-              <option value="id_{{employee.location.pk}}">{{employee.location.name}}</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-3">
-            <label for="status">Status</label>
-            <select class="form-control" name="status" required>
-              <option value="{{employee.STATE_ACT}}"
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="status">Status</label>
+              <select class="form-control" name="status" required>
+                <option value="{{employee.STATE_ACT}}"
                 {% if employee.status == employee.STATE_ACT %} selected{% endif %}>
                 Active</option>
-              <option value="{{employee.STATE_LEA}}"
-                {% if employee.status == employee.STATE_LEA %} selected{% endif %}>
-                On Leave</option>
-              <option value="{{employee.STATE_TERM}}"
-                {% if employee.status == employee.STATE_TERM %} selected{% endif %}>
-                Terminated</option>
-            </select>
+                <option value="{{employee.STATE_LEA}}"
+                  {% if employee.status == employee.STATE_LEA %} selected{% endif %}>
+                  On Leave</option>
+                  <option value="{{employee.STATE_TERM}}"
+                  {% if employee.status == employee.STATE_TERM %} selected{% endif %}>
+                  Terminated</option>
+              </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="primary_job">Primary Job</label>
+              <select class="form-control" name="primary_job" required>
+                <option value="id_{{employee.primary_job.pk}}" selected="selected">
+                  {{employee.primary_job.name}}</option>
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="jobs">Additional Jobs</label>
+              <select class="form-control" name="jobs" multiple>
+                {% for job in employee.jobs.all %}
+                <option value="id_{{job.pk}}" selected="selected">{{job.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
-          <div class="form-group col-md-4">
-            <label for="primary_job">Primary Job</label>
-            <select class="form-control" name="primary_job" required>
-              <option value="id_{{employee.primary_job.pk}}" selected="selected">
-                {{employee.primary_job.name}}</option>
-            </select>
+          <div class="form-row">
+            <div class="col-md-4 d-flex justify-content-center mg-b-1">
+              <img src="{% if employee.photo %}{{ employee.photo }}{% else %}
+              {% static 'default-user.jpg' %}{% endif %}"
+                  id="employee-photo" class="img-fluid pr-1">
+            </div>
+            <div class="col-md-8 mb-1">
+              <div class="custom-file" style="padding: 2pt 0;" >
+                <input type="file" class="custom-file-input" name="photo" accept="image/jpeg,image/png">
+                <label class="custom-file-label" for="photo">Choose file</label>
+                <div class="invalid-feedback">A valid photo is required.</div>
+              </div>
+            </div>
           </div>
-          <div class="form-group col-md-3">
-            <label for="jobs">additional Jobs</label>
-            <select class="form-control" name="jobs" multiple>
-              {% for job in employee.jobs.all %}
-              <option value="id_{{job.pk}}" selected="selected">{{job.name}}</option>
-              {% endfor %}
-            </select>
+          <button type="submit" class="btn btn-primary mb-2 text-right">Update</button>
+        </form>
+      </div>
+      {% if employee.password %}
+      <div id="password">
+        <hr>
+        <h3 id="password">Default Password</h3>
+        <div class="input-group">
+          <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
+        </div>
+      </div>
+      {% endif %}
+      <div id="phone">
+        <hr>
+        <h4>Phone Numbers</h4>
+        <ul class="nav nav-tabs" role="tablist">
+          <li class="nav-item" id="phone-new-li">
+            <a class="nav-link active" id="phone-new-tab" data-toggle="tab" role="tab"
+              aria-controls="phone-new" href="#phone-new" aria-selected="true">
+              <i class="fa-solid fa-plus"></i></a>
+          </li>
+        </ul>
+        <div class="tab-content" id="phones">
+          <div class="tab-pane fade show active" id="phone-new"
+               role="tabpanel" aria-labelledby="phone-new-tab">
+            <form id="phone-form-0" class="phone-form">
+              <div class="form-row">
+                <div class="form-group col-md-5">
+                  <label for="label">Label</label>
+                  <input type="text" name="label" class="form-control" required
+                         placeholder="Home, Work, etc..."/>
+                </div>
+                <div class="form-group col-md-5">
+                  <label for="number">Number</label>
+                  <input type="text" name="number" placeholder="1231231234" required
+                         onkeypress="return is_num_key(event,this)" class="form-control"/>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mb-2 text-right">Add</button>
+            </form>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary mb-2">Update</button>
-      </form>
-    </div>
-    {% if employee.password %}
-    <div id="password">
-      <hr>
-      <h3 id="password">Default Password</h3>
-      <div class="input-group">
-        <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
       </div>
-    </div>
-    {% endif %}
-    <div id="phone">
-      <hr>
-      <h4>Phone Numbers</h4>
-      <div class='w-75 ml-2'>
-        <div id="phone-header" class="row p-3 mb-2 bg-secondary">
-          <div class="col-md-4">Label</div>
-          <div class="col-md-4">Phone</div>
-          <div class="col-md-2">Primary</div>
-        </div>
-        <div id="phone-end" class="d-none"></div>
-      </div>
-    </div>
-    <div id="address">
-      <hr>
-      <h4>Address</h4>
-      <ul class="nav nav-tabs" role="tablist">
-        <li class="nav-item" id="address-new-li">
-          <a class="nav-link active" id="address-new-tab" data-toggle="tab" role="tab"
-            aria-controls="address-new" href="#address-new" aria-selected="true">
-            <i class="fa-solid fa-plus"></i></a>
-        </li>
-      </ul>
-      <div class="tab-content" id="addresses">
-        <div class="tab-pane fade show active" id="address-new" role="tabpanel" 
-        aria-labelledby="address-new-tab">
-          <form id="address-form-0">
-            <div class="form-group">
-              <label for="label">Label</label>
-              <input type="text" class="form-control" name="label" placeholder="Home, Work, etc...">
-            </div>
-            <div class="form-group">
-              <label for="address">Address</label>
-              <input type="text" class="form-control" name="street1" placeholder="123 Main St.">
-              <input type="text" class="form-control" name="street2">
-              <input type="text" class="form-control" name="street3">
-            </div>
-            <div class="form-group">
-              <label for="city">City</label>
-              <input type="text" class="form-control" name="city">
-            </div>
-            <div class="form-group">
-              <label for="state">Province or State</label>
-              <input type="text" class="form-control" name="province">
-            </div>
-            <div class="form-group">
-              <label for="postal_code">Postal Code or ZIP</label>
-              <input type="text" class="form-control" name="postal_code">
-            </div>
-            <div class="form-group">
-              <label for="country">Country</label>
-              <input type="text" class="form-control" name="country">
-            </div>
-            <button type="submit" class="btn btn-primary mb-2">Add</button>
-          </form>
+      <div id="address">
+        <hr>
+        <h4>Address</h4>
+        <ul class="nav nav-tabs" role="tablist">
+          <li class="nav-item" id="address-new-li">
+            <a class="nav-link active" id="address-new-tab" data-toggle="tab" role="tab"
+              aria-controls="address-new" href="#address-new" aria-selected="true">
+              <i class="fa-solid fa-plus"></i></a>
+          </li>
+        </ul>
+        <div class="tab-content" id="addresses">
+          <div class="tab-pane fade show active" id="address-new" role="tabpanel" 
+          aria-labelledby="address-new-tab">
+            <form id="address-form-0" class="address-form">
+              <div class="form-group">
+                <label for="label">Label</label>
+                <input type="text" class="form-control" name="label" required
+                       placeholder="Home, Work, etc...">
+              </div>
+              <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" class="form-control" name="street1" required
+                       placeholder="123 Main St.">
+                <input type="text" class="form-control" name="street2">
+                <input type="text" class="form-control" name="street3">
+              </div>
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" class="form-control" name="city" required>
+              </div>
+              <div class="form-group">
+                <label for="state">State or Province</label>
+                <input type="text" class="form-control" name="province" required>
+              </div>
+              <div class="form-group">
+                <label for="postal_code">Postal Code or ZIP</label>
+                <input type="text" class="form-control" name="postal_code" required>
+              </div>
+              <div class="form-group">
+                <label for="country">Country</label>
+                <input type="text" class="form-control" name="country" required>
+              </div>
+              <button type="submit" class="btn btn-primary mb-2 text-right">Add</button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
-    <div id="software">
-      <hr>
-      <h4>Software</h4>
-      <div class='w-75 ml-2'>
-        <div id="software-header" class="row p-3 mb-2 bg-secondary">
-          <div class="col-md-6">Software</div>
-        </div>
-        <div id="software-end" class="d-none"></div>
+      <div id="software">
+        <hr>
+        <h4>Software</h4>
+        <div id="software-list"></div>
+        <button type="button" class="btn btn-primary mb-2" onclick="add_software()">
+          <i class="fa-solid fa-plus"></i> Add Software</button>
       </div>
-      <button type="button" class="btn btn-primary mb-2" onclick="add_software()">
-        <i class="fa-solid fa-plus"></i> Add Software</button>
+    </div>
+    <div id="page-sidebar" class="list-group col-md-2 order-md-1 mb-2">
+      <div class="mg-r-1 sticky-top">
+        <a href="#info" class="list-group-item list-group-item-action mg-t-1">
+          <span class="d-md-inline">Info</span>
+        </a>
+        <a href="#sec-edit" class="list-group-item list-group-item-action">
+          <span class="d-md-inline">Edit</span>
+        </a>
+        {% if employee.password %}
+        <a href="#password" class="list-group-item list-group-item-action">
+          <span class="d-md-inline">Password</span>
+        </a>
+        {% endif %}
+        <a href="#phone" class="list-group-item list-group-item-action">
+          <span class="d-md-inline">Phone Numbers</span>
+        </a>
+        <a href="#address" class="list-group-item list-group-item-action">
+          <span class="d-md-inline">Addresses</span>
+        </a>
+        <a href="#software" class="list-group-item list-group-item-action">
+          <span class="d-md-inline">Software</span>
+        </a>
+      </div>
     </div>
   </div>
-  <div id="page-nav" class="list-group col-md-2 order-md-1 mb-2">
-    <a href="#info" class="list-group-item list-group-item-action active">
-      <span class="d-md-inline">Info</span>
-    </a>
-    <a href="#sec-edit" class="list-group-item list-group-item-action">
-      <span class="d-md-inline">Edit</span>
-    </a>
-    {% if employee.password %}
-    <a href="#password" class="list-group-item list-group-item-action">
-      <span class="d-md-inline">Password</span>
-    </a>
-    {% endif %}
-    <a href="#phone" class="list-group-item list-group-item-action">
-      <span class="d-md-inline">Phone Numbers</span>
-    </a>
-    <a href="#address" class="list-group-item list-group-item-action">
-      <span class="d-md-inline">Addresses</span>
-    </a>
-    <a href="#software" class="list-group-item list-group-item-action">
-      <span class="d-md-inline">Software</span>
-    </a>    
+</div>
 {% endblock %}
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"
@@ -263,18 +288,17 @@
  inetgrity="sha384-KbjtsG2/8FseXr/pG6hEWL1vE9vDr4gxEGtXWMK8T6D9fb83Nq+Ka0FiwxUSskvd"
  crossorigin="anonymous"></script>
 <script>
-var select_location_url - "{% url 's2-location-list' %}";
-var select_primary_job_url = "{% url 's2-job-role-list' %}";
-var select_jobs_url = "{% url 's2-job-role-list' %}";
-var select_software_url = "{% url 's2-software-list' %}";
-var phones_url = "{% url 'employee-phones-list' %}";
-var phones_update_url = "{% url 'employee-phones-detail' %}";
-var addresses_url = "{% url 'employee-addresses-list' %}";
-var addresses_update_url = "{% url 'employee-addresses-detail' %}";
-var software_url = "{% url 'employee-tracked-account-list' %}";
-var software_update_url = "{% url 'employee-tracked-account-detail' %}";
+var select_location_url = "/api/_s2/organization/location";
+var select_primary_job_url = "/api/_s2/organization/job_role";
+var select_jobs_url = "/api/_s2/organization/job_role";
+var select_software_url = "/api/_s2/software/software";
+var phones_url = "/api/employee/phone_number/";
+var address_url = "/api/employee/address/";
+var accounts_url = "/api/software/accounts/";
+var software_url = "/api/software/software/";
 var employee_id = {{ employee.pk }};
 
+{% if employee_import %}
 var employee_import = {
   "first_name": "{{ employee_import.first_name }}",
   "middle_name": "{{ employee_import.middle_name }}",
@@ -291,7 +315,21 @@ var employee_import = {
   {% endfor %}
   ]
 };
+{% else %}
+var employee_import = false;
+{% endif %}
 </script>
 <script src="{% static 'form.js' %}"></script>
 <script src="{% static 'employee.js' %}"></script>
+<script>
+$(function () {
+  populate_select('location');
+  populate_select('primary_job');
+  populate_select('jobs');
+  employee_undo();
+  get_phones();
+  get_addresses();
+  get_software();
+});
+</script>
 {% endblock %}
