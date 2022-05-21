@@ -70,12 +70,12 @@ class Employee(TemplateResponseMixin, LoggedInView):
                 if key == 'location':
                     try:
                         setattr(employee,key,Location.objects.get(pk=name_to_pk(val)))
-                    except models.Location.DoesNotExist:
+                    except Location.DoesNotExist:
                         errors.append(key)
                 if key == 'primary_job':
                     try:
                         setattr(employee,key,JobRole.objects.get(pk=name_to_pk(val)))
-                    except models.Location.DoesNotExist:
+                    except JobRole.DoesNotExist:
                         errors.append(key)
                 if key == 'manager':
                     try:
@@ -86,12 +86,12 @@ class Employee(TemplateResponseMixin, LoggedInView):
                     for job in val.split(','):
                         try:
                             employee.jobs.add(JobRole.objects.get(pk=name_to_pk(job)))
-                        except models.Job.DoesNotExist:
+                        except JobRole.DoesNotExist:
                             errors.append(key)
                 else:
                     try:
                         setattr(employee, key, val)
-                    except ValueError:
+                    except (ValueError,AttributeError):
                         errors.append(key)
 
             elif not key in ["form","csrfmiddlewaretoken"]:
@@ -110,3 +110,4 @@ class Employee(TemplateResponseMixin, LoggedInView):
                         logger.debug(f"Error uploading photo: {e}")
 
         employee.save()
+        return JsonResponse({"status":"success","errors":errors})
