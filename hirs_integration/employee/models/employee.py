@@ -53,7 +53,7 @@ class Employee(EmployeeBase):
         if int(self.id) != int(other.pk):
             return False
 
-        for field in ['first_name','last_name','middlename','suffix','start_date','state','leave',
+        for field in ['first_name','last_name','middle_name','suffix','start_date','state','leave',
                       'username','photo','email_alias']:
             if getattr(self,field) != getattr(other,field):
                 return False
@@ -205,7 +205,7 @@ class EmployeeImport(EmployeeBase):
         if int(self.id) != int(other.pk):
             return False
 
-        for field in ['givenname','surname','middlename','suffix','state','leave']:
+        for field in ['first_name','last_name','middle_name','suffix','state','leave']:
             if getattr(self,field) != getattr(other,field):
                 return False
         
