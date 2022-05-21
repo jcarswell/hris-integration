@@ -47,11 +47,9 @@ class Account(ChangeLogMixin):
 
     id = models.AutoField(primary_key=True)
     #: Employee: The employee linked to this tracking instance.
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,
-                                 blank=False, null=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     #: Software: The software related to the tracking instance.
-    software = models.ForeignKey(Software, on_delete=models.CASCADE,
-                                 blank=False, null=False)
+    software = models.ForeignKey(Software, on_delete=models.CASCADE)
     #: str: Notes related to this specific tracking instance.
     notes = models.TextField(blank=True)
     #: date: The date that the license/allocation expires.    
@@ -62,20 +60,27 @@ class Account(ChangeLogMixin):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        if hasattr(instance, 'software') and hasattr(instance, 'employee'):
+            prev_instance = None
+            if hasattr(instance,'id') and instance.id:
+                try:
+                    prev_instance = Account.objects.get(id=instance.id)
+                except Account.DoesNotExist:
+                    pass
 
-        if (hasattr(instance,'software') 
-            and isinstance(instance.software,Software) 
-            and (instance.software.licensed or instance.software.max_users != 0)):
-            if (len(Account.objects.filter(software=instance.software)) 
-                >= instance.software.max_users):
-                raise ValidationError("Software already has maximum number of users")
+            if prev_instance:
+                if (prev_instance.software 
+                    and prev_instance.software.id != instance.software.id):
+                    raise ValidationError("Software instance is not mutable")
+                if (prev_instance.employee and 
+                    prev_instance.employee.id != instance.employee.id):
+                    raise ValidationError("Employee is not mutable")
+                if prev_instance.software is None or prev_instance.employee is None:
+                    if (len(Account.objects.filter(software=instance.software)) 
+                        >= instance.software.max_users 
+                        and (instance.software.licensed or instance.software.max_users)):
+                        raise ValidationError("License limit exceeded")
+                    instance.software.employees.add(instance.employee)
+                    instance.software.save()
 
-    @classmethod
-    def post_save(cls, sender, instance, created, **kwargs):
-        if created:
-            if instance.software.licensed or instance.software.max_users != 0:
-                instance.software.employees.add(instance.employee)
-                instance.software.save()
-
-#pre_save.connect(Account.pre_save, sender=Account)
-post_save.connect(Account.post_save, sender=Account)
+pre_save.connect(Account.pre_save, sender=Account)
