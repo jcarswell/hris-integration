@@ -179,7 +179,7 @@ class ImportedEmployeeView(Form):
     list_fields = ['id','firstname','lastname','state','is_matched']
 
     class Meta(MetaBase):
-        models = models.EmployeeImport
+        model = models.EmployeeImport
         disabled = '__all__'
         exclude = ('created_on','updated_on')
         labels = {
