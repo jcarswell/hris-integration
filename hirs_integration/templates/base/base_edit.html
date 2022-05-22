@@ -40,12 +40,15 @@
 var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
-  data = serialize_form(e.currentTarget);
+  data = new FormData(this);
 
   $.ajax({
     method: "POST",
     url: location.href,
-    data: data
+    data: data,
+    cache: false,
+    processData: false,
+    contentType: false
   })
   .done(function(data) {
     doneProcess(data,e.currentTarget);
