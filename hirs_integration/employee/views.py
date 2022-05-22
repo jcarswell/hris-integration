@@ -12,6 +12,7 @@ from hris_integration.views import LoggedInView
 from common.functions import name_to_pk
 from django.http import JsonResponse
 from organization.models import JobRole,Location
+from django.conf import settings
 
 from . import models
 
@@ -102,12 +103,13 @@ class Employee(TemplateResponseMixin, LoggedInView):
             if len(request.FILES) > 1:
                 errors += list(request.FILES.keys())
             else:
-                for file in request.FILES.values():
-                    try:
-                         employee.photo = file
-                    except Exception as e:
-                        errors.append('photo')
-                        logger.debug(f"Error uploading photo: {e}")
+                static_file = '/employee/' + employee.id+request.FILES['file'].name.split('.')[-1]
+                with open(settings.MEDIA_ROOT+static_file, 'wb+') as destination:
+                    for chunk in request.FILES['file'].chunks():
+                       destination.write(chunk)
+                    logger.debug(f"photo file saved as: {static_file}")
+
+                employee.photo = static_file
 
         employee.save()
         return JsonResponse({"status":"success","errors":errors})
