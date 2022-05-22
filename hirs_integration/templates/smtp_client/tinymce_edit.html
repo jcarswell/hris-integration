@@ -25,14 +25,14 @@ tinymce.init({
                   type: 'menuitem',
                   text: 'First Name',
                   onAction: function() {
-                    editor.insertContent('\{\{ employee.firstname \}\}');
+                    editor.insertContent('\{\{ employee.first_name \}\}');
                   }
                 },
                 {
                   type: 'menuitem',
                   text: 'Last Name',
                   onAction: function() {
-                    editor.insertContent('\{\{ employee.lastname \}\}');
+                    editor.insertContent('\{\{ employee.last_name \}\}');
                   }
                 },
                 {
@@ -53,7 +53,7 @@ tinymce.init({
                   type: 'menuitem',
                   text: 'Manager',
                   onAction: function() {
-                    editor.insertContent('\{\{ employee.manager.firstname \}\}');
+                    editor.insertContent('\{\{ employee.manager.first_name \}\}');
                   }
                 },
                 {
@@ -123,15 +123,18 @@ function s(e)
 }
 $("#form_list").submit(function(e) {
   e.preventDefault();
-  data = serialize_form(e.currentTarget);
+  data = new FormData(this);
 
   $.ajax({
     method: "POST",
     url: location.href,
-    data: data
+    data: data,
+    cache: false,
+    processData: false,
+    contentType: false
   })
   .done(function(data) {
-    doneProcess(data,e.currentTarget);
+    doneProcess(data,this);
     if (data["status"] == "success") {
       if (data["id"] !== undefined) {
         if (snew) {
