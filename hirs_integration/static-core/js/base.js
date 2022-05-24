@@ -17,6 +17,9 @@ function get_basepath() {
   if (isInt(loc[loc.length-1])) {
     loc.pop();
   }
+  if (loc[loc.length-1] === 'new') {
+    loc.pop();
+  }
   return loc.join('/') + '/';
 }
 
