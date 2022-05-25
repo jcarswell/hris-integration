@@ -53,13 +53,14 @@ TIME_ZONE = getattr(config, "TIME_ZONE", "UTC")
 STATIC_ROOT = getattr(config, "STATIC_ROOT", None)
 STATIC_URL = getattr(config, "STATIC_URL", None)
 MEDIA_ROOT = getattr(config, "MEDIA_ROOT", None)
-MEDIA_URL = getattr(config, "MEDIA_URL", "media/")
 PASSWORD_LENGTH = getattr(config, "PASSWORD_LENGTH", 12)
 PASSWORD_CHARS = getattr(config, "PASSWORD_CHARS", "abcdefABCDEF1234567890!@#$%^&*()")
 ADMINS = getattr(config, "ADMINS", [])
 USE_I18N = getattr(config, "USE_I18N", True)
 USE_L10N = getattr(config, "USE_L10N", True)
 USE_TZ = getattr(config, "USE_TZ", True)
+
+MEDIA_URL = "media/"  # DO NOT CHANGE THIS IT IS HARD CODED IN THE APP
 
 # Application definition
 INSTALLED_APPS = [

@@ -52,9 +52,6 @@ STATIC_ROOT_URL = "static/"
 # If the path is not absolute, the path will be localized to the app directory.
 MEDIA_ROOT = "media"
 
-# The URL that will be used to access the media files. Must end with a '/' (DEFAULT: media/)
-MEDIA_URL = "media/"
-
 # Additional apps to be installed. (DEFAULT: [])
 # `corepoint_export` is and optional module representing employee exports that are not to AD.
 ADDITIONAL_APPS = ["corepoint_export"]
