@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load static i18n mptt_tags rest_framework %}
+{% load static i18n mptt_tags %}
 
 {% block extra_style %}
 <link rel="stylesheet"
@@ -143,7 +143,7 @@
           </div>
           <div class="form-row">
             <div class="col-md-4 d-flex justify-content-center mg-b-1">
-              <img src="{% if employee.photo %}{{ employee.photo }}{% else %}
+              <img src="{% if employee.photo %}{{ MEDIA_URL }}{{ employee.photo }}{% else %}
               {% static 'default-user.jpg' %}{% endif %}"
                   id="employee-photo" class="img-fluid pr-1">
             </div>
