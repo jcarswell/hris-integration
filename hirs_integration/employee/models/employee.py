@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.conf import settings
 from common.functions import password_generator
 from hris_integration.models.encryption import PasswordField
+from hris_integration.models import InactiveMixin
 from time import time
 from employee.validators import UPNValidator, UsernameValidator
 
@@ -22,7 +23,7 @@ def employee_upload_to(instance, filename):
     return f"employeephoto/{instance.id}/{filename}"
 
 
-class Employee(EmployeeBase):
+class Employee(EmployeeBase, InactiveMixin):
     """The base Employee Form. This represents the mutable entity for each employee.
     This table used the Modified Preorder Tree Traversal extention to allow for mappings
     between the employee and the employee's manager and my extension direct-reports.
