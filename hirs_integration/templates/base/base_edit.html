@@ -44,7 +44,7 @@ $("#form_list").submit(function(e) {
 
   $.ajax({
     method: "POST",
-    url: location.href,
+    url: location.pathname,
     data: data,
     cache: false,
     processData: false,
@@ -53,14 +53,21 @@ $("#form_list").submit(function(e) {
   .done(function(data) {
     doneProcess(data,e.currentTarget);
     if (data["status"] == "success") {
+      var href = get_basepath();
+      if (url_params.has('next')) {
+        href = url_params.get('next');
+      } else if (url_params.has('last')) {
+        href = url_params.get('last');
+      }
       if (data["id"] !== undefined) {
         if (snew) {
           reset_form(this);
           location.reload(true);
         } else {
-          location.replace(get_basepath() + data["id"] + '/');
+          href += data["id"] + '/';
+          location.replace(href);
         }
-      } else {location.replace(get_basepath());}
+      } else {location.replace(href);}
     }
   })
   .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error,e.currentTarget);});
