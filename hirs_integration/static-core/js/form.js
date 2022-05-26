@@ -164,5 +164,9 @@ $(function() {
   $.ajaxSetup({
     headers: { "X-CSRFToken": csrftoken }
   });
-  $('#btn_back')[0].href = get_basepath()
+  if (url_params.has('last')) {
+    $('#btn_back')[0].href = url_params.get('last');
+  } else {
+    $('#btn_back')[0].href = get_basepath();
+  }
 });

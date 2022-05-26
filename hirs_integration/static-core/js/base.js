@@ -45,9 +45,9 @@ function set_nav() {
     });
   }
 }
-
+var url_params = new URLSearchParams(window.location.search);
 $(function() {
   $('.menu-open','.sidebar').removeClass('menu-open')
   set_nav();
-  $('#search').addClass('d-none');  
+  $('#search').addClass('d-none');
 });
