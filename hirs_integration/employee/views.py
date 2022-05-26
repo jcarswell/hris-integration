@@ -9,12 +9,12 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic.base import TemplateResponseMixin
 from django.shortcuts import redirect
 from hris_integration.views import LoggedInView
-from common.functions import name_to_pk
+from common.functions import name_to_pk, pk_to_name
 from django.http import JsonResponse
 from organization.models import JobRole, Location
 from django.conf import settings
 
-from . import models
+from . import models, forms
 
 logger = logging.getLogger("employee.view")
 
@@ -137,3 +137,79 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
         employee.save()
         return JsonResponse({"status": "success", "errors": errors})
+
+
+class ManualImport(TemplateResponseMixin, LoggedInView):
+    page_title = "Manual Employee Import"
+    template_name = "base/base_edit.html"
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        if "id" not in kwargs.keys():
+            raise KeyError("ID is a required attribute")
+        try:
+            self.mutable_employee = models.Employee.objects.get(pk=int(kwargs["id"]))
+        except models.Employee.DoesNotExist:
+            raise ValueError("Pending Employee Doesn't exist")
+
+        form_data = {
+            "first_name": self.mutable_employee.first_name,
+            "middle_name": self.mutable_employee.middle_name,
+            "last_name": self.mutable_employee.last_name,
+            "suffix": self.mutable_employee.suffix,
+            "state": self.mutable_employee.state,
+            "leave": self.mutable_employee.leave,
+            "primary_job": pk_to_name(self.mutable_employee.primary_job.pk),
+            "jobs": [pk_to_name(x.pk) for x in self.mutable_employee.jobs.iterator()],
+            "location": pk_to_name(self.mutable_employee.location.pk),
+            "manager": pk_to_name(self.mutable_employee.manager.pk),
+            "start_date": self.mutable_employee.created_on,
+            "type": self.mutable_employee.type,
+        }
+        self._form = forms.ManualImportForm(initial=form_data)
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+
+        context = self.get_context(form_delete=False, **kwargs)
+        context["form"] = self._form
+
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            employee = models.EmployeeImport.objects.get(pk=request.POST["id"])
+        except models.Employee.DoesNotExist:
+            employee = None
+
+        if employee != None:
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "fields": ["id"],
+                    "errors": [
+                        "Employee ID already exists. Please use import form on previous page"
+                    ],
+                }
+            )
+
+        self._form.data = request.POST
+        self._form.is_bound = True
+        self._form.full_clean()
+
+        if not self._form.is_valid():
+            errs = []
+            for e in self._form._errors.values():
+                errs.append("<br>".join(e))
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "fields": list(self._form._errors.keys()),
+                    "errors": errs,
+                }
+            )
+        employee = self._form.save(self.mutable_employee)
+        return JsonResponse({"status": "success"})
