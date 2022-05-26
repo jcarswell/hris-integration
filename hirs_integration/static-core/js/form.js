@@ -64,9 +64,15 @@ function do_delete() {
   $.ajax({
     method: "delete",
     url: location.href,
-    })
+  })
   .done(function(data){
-    location.replace(get_basepath());
+    if (url_params.has('next')) {
+      href = url_params.get('next');
+    } else if (url_params.has('last')) {
+      href = url_params.get('last');
+    } else {
+      location.replace(get_basepath());
+    }
   })
   .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 }
