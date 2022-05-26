@@ -41,6 +41,13 @@ var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
   data = new FormData(this);
+  
+  var href = get_basepath();
+  if (url_params.has('next')) {
+    href = url_params.get('next');
+  } else if (url_params.has('last')) {
+    href = url_params.get('last');
+  }
 
   $.ajax({
     method: "POST",
@@ -53,12 +60,6 @@ $("#form_list").submit(function(e) {
   .done(function(data) {
     doneProcess(data,e.currentTarget);
     if (data["status"] == "success") {
-      var href = get_basepath();
-      if (url_params.has('next')) {
-        href = url_params.get('next');
-      } else if (url_params.has('last')) {
-        href = url_params.get('last');
-      }
       if (data["id"] !== undefined) {
         if (snew) {
           reset_form(this);
