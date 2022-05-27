@@ -466,29 +466,53 @@ $("#employee-form input[type=file]").on("change",function(e) {
 })
 $("#edit").on("submit",function(e) {
     e.preventDefault();
-    form = $(this);
-    data = serialize_form(form);
-    data.push({name:'form',value:'override'});
-
+    form = new FormData(this);
     $.ajax({
         method: "POST",
-        url: location.href,
-        data: data,
+        url: location.pathname,
+        data: form,
+        cache: false,
+        processData: false,
+        contentType: false
     })
-    .done(function(r) {doneProcess(r,form);})
+    .done(function(r) {doneProcess(r,this);})
     .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 });
 function revert_field(e) {
-    $('input[name="'+e+'"]').val(employee_import.e);
+    $('input[name="'+e+'"]').val(employee_import[e]);
+    $('input[name="'+e+'"]').closest('.input-group').find('.input-group-append').remove()
+}
+function revert_select(e) {
+    if (typeof(employee_import[e]) === 'string') {
+        $('select[name="'+e+'"]').selectpicker('val',e);
+    } else if (employee_import[e][0] === undefined) {
+        $('select[name="'+e+'"]').selectpicker('deselectAll');   
+    } else if (typeof(employee_import[e]) === 'object') {
+        $('select[name="'+e+'"]').selectpicker('val',employee_import[e]);
+    }
+    $('select[name="'+e+'"]').closest('.input-group').find('.input-group-append').remove()
 }
 function employee_undo() {
     if (employee_import === false) {return}
-    Objects.keys(employee_import).forEach(function(e) {
-        t = $('input[name=' + e + ']');
-        if (t.val() != employee_import.e) {
-            t.after('<div class="input-group-append"> \n\
-                 <button class="btn btn-outline-secondary" type="button" onclick="revert_field(' + e + ')"> \n\
-                 <i class="fa-solid fa-angles-down"></i></button></div>');
+    Object.keys(employee_import).forEach(function(e) {
+        var t = $('input[name=' + e + ']');
+        if (t.val() === undefined) {
+            t = $('select[name=' + e + ']');
+        }
+        if (t.val() != employee_import[e] && ["","None"].indexOf(employee_import[e]) === -1) {
+            console.log(t.val(), employee_import[e]);
+            var action;
+            if (t.is('select')) {
+                action = 'revert_select';
+            } else {
+                action = 'revert_field';
+            }
+            t.after(`<div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button"
+                            onclick="${action}('${e}')">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </button>
+                    </div>`);
         }
     });
 }
