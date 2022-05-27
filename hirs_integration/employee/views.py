@@ -159,13 +159,19 @@ class ManualImport(TemplateResponseMixin, LoggedInView):
             "suffix": self.mutable_employee.suffix,
             "state": self.mutable_employee.state,
             "leave": self.mutable_employee.leave,
-            "primary_job": pk_to_name(self.mutable_employee.primary_job.pk),
             "jobs": [pk_to_name(x.pk) for x in self.mutable_employee.jobs.iterator()],
-            "location": pk_to_name(self.mutable_employee.location.pk),
-            "manager": pk_to_name(self.mutable_employee.manager.pk),
             "start_date": self.mutable_employee.created_on,
             "type": self.mutable_employee.type,
         }
+        for f in ["primary_job", "location", "manager"]:
+            try:
+                form_data[f] = pk_to_name(getattr(self.mutable_employee, f).pk)
+            except AttributeError:
+                logger.debug(
+                    f"employee {self.mutable_employee} has no value set for {f}"
+                )
+                form_data[f] = None
+
         self._form = forms.ManualImportForm(initial=form_data)
 
     @method_decorator(csrf_protect)
@@ -182,7 +188,7 @@ class ManualImport(TemplateResponseMixin, LoggedInView):
     def post(self, request, *args, **kwargs):
         try:
             employee = models.EmployeeImport.objects.get(pk=request.POST["id"])
-        except models.Employee.DoesNotExist:
+        except models.EmployeeImport.DoesNotExist:
             employee = None
 
         if employee != None:
@@ -190,9 +196,7 @@ class ManualImport(TemplateResponseMixin, LoggedInView):
                 {
                     "status": "error",
                     "fields": ["id"],
-                    "errors": [
-                        "Employee ID already exists. Please use import form on previous page"
-                    ],
+                    "errors": ["Employee ID already exists."],
                 }
             )
 
