@@ -118,7 +118,7 @@ class Employee(EmployeeBase, InactiveMixin):
         return hash(self.pk)
 
     def __str__(self):
-        return f"Employee: {self.givenname} {self.surname}"
+        return f"Employee: {self.first_name} {self.last_name}"
 
     def clear_password(self, confirm: bool = False) -> None:
         """Unset the password field and save the model."""
@@ -218,19 +218,19 @@ class Employee(EmployeeBase, InactiveMixin):
             instance.updated_on = timezone.now()
             if prev_instance.photo and prev_instance.photo != instance.photo:
                 # Delete the old photo
-                f = Path(
-                    settings.MEDIA_ROOT,
-                    "employee/employee/",
-                    instance.id,
-                    str(prev_instance.photo.path),
-                )
+                f = Path(settings.MEDIA_ROOT, str(prev_instance.photo.path))
                 if f.exists():
                     f.unlink()
 
-        if instance.username is None:
+                del f
+
+        if instance.updated_on is None:
+            instance.updated_on = timezone.now()
+
+        if instance.username is None and instance.active:
             cls.reset_username(instance)
 
-        if instance.email_alias is None:
+        if instance.email_alias is None and instance.active:
             cls.reset_upn(instance)
 
 
@@ -307,7 +307,7 @@ class EmployeeImport(EmployeeBase):
         return hash(self.pk)
 
     def __str__(self):
-        return f"{self.id}: {self.givenname} {self.surname}"
+        return f"{self.id}: {self.first_name} {self.last_name}"
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
@@ -320,6 +320,9 @@ class EmployeeImport(EmployeeBase):
             prev_instance = None
 
         if prev_instance and instance != prev_instance:
+            instance.updated_on = timezone.now()
+
+        if instance.updated_on is None:
             instance.updated_on = timezone.now()
 
         if instance.employee and instance.employee.employee_id != instance.id:
