@@ -13,7 +13,7 @@
     <i class="fas fa-arrow-circle-left"></i> Back</a>
   {% if employee.is_imported is False %}
   <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_manual_import"
-    href="{% url 'employee_manual' id=employee.id %}">
+    href="{% url 'employee_manual' id=employee.id %}?last={{ request.path }}">
     <i class="fas fa-upload"></i> Manual Import</a>
   <a class="btn btn-md btn-danger" style="margin:0 2pt;" id="btn_delete" onclick="do_delete()">
     <i class="fas fa-trash-alt"></i> Delete</a>
