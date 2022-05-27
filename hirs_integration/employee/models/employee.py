@@ -222,8 +222,6 @@ class Employee(EmployeeBase, InactiveMixin):
                 if f.exists():
                     f.unlink()
 
-                del f
-
         if instance.updated_on is None:
             instance.updated_on = timezone.now()
 
