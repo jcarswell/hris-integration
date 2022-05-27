@@ -63,77 +63,105 @@
           <div class="form-row">
             <div class="form-group col-md-4">
               <label for="first_name">First Name</label>
-              <input type="text" class="form-control" name="first_name" 
-              value="{{employee.first_name}}" required>
+              <div class="input-group">
+                <input type="text" class="form-control" name="first_name" 
+                  value="{{employee.first_name}}" required>
+              </div>
               <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-3">
               <label for="middle_name">Middle Name</label>
-              <input type="text" class="form-control" name="middle_name"
-                value="{{employee.middle_name}}">
+              <div class="input-group">
+                <input type="text" class="form-control" name="middle_name"
+                  value="{{employee.middle_name}}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-4">
               <label for="last_name">Last Name</label>
-              <input type="text" class="form-control" name="last_name"
-                value="{{employee.last_name}}" required>
+              <div class="input-group">
+                <input type="text" class="form-control" name="last_name"
+                  value="{{employee.last_name}}" required>
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-1">
               <label for="suffix">Suffix</label>
-              <input type="text" class="form-control" name="suffix"
-                value="{{employee.suffix}}">
+              <div class="input-group">
+                <input type="text" class="form-control" name="suffix"
+                  value="{{employee.suffix}}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group col-md-4">
               <label for="username">Username</label>
-              <input type="text" class="form-control" name="username" 
-                value="{{employee.username}}">
+              <div class="input-group">
+                <input type="text" class="form-control" name="username" 
+                  value="{{employee.username}}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-4">
               <label for="email_alias">Email Alias</label>
-              <input type="text" class="form-control" name="email_alias"
-              value="{{employee.email_alias}}">
+              <div class="input-group">
+                <input type="text" class="form-control" name="email_alias"
+                  value="{{employee.email_alias}}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-4">
               <label for="nickname">Nickname</label>
-              <input type="text" class="form-control" name="nickname"
-                value="{{employee.nickname}}">
+              <div class="input-group">
+                <input type="text" class="form-control" name="nickname"
+                  value="{{employee.nickname}}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group col-md-6">
               <label for='designations'>Designations</label>
-              <input type="text" class="form-control" placeholder="CISSP CPA ..." 
-              name="designations" value="{{ employee.designations }}">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="CISSP CPA ..." 
+                  name="designations" value="{{ employee.designations }}">
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-6">
               <label for="location">Home Building</label>
               <select name="location" class="form-control" required>
                 <option value="id_{{employee.location.pk}}">{{employee.location.name}}</option>
               </select>
+              <div class="invalid-feedback d-none"></div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group col-md-4">
               <label for="status">Status</label>
-              <select class="form-control" name="status" required>
-                <option value="{{employee.STATE_ACT}}"
-                {% if employee.status == employee.STATE_ACT %} selected{% endif %}>
-                Active</option>
-                <option value="{{employee.STATE_LEA}}"
-                  {% if employee.status == employee.STATE_LEA %} selected{% endif %}>
-                  On Leave</option>
+              <div class="input-group">
+                <select class="form-control" name="status" required>
+                  <option value="{{employee.STATE_ACT}}"
+                    {% if employee.status == employee.STATE_ACT %} selected{% endif %}>
+                    Active</option>
+                  <option value="{{employee.STATE_LEA}}"
+                    {% if employee.status == employee.STATE_LEA %} selected{% endif %}>
+                    On Leave</option>
                   <option value="{{employee.STATE_TERM}}"
-                  {% if employee.status == employee.STATE_TERM %} selected{% endif %}>
-                  Terminated</option>
-              </select>
+                    {% if employee.status == employee.STATE_TERM %} selected{% endif %}>
+                    Terminated</option>
+                </select>
+              </div>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-4">
               <label for="primary_job">Primary Job</label>
               <select class="form-control" name="primary_job" required>
                 <option value="id_{{employee.primary_job.pk}}" selected="selected">
                   {{employee.primary_job.name}}</option>
-                </select>
+              </select>
+              <div class="invalid-feedback d-none"></div>
             </div>
             <div class="form-group col-md-4">
               <label for="jobs">Additional Jobs</label>
@@ -142,6 +170,7 @@
                 <option value="id_{{job.pk}}" selected="selected">{{job.name}}</option>
                 {% endfor %}
               </select>
+              <div class="invalid-feedback d-none"></div>
             </div>
           </div>
           <div class="form-row">
@@ -314,7 +343,7 @@ var employee_import = {
   "primary_job": "{{ employee_import.primary_job.pk }}",
   "jobs": [
   {% for job in employee_import.jobs.all %}
-    "{{ job.pk }}",
+    "id_{{ job.id }}",
   {% endfor %}
   ]
 };
@@ -326,10 +355,10 @@ var employee_import = false;
 <script src="{% static 'employee.js' %}"></script>
 <script>
 $(function () {
+  employee_undo();
   populate_select('location');
   populate_select('primary_job');
   populate_select('jobs');
-  employee_undo();
   get_phones();
   get_addresses();
   get_software();
