@@ -129,7 +129,7 @@ class ManualImportForm(forms.Form):
         :type mutable_employee: models.Employee
         """
 
-        employee = models.EmployeeImport()
+        employee = models.EmployeeImport(id=self.data["id"])
         for field in self.data.keys():
             try:
                 if hasattr(employee, field) and not field in (
@@ -138,25 +138,38 @@ class ManualImportForm(forms.Form):
                     "primary_jobs",
                     "state",
                     "leave",
+                    "id",
                 ):
-                    logger.debug(f"{field}:{self.data[field]}")
+                    logger.debug(f"{field}: {self.data[field]}")
                     if self.data[field] != "":
                         setattr(employee, field, self.data[field])
                     elif field in self.initial and self.initial[field] != "":
-                        setattr(employee, field, self.data[field])
+                        setattr(employee, field, self.initial[field])
                 elif field in ("state", "leave"):
                     setattr(employee, field, bool(self.data[field]))
                 elif self.data[field] != "":
                     if field == "manager":
-                        employee.manager = models.Employee.objects.get(
+                        mutable_manager = models.Employee.objects.get(
                             pk=name_to_pk(self.data[field])
                         )
+                        if mutable_employee.is_imported and mutable_manager.employee_id:
+                            logger.debug(
+                                f"setting manager to {mutable_manager.employee_id}"
+                            )
+                            employee.manager = models.EmployeeImport.objects.get(
+                                id=mutable_manager.employee_id
+                            )
+                        else:
+                            logger.warn(
+                                f"Unable to set manager on imported employee as it is not imported yet"
+                            )
+
                     elif field == "primary_job":
-                        employee.manager = JobRole.objects.get(
+                        employee.primary_job = JobRole.objects.get(
                             pk=name_to_pk(self.data[field])
                         )
                 elif field == "jobs" and self.data[field] != []:
-                    employee.jobs = [name_to_pk(x) for x in self.data[field]]
+                    employee.secondary_jobs = [name_to_pk(x) for x in self.data[field]]
             except ValueError as e:
                 self.add_error(field, str(e))
             except (models.Employee.DoesNotExist, JobRole.DoesNotExist):
@@ -167,9 +180,15 @@ class ManualImportForm(forms.Form):
             except KeyError:
                 self.add_error(field, f"{field} - an internal error occurred")
 
-        employee = mutable_employee
+        employee.employee = mutable_employee
         employee.is_matched = True
         employee.save()
+        mutable_employee.employee_id = employee.id
+        mutable_employee.is_imported = True
+        mutable_employee.save()
+        logger.debug(f'saved employee "{employee}" based on "{mutable_employee}"')
+
+        return employee
 
 
 class NewEmployeeForm(Form):
