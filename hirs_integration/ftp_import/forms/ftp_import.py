@@ -66,7 +66,8 @@ class BaseImport:
     ]
 
     def __init__(self, field_config: List[Dict], **kwargs) -> None:
-        """The Base initialization module.
+        """
+        The Base initialization module.
 
         :param field_config: a mapping of kwargs to the target model field
         :type field_config: List[Dict]
@@ -173,7 +174,8 @@ class BaseImport:
             return None, False
 
     def _set_status(self) -> None:
-        """Parse the employee status field from the data and updated it to be a common value
+        """
+        Parse the employee status field from the data and updated it to be a common value
         understood by the Employee model.
         """
 
@@ -206,7 +208,8 @@ class BaseImport:
             logger.debug(f"Revised status is '{self.kwargs[self.status_field]}'")
 
     def _expand(self, data: str) -> str:
-        """Expand any short hand words used in the HRIS System
+        """
+        Expand any short hand words used in the HRIS System
 
         :param data: The source string to expand
         :type data: str
@@ -274,16 +277,15 @@ class BaseImport:
             return False
 
     def add_location(self, id: int) -> Location:
-        """Add or update a Location. If updating a location, ensure that all
+        """
+        Add or update a Location. If updating a location, ensure that all
         Employee and EmployeeOverride objects that use the Location are flagged
         that they are updated
 
-        Args:
-            id (int): The location id
-
-        Returns:
-            Location: the created/updated Location
-                May return None if the creation fails
+        :param id: The location id
+        :type data: int
+        :return: The created or updated Location (May return None if the creation fails)
+        :rtype: Location
         """
 
         if not isinstance(id, int):
@@ -340,12 +342,10 @@ class BaseImport:
         the Employee objects that have the job as its primary_job are
         flagged to get updated.
 
-        Args:
-            id (int): The Job ID to be created/updated
-
-        Returns:
-            JobRole: the created/updated JobRole
-                May return None if the creation fails
+        :param id: The Job id
+        :type data: int
+        :return: The created or updated Job (May return None if the creation fails)
+        :rtype: JobRole
         """
 
         if not isinstance(id, int):
@@ -410,18 +410,14 @@ class BaseImport:
 
     def add_business_unit(self, id: int) -> BusinessUnit:
         """
-        Add or update a business unit, if updating the bussiness unit
+        Add or update a business unit, if updating the business unit
         ensure that all impacted employee objects are getting flagged that
-        their is new infomation impacting them.
+        their is new information impacting them.
 
-        Args:
-            id (int): The ID of the business unit
-            name (AnyStr): The name of the business unit
-            parent [optional](int): An optional parrent business unit
-
-        Returns:
-            BusinessUnit: returns the new/updated business unit
-                may return None if the creation of a new JobRole Fails
+        :param id: The Business Unit ID
+        :type data: int
+        :return: The created or updated Business Unit (May return None if the creation fails)
+        :rtype: BusinessUnit
         """
 
         if not isinstance(id, int):
@@ -530,7 +526,8 @@ class BaseImport:
         pass
 
     def save(self):
-        """This is a wrapper function to call the various save tasks in the correct order.
+        """
+        This is a wrapper function to call the various save tasks in the correct order.
         If you are extending this method, the call order is save_pre, save_main, save_post
         """
 
@@ -598,7 +595,8 @@ class BaseImport:
 
 
 class EmployeeForm(BaseImport):
-    """This is the main class for importing employee data. Extending the base class to provide
+    """
+    This is the main class for importing employee data. Extending the base class to provide
     the full functionality of the import. If you are extending the import class it's recommended
     to understand this model and extend this instead of the base class. See the documentation
     for full details on writing your own import class.
@@ -684,7 +682,8 @@ class EmployeeForm(BaseImport):
             self.mutable_employee = None
 
     def save_employee_new(self) -> bool:
-        """The main save logic for a new employee. This will create a new EmployeeImport object
+        """
+        The main save logic for a new employee. This will create a new EmployeeImport object
         and attempt to match it to an existing employee.
          - If no match is found, then the Employee object will be created as well.
          - If the employee is matched to an existing pending user with a configured level
@@ -753,7 +752,8 @@ class EmployeeForm(BaseImport):
             self.employee.save()
 
     def _get_phone(self) -> Phone:
-        """Attempts to get the Phone object for the employee. If one does not exist,
+        """
+        Attempts to get the Phone object for the employee. If one does not exist,
         a new one will be created with the base fields set. If one exists, it will be returned
         else a exception will be raised, while we cowardly refuse to create a new object.
 
@@ -805,7 +805,8 @@ class EmployeeForm(BaseImport):
             phone.save()
 
     def _get_address(self) -> Address:
-        """similar to _get_phone, but for addresses. This method also filters based on the
+        """
+        Similar to _get_phone, but for addresses. This method also filters based on the
         "Imported Address" label, so it should always return a single address new or existing.
 
         :raises Address.MultipleObjectsReturned: If more than one address is found
@@ -856,7 +857,8 @@ class EmployeeForm(BaseImport):
             address.save()
 
     def save_main(self):
-        """The Main save logic. This method calls the appropriate sub-routines to save or update
+        """
+        The Main save logic. This method calls the appropriate sub-routines to save or update
         the employee object. This entire method will not do anything if save_user is set to False.
 
         If this is a new employee, the save_employee_new method will be called otherwise the
@@ -907,7 +909,8 @@ class PendingImport(EmployeeForm):
     converting an unmatched employee to a matched employee."""
 
     def __init__(self, employee: EmployeeImport, mutable_employee: Employee, **kwargs):
-        """A simplified initialization that runs through the needed steps to update the
+        """
+        A simplified initialization that runs through the needed steps to update the
         mutable employee object and match the mutable employee to the employee object.
 
         :param employee: The source employee object that we are matching
