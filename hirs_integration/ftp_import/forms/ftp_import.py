@@ -1,14 +1,13 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import datetime
 import logging
-import json
 
 from typing import Dict, List
 from django.utils import timezone
 from settings.models import WordList
-from employee.models import Employee,EmployeeImport,Phone,Address
+from employee.models import Employee, EmployeeImport, Phone, Address
 from extras.models import Notification
 from organization.models import JobRole, Location, BusinessUnit
 from django.db.utils import IntegrityError
@@ -16,21 +15,22 @@ from django.db.models import Q
 from common.functions import get_model_pk_name
 
 from ftp_import.helpers import config
-from ftp_import.helpers.text_utils import int_or_str,fuzz_name,parse_date
+from ftp_import.helpers.text_utils import int_or_str, fuzz_name, parse_date
 from ftp_import.helpers.stats import Stats
 
-__all__ = ('form','PendingImport')
+__all__ = ("form", "PendingImport")
 
-logger = logging.getLogger('ftp_import.forms.ImportForm')
+logger = logging.getLogger("ftp_import.forms.ImportForm")
 
-class BaseImport():
+
+class BaseImport:
     """
     Base import form for parsing employee data. This class provides numerous
     supporting functions along with the shell to which processing happens.
-    
+
     Initialization:
       The class expects a list of felid configuration data that will be provided as kwargs.
-      The list should be structured as: 
+      The list should be structured as:
       [
           {
               'field': <kwarg field name>,
@@ -38,8 +38,8 @@ class BaseImport():
           },
           ...
       ]
-      
-      Durring initialization the following things happen:
+
+      During initialization the following things happen:
        - Employee object is initialized either with the existing object or an empty object
        - The status field from the import is re-mapped to the expected model value
        - If this is a "new" Employee the save attribute is set
@@ -47,10 +47,25 @@ class BaseImport():
 
     mutable_employee = None
     save_user = True
-    UPDATE_FIELDS_ALWAYS = ['manager','primary_job','jobs','type','state','leave','start_date']
-    UPDATE_FIELDS_OPTIONAL = ['first_name','last_name','middle_name','location','email_alias','username'] 
+    UPDATE_FIELDS_ALWAYS = [
+        "manager",
+        "primary_job",
+        "jobs",
+        "type",
+        "state",
+        "leave",
+        "start_date",
+    ]
+    UPDATE_FIELDS_OPTIONAL = [
+        "first_name",
+        "last_name",
+        "middle_name",
+        "location",
+        "email_alias",
+        "username",
+    ]
 
-    def __init__(self,field_config:List[Dict], **kwargs) -> None:
+    def __init__(self, field_config: List[Dict], **kwargs) -> None:
         """The Base initialization module.
 
         :param field_config: a mapping of kwargs to the target model field
@@ -62,22 +77,28 @@ class BaseImport():
         self.config = config.Config()
         self.kwargs = kwargs
         self.field_config = field_config
-        self.expand = self.config(config.CAT_CSV,config.CSV_USE_EXP)
-        self.import_jobs = self.config(config.CAT_CSV,config.CSV_IMPORT_JOBS)
-        self.import_bu = self.config(config.CAT_CSV,config.CSV_IMPORT_BU)
-        self.import_jobs_all = self.config(config.CAT_CSV,config.CSV_IMPORT_ALL_JOBS)
-        self.import_loc = self.config(config.CAT_CSV,config.CSV_IMPORT_LOC)
-        logger.debug(f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} "
-                     f"- bu: {self.import_bu} - location: {self.import_loc}")
+        self.expand = self.config(config.CAT_CSV, config.CSV_USE_EXP)
+        self.import_jobs = self.config(config.CAT_CSV, config.CSV_IMPORT_JOBS)
+        self.import_bu = self.config(config.CAT_CSV, config.CSV_IMPORT_BU)
+        self.import_jobs_all = self.config(config.CAT_CSV, config.CSV_IMPORT_ALL_JOBS)
+        self.import_loc = self.config(config.CAT_CSV, config.CSV_IMPORT_LOC)
+        logger.debug(
+            f"Config - import jobs: {self.import_jobs} - all jobs: {self.import_jobs_all} "
+            f"- bu: {self.import_bu} - location: {self.import_loc}"
+        )
         Stats.rows_processed += 1
 
         emp_id_field = get_model_pk_name(EmployeeImport)
         employee_id_field = self.get_field_name(emp_id_field)
 
         if employee_id_field == None or employee_id_field not in kwargs:
-            Stats.errors.append(f"Row {Stats.rows_processed} does not contain an Employee ID")
+            Stats.errors.append(
+                f"Row {Stats.rows_processed} does not contain an Employee ID"
+            )
             logger.fatal("Row data does not contain an employee id field mapping")
-            raise ValueError(f"'{emp_id_field}' is missing from fields, can not continue")
+            raise ValueError(
+                f"'{emp_id_field}' is missing from fields, can not continue"
+            )
         else:
             self.employee_id = int_or_str(kwargs[employee_id_field])
 
@@ -91,12 +112,18 @@ class BaseImport():
         except EmployeeImport.DoesNotExist:
             self.employee = EmployeeImport()
             self.new = True
-            logger.debug(f'{self.employee_id} is a new Employee')
+            logger.debug(f"{self.employee_id} is a new Employee")
 
         self._set_status()
 
-        if self.new and self.status_field and kwargs[self.status_field] == Employee.STAT_TERM:
-            logger.debug(f"Employee {self.employee_id} is doesn't exists and is already terminated not importing")
+        if (
+            self.new
+            and self.status_field
+            and kwargs[self.status_field] == Employee.STAT_TERM
+        ):
+            logger.debug(
+                f"Employee {self.employee_id} is doesn't exists and is already terminated not importing"
+            )
             self.save_user = False
             self.employee = None
         else:
@@ -114,17 +141,22 @@ class BaseImport():
         Returns Tuple[(EmployeePending,None),Multiple]
         """
 
-        fuzz_pcent = self.config(config.CAT_CSV,config.CSV_FUZZ_PCENT)
+        fuzz_pcent = self.config(config.CAT_CSV, config.CSV_FUZZ_PCENT)
 
         potentials = []
         for emp in Employee.objects.filter(is_imported=False):
-            state,pcent = fuzz_name(self.employee.givenname,self.employee.surname,
-                                    emp.givenname,emp.surname,fuzz_pcent)
+            state, pcent = fuzz_name(
+                self.employee.first_name,
+                self.employee.last_name,
+                emp.first_name,
+                emp.last_name,
+                fuzz_pcent,
+            )
             if state:
-                potentials.append([emp,pcent])
+                potentials.append([emp, pcent])
 
         if len(potentials) == 1:
-            return potentials[0][0],False
+            return potentials[0][0], False
 
         elif len(potentials) > 1:
             hmark = 0
@@ -135,39 +167,45 @@ class BaseImport():
                     hmark = opt[1]
                     emp = opt[0]
 
-            return emp,True
+            return emp, True
 
         else:
-            return None,False
+            return None, False
 
     def _set_status(self) -> None:
         """Parse the employee status field from the data and updated it to be a common value
         understood by the Employee model.
         """
 
-        self.status_field = self.config(config.CAT_FIELD,config.FIELD_STATUS)
-        status_term = self.config(config.CAT_EXPORT,config.EXPORT_TERM)
-        status_act = self.config(config.CAT_EXPORT,config.EXPORT_ACTIVE)
-        status_leave = self.config(config.CAT_EXPORT,config.EXPORT_LEAVE)
+        self.status_field = self.config(config.CAT_FIELD, config.FIELD_STATUS)
+        status_term = self.config(config.CAT_EXPORT, config.EXPORT_TERM)
+        status_act = self.config(config.CAT_EXPORT, config.EXPORT_ACTIVE)
+        status_leave = self.config(config.CAT_EXPORT, config.EXPORT_LEAVE)
 
         if not self.status_field:
-            self.status_field = self.get_field_name('status')
+            self.status_field = self.get_field_name("status")
 
         logger.debug(f"status field is '{self.status_field}'")
 
-        if (self.status_field and
-                self.status_field in self.kwargs and
-                self.kwargs[self.status_field] in [status_leave,status_act,status_term]):
+        if (
+            self.status_field
+            and self.status_field in self.kwargs
+            and self.kwargs[self.status_field]
+            in [status_leave, status_act, status_term]
+        ):
             logger.debug(f"Source status is '{self.kwargs[self.status_field]}'")
             if self.kwargs[self.status_field].lower() == status_term.lower():
                 self.kwargs[self.status_field] = EmployeeImport.STAT_TERM
             elif self.kwargs[self.status_field].lower() == status_act.lower():
                 self.kwargs[self.status_field] = EmployeeImport.STAT_ACT
-            elif status_leave and self.kwargs[self.status_field].lower() == status_leave.lower():
+            elif (
+                status_leave
+                and self.kwargs[self.status_field].lower() == status_leave.lower()
+            ):
                 self.kwargs[self.status_field] = EmployeeImport.STAT_LEA
             logger.debug(f"Revised status is '{self.kwargs[self.status_field]}'")
 
-    def _expand(self,data:str) -> str:
+    def _expand(self, data: str) -> str:
         """Expand any short hand words used in the HRIS System
 
         :param data: The source string to expand
@@ -200,7 +238,7 @@ class BaseImport():
         return " ".join(output)
 
     @staticmethod
-    def location_check(id:int) -> bool:
+    def location_check(id: int) -> bool:
         """Check if the Location exists and is valid"""
 
         try:
@@ -212,7 +250,7 @@ class BaseImport():
             return False
 
     @staticmethod
-    def jobs_check(id:int) -> bool:
+    def jobs_check(id: int) -> bool:
         """Check if the JobRole exists and is valid"""
 
         try:
@@ -224,7 +262,7 @@ class BaseImport():
             return False
 
     @staticmethod
-    def business_unit_check(id:int) -> bool:
+    def business_unit_check(id: int) -> bool:
         """Check if the BusinessUnit exists and is valid"""
 
         try:
@@ -235,7 +273,7 @@ class BaseImport():
         except BusinessUnit.DoesNotExist:
             return False
 
-    def add_location(self,id:int) -> Location:
+    def add_location(self, id: int) -> Location:
         """Add or update a Location. If updating a location, ensure that all
         Employee and EmployeeOverride objects that use the Location are flagged
         that they are updated
@@ -248,21 +286,24 @@ class BaseImport():
                 May return None if the creation fails
         """
 
-        if not isinstance(id,int):
+        if not isinstance(id, int):
             raise ValueError(f"Expected int got type {type(id)}")
 
-        loc_desc = self.config(config.CAT_FIELD,config.FIELD_LOC_NAME)
+        loc_desc = self.config(config.CAT_FIELD, config.FIELD_LOC_NAME)
         changed = False
 
-        location,new = Location.objects.get_or_create(pk=id)
+        location, new = Location.objects.get_or_create(pk=id)
 
         if new and not self.import_loc:
             logger.debug("Importing new jobs is disabled")
             location.delete()
             return
 
-        if (loc_desc in self.kwargs.keys() and int_or_str(self.kwargs[loc_desc]) 
-                and location.name != int_or_str(self.kwargs[loc_desc])):
+        if (
+            loc_desc in self.kwargs.keys()
+            and int_or_str(self.kwargs[loc_desc])
+            and location.name != int_or_str(self.kwargs[loc_desc])
+        ):
             location.name = self._expand(int_or_str(self.kwargs[loc_desc]))
             changed = True
 
@@ -288,14 +329,14 @@ class BaseImport():
 
         return location
 
-    def update_location(self,id:int) -> Location:
+    def update_location(self, id: int) -> Location:
         """Update the location. This base class just wraps the add_location method"""
 
         return self.add_location(id)
 
-    def add_job(self,id:int) -> JobRole:
+    def add_job(self, id: int) -> JobRole:
         """
-        Create or update a JobRole. If updating the Job Role ensure that 
+        Create or update a JobRole. If updating the Job Role ensure that
         the Employee objects that have the job as its primary_job are
         flagged to get updated.
 
@@ -307,14 +348,14 @@ class BaseImport():
                 May return None if the creation fails
         """
 
-        if not isinstance(id,int):
+        if not isinstance(id, int):
             raise ValueError(f"Expected int got type {type(id)}")
 
-        job_desc = self.config(config.CAT_FIELD,config.FIELD_JD_NAME)
-        job_bu = self.config(config.CAT_FIELD,config.FIELD_JD_BU)
+        job_desc = self.config(config.CAT_FIELD, config.FIELD_JD_NAME)
+        job_bu = self.config(config.CAT_FIELD, config.FIELD_JD_BU)
         changed = False
-        
-        job,new = JobRole.objects.get_or_create(pk=id)
+
+        job, new = JobRole.objects.get_or_create(pk=id)
 
         if new and not self.import_jobs or not self.import_jobs_all:
             logger.debug("Importing new jobs is disabled")
@@ -332,7 +373,9 @@ class BaseImport():
             logger.debug(f"user keys: {self.kwargs.keys()}")
             bu = None
 
-        if int_or_str(self.kwargs[job_desc]) and job.name != int_or_str(self.kwargs[job_desc]):
+        if int_or_str(self.kwargs[job_desc]) and job.name != int_or_str(
+            self.kwargs[job_desc]
+        ):
             job.name = self._expand(int_or_str(self.kwargs[job_desc]))
             changed = True
 
@@ -362,10 +405,10 @@ class BaseImport():
 
         return job
 
-    def update_job(self,id:int) -> JobRole:
+    def update_job(self, id: int) -> JobRole:
         return self.add_job(id)
 
-    def add_business_unit(self,id:int) -> BusinessUnit:
+    def add_business_unit(self, id: int) -> BusinessUnit:
         """
         Add or update a business unit, if updating the bussiness unit
         ensure that all impacted employee objects are getting flagged that
@@ -381,13 +424,13 @@ class BaseImport():
                 may return None if the creation of a new JobRole Fails
         """
 
-        if not isinstance(id,int):
+        if not isinstance(id, int):
             raise ValueError(f"Expected int got type {type(id)}")
 
-        bu_desc = self.config(config.CAT_FIELD,config.FIELD_BU_NAME)
-        bu_parent = self.config(config.CAT_FIELD,config.FIELD_BU_PARENT)
+        bu_desc = self.config(config.CAT_FIELD, config.FIELD_BU_NAME)
+        bu_parent = self.config(config.CAT_FIELD, config.FIELD_BU_PARENT)
 
-        bu,new = BusinessUnit.objects.get_or_create(pk=id)
+        bu, new = BusinessUnit.objects.get_or_create(pk=id)
         changed = False
 
         if new and not self.import_bu:
@@ -395,11 +438,17 @@ class BaseImport():
             bu.delete()
             return
 
-        if bu_desc in self.kwargs.keys() and new or bu.name != self._expand(self.kwargs[bu_desc]):
+        if (
+            bu_desc in self.kwargs.keys()
+            and new
+            or bu.name != self._expand(self.kwargs[bu_desc])
+        ):
             bu.name = self._expand(self.kwargs[bu_desc])
             changed = True
 
-        if bu_parent in self.kwargs.keys() and self.business_unit_check(int(self.kwargs[bu_parent])):
+        if bu_parent in self.kwargs.keys() and self.business_unit_check(
+            int(self.kwargs[bu_parent])
+        ):
             parent = BusinessUnit.objects.get(pk=int(self.kwargs[bu_parent]))
             if parent != bu.parent:
                 bu.parent = parent
@@ -412,7 +461,9 @@ class BaseImport():
             if new:
                 logger.info(f"Added new business unit {bu}")
         except IntegrityError as e:
-            logger.error(f"Unable to save business unit '{bu.bu_id} - {bu.name}' error {e}")
+            logger.error(
+                f"Unable to save business unit '{bu.bu_id} - {bu.name}' error {e}"
+            )
             if new:
                 bu.delete()
                 return
@@ -428,21 +479,30 @@ class BaseImport():
 
         return bu
 
-    def update_business_unit(self,id:int) -> BusinessUnit:
+    def update_business_unit(self, id: int) -> BusinessUnit:
         """A wrapper call for add_business_unit for simplicity"""
 
         return self.add_business_unit(id)
 
     def save_pre(self):
         """Pre-save: Process the creation and updating of jobs and business units"""
-        if not (self.import_jobs_all or self.import_jobs or self.import_bu or self.import_loc):
+        if not (
+            self.import_jobs_all
+            or self.import_jobs
+            or self.import_bu
+            or self.import_loc
+        ):
             return
 
         fields = config.CsvSetting()
-        job_id = fields.get_by_map_val('primary_job')
-        loc_id = fields.get_by_map_val('location')
+        job_id = fields.get_by_map_val("primary_job")
+        loc_id = fields.get_by_map_val("location")
 
-        if self.import_jobs_all or (self.import_jobs and self.save_user) and job_id in self.kwargs.keys():
+        if (
+            self.import_jobs_all
+            or (self.import_jobs and self.save_user)
+            and job_id in self.kwargs.keys()
+        ):
             try:
                 self.add_job(int_or_str(self.kwargs[job_id]))
             except Exception as e:
@@ -458,7 +518,7 @@ class BaseImport():
 
     def save_main(self) -> None:
         """
-        This is the main save logic that needs to be implement based on the individual 
+        This is the main save logic that needs to be implement based on the individual
         organizations need. Refer to the class doc for more details
         """
 
@@ -478,9 +538,9 @@ class BaseImport():
         self.save_main()
         self.save_post()
 
-    def get_map_to(self,key:str) -> str:
+    def get_map_to(self, key: str) -> str:
         """
-        Get the map value based on the field value 
+        Get the map value based on the field value
 
         Args:
             key (str): the field value to look up
@@ -490,14 +550,14 @@ class BaseImport():
         """
 
         for field in self.field_config:
-            if field['field'] == key:
-                return field['map_to']
+            if field["field"] == key:
+                return field["map_to"]
 
-        return ''
+        return ""
 
-    def get_field_name(self,key:str) -> str:
+    def get_field_name(self, key: str) -> str:
         """
-        Get the field name based on the map to value 
+        Get the field name based on the map to value
 
         Args:
             key (str): the map to value to look up
@@ -507,29 +567,30 @@ class BaseImport():
         """
 
         for field in self.field_config:
-            if field['map_to'] == key:
-                return field['field']
+            if field["map_to"] == key:
+                return field["field"]
 
-        return ''
+        return ""
 
-    def update_employee_mutable(self,mutable_employee:Employee) -> None:
+    def update_employee_mutable(self, mutable_employee: Employee) -> None:
         """Handles the update of the mutable employee object"""
 
         # These fields should always be updated to match the source data upon change
         for key in self.UPDATE_FIELDS_ALWAYS:
-            if getattr(self.employee,key,None) != None:
-                setattr(mutable_employee,key,getattr(self.employee,key))
+            if getattr(self.employee, key, None) != None:
+                setattr(mutable_employee, key, getattr(self.employee, key))
 
         if self.new:
             orig_data = self.employee
         else:
-            orig_data = EmployeeImport.objects.get(pk=self.employee.pk)
+            orig_data = EmployeeImport.objects.get(pk=self.employee.id)
 
-        #These fields should only be updated if they have changed or are not set
+        # These fields should only be updated if they have changed or are not set
         for key in self.UPDATE_FIELDS_OPTIONAL:
-            if (getattr(mutable_employee,key,None) == None 
-                or getattr(mutable_employee,key) == getattr(orig_data,key)):
-                setattr(mutable_employee,key,getattr(self.employee,key))
+            if getattr(mutable_employee, key, None) == None or getattr(
+                mutable_employee, key
+            ) == getattr(orig_data, key):
+                setattr(mutable_employee, key, getattr(self.employee, key))
 
         mutable_employee.is_imported = True
 
@@ -551,11 +612,11 @@ class EmployeeForm(BaseImport):
             mutable_employee = self.employee.employee
         else:
             mutable_employee = Employee()
-        for key,value in self.kwargs.items():
+        for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(self.employee,map_val):
-                #logger.debug(f"setting {map_val}")
-                if map_val == 'manager':
+            if hasattr(self.employee, map_val):
+                # logger.debug(f"setting {map_val}")
+                if map_val == "manager":
                     try:
                         manager = EmployeeImport.objects.get(pk=int_or_str(value))
                         if self.employee.manager != manager and manager.state:
@@ -574,7 +635,7 @@ class EmployeeForm(BaseImport):
                             self.employee.manager = None
                             changed = True
 
-                elif map_val == 'primary_job':
+                elif map_val == "primary_job":
                     if self.jobs_check(int_or_str(value)):
                         primary_job = JobRole.objects.get(pk=int_or_str(value))
                         if self.employee.primary_job != primary_job:
@@ -583,7 +644,7 @@ class EmployeeForm(BaseImport):
                     else:
                         logger.warning(f"Job {value} doesn't exist yet")
 
-                elif map_val == 'location':
+                elif map_val == "location":
                     if self.location_check(int_or_str(value)):
                         location = Location.objects.get(pk=int_or_str(value))
                         if self.employee.location != location:
@@ -591,14 +652,19 @@ class EmployeeForm(BaseImport):
                             changed = True
 
                 else:
-                    if hasattr(self.employee,map_val):
-                        if isinstance(getattr(self.employee,map_val),(datetime.datetime,datetime.date)):
+                    if hasattr(self.employee, map_val):
+                        if isinstance(
+                            getattr(self.employee, map_val),
+                            (datetime.datetime, datetime.date),
+                        ):
                             try:
                                 value = parse_date(value)
                             except ValueError as e:
-                                logger.error(f"Failed to parse date time value for {key} - {str(e)}")
-                    if getattr(self.employee,map_val) != value:
-                        setattr(self.employee,map_val,value)
+                                logger.error(
+                                    f"Failed to parse date time value for {key} - {str(e)}"
+                                )
+                    if getattr(self.employee, map_val) != value:
+                        setattr(self.employee, map_val, value)
                         changed = True
 
         if changed:
@@ -619,46 +685,57 @@ class EmployeeForm(BaseImport):
 
     def save_employee_new(self) -> bool:
         """The main save logic for a new employee. This will create a new EmployeeImport object
-        and attempt to match it to an existing employee. 
-         - If no match is found, then the Employee object will be created as well. 
-         - If the employee is matched to an existing pending user with a configured level 
+        and attempt to match it to an existing employee.
+         - If no match is found, then the Employee object will be created as well.
+         - If the employee is matched to an existing pending user with a configured level
            of certainty, then the employee will be matched to that existing object.
-         - If the employee is matched to multiple users, then the employee will be left in 
+         - If the employee is matched to multiple users, then the employee will be left in
            an unmatched state, to be manually matched.
         """
 
-        for key,value in self.kwargs.items():
+        for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(self.employee,map_val):
-                if map_val == 'manager':
+            if hasattr(self.employee, map_val):
+                if map_val == "manager":
                     try:
-                        self.employee.manager = Employee.objects.get(pk=int_or_str(value))
+                        self.employee.manager = Employee.objects.get(
+                            pk=int_or_str(value)
+                        )
                     except Employee.DoesNotExist:
                         logger.warning(f"Manager {value} doesn't exist yet")
                         Stats.warnings.append(f"Manager {value} doesn't exist yet")
 
-                elif map_val == 'primary_job':
+                elif map_val == "primary_job":
                     if self.jobs_check(int_or_str(value)):
-                        self.employee.primary_job = JobRole.objects.get(pk=int_or_str(value))
+                        self.employee.primary_job = JobRole.objects.get(
+                            pk=int_or_str(value)
+                        )
                     else:
                         logger.warning(f"Job {value} doesn't exist yet")
                         Stats.warnings.append(f"Job {value} doesn't exist yet")
-                elif map_val == 'location':
+                elif map_val == "location":
                     if self.location_check(int_or_str(value)):
-                        self.employee.location = Location.objects.get(pk=int_or_str(value))
+                        self.employee.location = Location.objects.get(
+                            pk=int_or_str(value)
+                        )
                 else:
-                    if hasattr(self.employee,map_val):
-                        if isinstance(getattr(self.employee,map_val),(datetime.datetime,datetime.date)):
+                    if hasattr(self.employee, map_val):
+                        if isinstance(
+                            getattr(self.employee, map_val),
+                            (datetime.datetime, datetime.date),
+                        ):
                             value = parse_date(value)
                     try:
-                        setattr(self.employee,map_val,value)
+                        setattr(self.employee, map_val, value)
                     except IntegrityError:
-                        #This may be expected as the employee has yet to be created in the database
+                        # This may be expected as the employee has yet to be created in the database
                         # therefore a foreign key relationship cannot be created.
-                        if map_val != 'jobs':
-                            logger.warning(f"Failed to set field '{map_val}' for {self.employee}")
+                        if map_val != "jobs":
+                            logger.warning(
+                                f"Failed to set field '{map_val}' for {self.employee}"
+                            )
 
-        mutable_employee,multiple = self.fuzz_pending()
+        mutable_employee, multiple = self.fuzz_pending()
 
         if not multiple:
             if mutable_employee == None:
@@ -703,22 +780,24 @@ class EmployeeForm(BaseImport):
         """Parse the kwargs for phone number fields and update the phone number object."""
 
         if self.employee.is_matched == False:
-            #This is a pending employee so we can't save the phone number
+            # This is a pending employee so we can't save the phone number
             return
 
         try:
             phone = self._get_phone()
         except Phone.MultipleObjectsReturned:
-            logger.warning("More than one phone number exists. Cowardly not doing anything")
+            logger.warning(
+                "More than one phone number exists. Cowardly not doing anything"
+            )
             return
         except KeyError:
             # This should only happen if the employee is not matched but the flag is set
             return
 
-        for key,value in self.kwargs.items():
+        for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(phone,map_val) and value:
-                setattr(phone,map_val,value)
+            if hasattr(phone, map_val) and value:
+                setattr(phone, map_val, value)
                 phone.label = key
 
         if phone.number:
@@ -726,7 +805,7 @@ class EmployeeForm(BaseImport):
             phone.save()
 
     def _get_address(self) -> Address:
-        """similar to _get_phone, but for addresses. This method also filters based on the 
+        """similar to _get_phone, but for addresses. This method also filters based on the
         "Imported Address" label, so it should always return a single address new or existing.
 
         :raises Address.MultipleObjectsReturned: If more than one address is found
@@ -734,13 +813,15 @@ class EmployeeForm(BaseImport):
         :rtype: Address
         """
 
-        addrs = Address.objects.filter(Q(employee=self.mutable_employee) & Q(label="Imported Address"))
+        addrs = Address.objects.filter(
+            Q(employee=self.mutable_employee) & Q(label="Imported Address")
+        )
         if len(addrs) > 1:
             raise Address.MultipleObjectsReturned
         elif len(addrs) < 1:
             addr = Address()
             addr.employee = self.mutable_employee
-            addr.label = 'Imported Address'
+            addr.label = "Imported Address"
             return addr
         else:
             return addrs[0]
@@ -749,7 +830,7 @@ class EmployeeForm(BaseImport):
         """Parse the kwargs for address fields and updates the address object."""
 
         if self.employee.is_matched == False:
-            #This is a pending employee so we can't save the phone number
+            # This is a pending employee so we can't save the address
             return
 
         try:
@@ -757,25 +838,25 @@ class EmployeeForm(BaseImport):
         except Address.MultipleObjectsReturned:
             logger.warning("More than one address exists. Cowardly not doing anything")
 
-        for key,value in self.kwargs.items():
+        for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(address,map_val):
-                if map_val[:6] == 'street':
-                    if 1 < len(value.split(',')) < 4:
-                        value = value.split(',')
+            if hasattr(address, map_val):
+                if map_val[:6] == "street":
+                    if 1 < len(value.split(",")) < 4:
+                        value = value.split(",")
                         for x in range(len(value)):
-                            setattr(address,f"street{x}",value[x])
+                            setattr(address, f"street{x}", value[x])
                     else:
-                        setattr(address,map_val,value)
+                        setattr(address, map_val, value)
 
-                setattr(address,map_val,value)
+                setattr(address, map_val, value)
 
         if address.street1:
             address.primary = False
             address.save()
 
     def save_main(self):
-        """The Main save logic. This method calls the appropriate sub-rutines to save or update
+        """The Main save logic. This method calls the appropriate sub-routines to save or update
         the employee object. This entire method will not do anything if save_user is set to False.
 
         If this is a new employee, the save_employee_new method will be called otherwise the
@@ -800,26 +881,32 @@ class EmployeeForm(BaseImport):
                 try:
                     self.save_address()
                 except IntegrityError as e:
-                    logger.exception(f"Failed to save employee address for {self.employee_id}")
+                    logger.exception(
+                        f"Failed to save employee address for {self.employee_id}"
+                    )
                 try:
                     self.save_phone()
                 except IntegrityError as e:
-                    logger.exception(f"Failed to save employee phone for {self.employee_id}")
+                    logger.exception(
+                        f"Failed to save employee phone for {self.employee_id}"
+                    )
         else:
-            logger.info(f"Not saving employee {self.employee_id}, as the don't exist are terminated")
+            logger.info(
+                f"Not saving employee {self.employee_id}, as the don't exist are terminated"
+            )
             return
-        
+
         if self.employee and not self.employee.pk:
             self.employee.delete()
 
-        logger.debug(f'\'save()\' complete for {self.employee_id}')
+        logger.debug(f"'save()' complete for {self.employee_id}")
 
 
 class PendingImport(EmployeeForm):
     """This method is a simple wrapper around the EmployeeForm class specifically to handle
     converting an unmatched employee to a matched employee."""
 
-    def __init__(self,employee:EmployeeImport,mutable_employee:Employee,**kwargs):
+    def __init__(self, employee: EmployeeImport, mutable_employee: Employee, **kwargs):
         """A simplified initialization that runs through the needed steps to update the
         mutable employee object and match the mutable employee to the employee object.
 
