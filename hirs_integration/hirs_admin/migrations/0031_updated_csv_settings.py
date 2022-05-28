@@ -2,7 +2,7 @@ import logging
 
 from django.db import migrations
 
-logger = logging.getLogger('hirs_admin.Migrations')
+logger = logging.getLogger("hirs_admin.Migrations")
 
 SETTING_MIGRATIONS = {
     "global_settings/configuration/ad_search_base_dn": "active_directory/configuration/ad_search_base_dn",
@@ -12,14 +12,15 @@ SETTING_MIGRATIONS = {
     "ftp_import_feild_mapping": "ftp_import_field_mapping",
     "ftp_import_config/server/protocal": "ftp_import_config/server/protocol",
     "ftp_import_config/server/field_sperator": "ftp_import_config/server/field_separator",
-    "ftp_import_config/export_options/actve_status_field_value":"ftp_import_config/export_options/active_status_field_value",
+    "ftp_import_config/export_options/actve_status_field_value": "ftp_import_config/export_options/active_status_field_value",
     "ad_export/user_defaults/orginization": "ad_export/user_defaults/organization",
     "corepoint_export/configuration/last_sycronization_run": "corepoint_export/configuration/last_synchronization_run",
-    
-    }
+    "ftp_import_config/csv_parse/fuzzy_pending_match_precentage": "ftp_import_config/csv_parse/fuzzy_pending_match_percent",
+}
+
 
 def forward_func(apps, schema_editor):
-    Setting = apps.get_model('hirs_admin', 'Setting')
+    Setting = apps.get_model("hirs_admin", "Setting")
 
     for old_path, new_path in SETTING_MIGRATIONS.items():
         if new_path is None:
@@ -30,9 +31,11 @@ def forward_func(apps, schema_editor):
                 pass
         else:
             try:
-                if len(new_path.split('/')) == 1:
+                if len(new_path.split("/")) == 1:
                     for setting in Setting.o2.filter(setting__startswith=old_path):
-                        setting.setting = "/".join([new_path, setting.setting.split('/')[-1]])
+                        setting.setting = "/".join(
+                            [new_path, setting.setting.split("/")[-1]]
+                        )
                         setting.save()
                 setting = Setting.o2.get(setting=old_path)
                 setting.setting = new_path
@@ -44,12 +47,13 @@ def forward_func(apps, schema_editor):
 def reverse_func(apps, schema_editor):
     pass
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hirs_admin', '0030_datetime_feild_conversion'),
+        ("hirs_admin", "0030_datetime_feild_conversion"),
     ]
 
     operations = [
-        migrations.RunPython(forward_func,reverse_func),
+        migrations.RunPython(forward_func, reverse_func),
     ]
