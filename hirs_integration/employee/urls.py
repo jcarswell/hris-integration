@@ -17,7 +17,7 @@ urlpatterns = [
         name="employee_imported_list",
     ),
     path(
-        "imported/",
+        "imported/<int:id>/",
         FormView.as_view(form=forms.ImportedEmployeeView),
         name="employee_imported_edit",
     ),
