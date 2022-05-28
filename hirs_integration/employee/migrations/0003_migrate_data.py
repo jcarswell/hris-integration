@@ -2,19 +2,20 @@ import logging
 
 from django.db import migrations
 
-logger = logging.getLogger('employee.migrations')
+logger = logging.getLogger("employee.migrations")
 
-def migrate_employees(apps,schema_editor):
-    orig_employee = apps.get_model('hirs_admin','Employee')
-    orig_employee_override = apps.get_model('hirs_admin','EmployeeOverrides')
-    orig_address = apps.get_model('hirs_admin','EmployeeAddress')
-    orig_phone = apps.get_model('hirs_admin','EmployeePhone')
-    employee = apps.get_model('employee','Employee')
-    employee_import = apps.get_model('employee','EmployeeImport')
-    address = apps.get_model('employee','Address')
-    phone = apps.get_model('employee','Phone')
-    location = apps.get_model('organization','Location')
-    jobs = apps.get_model('organization','JobRole')
+
+def migrate_employees(apps, schema_editor):
+    orig_employee = apps.get_model("hirs_admin", "Employee")
+    orig_employee_override = apps.get_model("hirs_admin", "EmployeeOverrides")
+    orig_address = apps.get_model("hirs_admin", "EmployeeAddress")
+    orig_phone = apps.get_model("hirs_admin", "EmployeePhone")
+    employee = apps.get_model("employee", "Employee")
+    employee_import = apps.get_model("employee", "EmployeeImport")
+    address = apps.get_model("employee", "Address")
+    phone = apps.get_model("employee", "Phone")
+    location = apps.get_model("organization", "Location")
+    jobs = apps.get_model("organization", "JobRole")
 
     for e in orig_employee.objects.all():
         emp = {
@@ -30,7 +31,7 @@ def migrate_employees(apps,schema_editor):
             "leave": e.leave,
             "location": location.objects.get(id=e.location.pk),
             "type": e.type,
-            }
+        }
         extra = {
             "photo": e.photo,
             "email_alias": e._email_alias,
@@ -69,28 +70,36 @@ def migrate_employees(apps,schema_editor):
 
         if mutable_emp:
             for a in orig_address.objects.filter(employee=e):
-                d ={
-                        "employee": mutable_emp,
-                        "label": a.label,
-                        "street1": a.street1,
-                        "street2": a.street2,
-                        "street3": a.street3,
-                        "city": a.city,
-                        "province": a.province,
-                        "postal_code": a.postal_code,
-                        "country": a.country,
-                        "primary": a.primary,
-                    }
+                if a.label == "Imported Value":
+                    label = "Imported Address"
+                else:
+                    label = a.label
+                d = {
+                    "employee": mutable_emp,
+                    "label": label,
+                    "street1": a.street1,
+                    "street2": a.street2,
+                    "street3": a.street3,
+                    "city": a.city,
+                    "province": a.province,
+                    "postal_code": a.postal_code,
+                    "country": a.country,
+                    "primary": a.primary,
+                }
                 new_a = address.objects.create(**d)
                 new_a.save()
                 del d
 
             for p in orig_phone.objects.filter(employee=e):
+                if p.label == "Imported Value":
+                    label = "Imported Phone"
+                else:
+                    label = p.label
                 d = {
                     "employee": mutable_emp,
-                    "label": p.label,
+                    "label": label,
                     "number": p.number,
-                    "primary": p.primary
+                    "primary": p.primary,
                 }
                 new_p = phone.objects.create(**d)
                 new_p.save()
@@ -101,12 +110,13 @@ def migrate_employees(apps,schema_editor):
         del mutable_emp
         del new
 
-def migrate_pending(apps,schema_editor):
-    orig_employee_pending = apps.get_model('hirs_admin','EmployeePending')
-    employee = apps.get_model('employee','Employee')
-    employee_import = apps.get_model('employee','EmployeeImport')
-    location = apps.get_model('organization','Location')
-    jobs = apps.get_model('organization','JobRole')
+
+def migrate_pending(apps, schema_editor):
+    orig_employee_pending = apps.get_model("hirs_admin", "EmployeePending")
+    employee = apps.get_model("employee", "Employee")
+    employee_import = apps.get_model("employee", "EmployeeImport")
+    location = apps.get_model("organization", "Location")
+    jobs = apps.get_model("organization", "JobRole")
 
     for e in orig_employee_pending.objects.all():
         emp = {
@@ -126,7 +136,7 @@ def migrate_pending(apps,schema_editor):
             "password": e.password,
             "email_alias": e._email_alias,
             "guid": e.guid,
-            }
+        }
 
         new = employee.objects.create(**emp)
         for job in e.jobs.all():
@@ -140,9 +150,11 @@ def migrate_pending(apps,schema_editor):
         if e.employee:
             imp = employee_import.objects.get(id=e.employee.id)
             if imp.employee and e.employee.id != imp.employee.id:
-                logger.error(f"Pending Employee with matched employee {e.first_name} {e.last_name}"
-                             " has been matched to an existing employee. This pending employee will"
-                             " remain pending and can be merged through the GUI.")
+                logger.error(
+                    f"Pending Employee with matched employee {e.first_name} {e.last_name}"
+                    " has been matched to an existing employee. This pending employee will"
+                    " remain pending and can be merged through the GUI."
+                )
             elif imp.employee.id == None:
                 imp.employee = new
 
@@ -153,7 +165,9 @@ def migrate_pending(apps,schema_editor):
                     new.is_exported_ad = True
                 new.save()
             else:
-                logger.debug(f"Pending Employee {e.first_name} {e.last_name} was already matched")
+                logger.debug(
+                    f"Pending Employee {e.first_name} {e.last_name} was already matched"
+                )
 
             del imp
 
@@ -164,7 +178,7 @@ def migrate_pending(apps,schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employee', '0002_initial'),
+        ("employee", "0002_initial"),
     ]
 
     operations = [
