@@ -131,8 +131,8 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
 
     @property
     def secondary_jobs(self):
-        """Returns the Many to Many object of secondary jobs"""
-        return self.jobs
+        """Returns the query set for secondary jobs"""
+        return self.jobs.all()
 
     @secondary_jobs.setter
     def secondary_jobs(self, jobs):
