@@ -107,24 +107,24 @@ const addressFormBase = {
     'country': '',
     'primary': false
 };
-const softwareTemplate = (software) => {
+const softwareTemplate = (s) => {
     return `<div class="modal-body">
-    <form id="software-form-${software['id']}">
-        <input type="hidden" name="id" value="${software['id']}"/>
+    <form id="software-form-${s['id']}">
+        <input type="hidden" name="id" value="${s['id']}"/>
         <div class="form-group">
             <label for="software">Software</label>
             <select name="software" class="form-control" disabled>
-                <option value="${software['software']['id']}" selected>
-                    ${software['software']['name']}</option>
+                <option value="${s['software']}" selected>
+                    ${s['software_name']}</option>
             </select>
         </div>
         <div class="form-group">
             <label for="notes">Notes</label>
-            <textarea class="form-control" name="notes" rows="3">${software['notes']}</textarea>
+            <textarea class="form-control" name="notes" rows="3">${s['notes']}</textarea>
         </div>
         <div class="form-group">
-            <label for="expiry_date">Expiry</label>
-            <input type="date" class="form-control" name="expiry_date">
+            <label for="expire_date">Expiry</label>
+            <input type="date" class="form-control" name="expire_date" value="${s['expire_date']}">
         </div>
     </form>
     </div>
@@ -134,11 +134,11 @@ const softwareTemplate = (software) => {
     <button type="button" class="btn btn-danger" onclick="delete_software(this)">Delete</button>
     </div>`
 };
-const softwareListTemplate = (software) => {
-    return `<button id="software-${software['id']}" type="button"
+const softwareListTemplate = (s) => {
+    return `<button id="software-${s['id']}" type="button"
                     class="list-group-item list-group-item-action"
-                    onclick="edit_software(${software['id']})">
-                    ${software['software']['name']}
+                    onclick="edit_software(${s['id']})">
+                    ${s['software_name']}
             </button>`
 }
 const softwareNewTemplate = `<div class="modal-body">
@@ -153,8 +153,8 @@ const softwareNewTemplate = `<div class="modal-body">
             <textarea class="form-control" name="notes" rows="3"></textarea>
         </div>
         <div class="form-group">
-            <label for="expiry_date">Expiry</label>
-            <input type="date" class="form-control" name="expiry_date">
+            <label for="expire_date">Expiry</label>
+            <input type="date" class="form-control" name="expire_date">
         </div>
     </form>
     </div>
@@ -388,8 +388,16 @@ function get_software() {
     .done(function(data) {
         if (Object.keys(data).length) {
             data.forEach(function(i) {
-                software[i['id']] = i;
-                $("#software-list").append(softwareListTemplate(i));
+                $.ajax({
+                    url: software_url + i['software'] + '/',
+                    type: 'GET',
+                    dataType: 'json'
+                })
+                .done(function(r) {
+                    software[i['id']] = i;
+                    software[i['id']]['software_name'] = r['name'];
+                    $("#software-list").append(softwareListTemplate(i));
+                });
             });
         }
     })
@@ -429,20 +437,32 @@ function update_software(e) {
     })
     .done(function(r) {
         if (method === 'POST') {
-            $("#software-list").append(softwareListTemplate(i));
+            $("#software-list").append(softwareListTemplate(r));
             software[r['id']] = r;
+            software[r['id']]['software_name'] = $("option[value='"+r['software']+"']",f).text();
+        } else {
+            Object.keys(r).forEach(function(k) {
+                software[r['id']][k] = r[k];
+            });
         }
         $(e).closest('.modal').modal('hide');
     })
     .fail(function(jqXHR,status,error) {alert_error("Failed to update software ",error);});
 }
 function delete_software(e) {
-    var id = $(e).closest('.modal-content').find('id')[0].val();
+    var id = $(e).closest('.modal-content').find('input[name=id]').val();
+    console.log(e,id);
     $.ajax({
         method: 'DELETE',
-        url: software_url + id + '/',
+        url: accounts_url + id + '/',
         dataType: 'json'
     })
+    .done(function(r) {
+        $("#software-list").find("#software-"+id).remove();
+        delete software[id];
+        $(e).closest('.modal').modal('hide');
+    })
+    .fail(function(jqXHR,status,error) {alert_error("Failed to delete software ",jqXHR);});
 }
 $(".modal").on("hidden.bs.modal", function() {
     $('.modal-body').remove();
