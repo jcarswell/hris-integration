@@ -1,12 +1,13 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from pyad import ADUser
 from datetime import datetime
 
 from organization.group_manager import GroupManager
 
-from .models import Employee,EmployeeImport,Phone,Address
+from .models import Employee, EmployeeImport, Phone, Address
+
 
 class EmployeeManager:
     """
@@ -15,7 +16,7 @@ class EmployeeManager:
     methods that enable a more intuitive interaction with an "employee".
 
     This Manager is also used throughout the code base as a way of minimizing code
-    duplication everytime an interaction is needed with the employee.
+    duplication every time an interaction is needed with the employee.
     """
 
     #: ADUser: The ADUser object related to the employee
@@ -28,8 +29,8 @@ class EmployeeManager:
     _qs_addr = None
     #: bool: True if the employee is imported
     merge = False
-    
-    def __init__(self,employee:Employee) -> None:
+
+    def __init__(self, employee: Employee) -> None:
         """
         Initialization of the Manager requires that either a base Employee
         object is passed in.
@@ -38,9 +39,11 @@ class EmployeeManager:
         :type employee: Employee
         :raises ValueError: Did not get a valid employee object
         """
-        
-        if not isinstance(employee,Employee):
-            raise ValueError(f"expected Employee Object got {employee.__class__.__name__}")
+
+        if not isinstance(employee, Employee):
+            raise ValueError(
+                f"expected Employee Object got {employee.__class__.__name__}"
+            )
 
         self.employee = employee
         self.merge = False
@@ -51,18 +54,20 @@ class EmployeeManager:
             if not employee.is_imported:
                 self.merge = True
                 self.pre_merge()
-                
+
         except EmployeeImport.DoesNotExist:
             self.__employee = None
-        
+
     def get(self):
         """Get the specific sub-objects for the employee"""
-        
+
         self._qs_phone = Phone.objects.filter(employee=self.__qs_emp)
         self._qs_addr = Address.objects.filter(employee=self.__qs_emp)
-        self.group_manager = GroupManager(self.employee.primary_job,
-                                          self.employee.primary_job.business_unit,
-                                          self.employee.location)
+        self.group_manager = GroupManager(
+            self.employee.primary_job,
+            self.employee.primary_job.business_unit,
+            self.employee.location,
+        )
 
         if self.guid == None:
             self.get_guid()
@@ -81,7 +86,6 @@ class EmployeeManager:
         """Return the approximate call needed to re-create this class"""
         return f"<{self.__class__.__name__}({repr(self.employee)})>"
 
-
     @property
     def designations(self) -> str:
         """Returns the employees designations
@@ -89,7 +93,7 @@ class EmployeeManager:
         :return: employee designation field
         :rtype: str
         """
-        
+
         return self.employee.designations
 
     @property
@@ -107,12 +111,12 @@ class EmployeeManager:
 
     @property
     def phone(self) -> str:
-        """Returns the employees primary phone number 
+        """Returns the employees primary phone number
 
         :return: a phone number or None if there is no Phone numbers or primary phone number
         :rtype: str
         """
-        
+
         if self._qs_phone is None:
             return None
 
@@ -129,7 +133,7 @@ class EmployeeManager:
         :return: The primary or office address
         :rtype: Address
         """
-        
+
         if self._qs_addr is None:
             return {}
 
@@ -146,8 +150,12 @@ class EmployeeManager:
         :return: The employees preferred first name
         :rtype: str
         """
-        
+
         return self.employee.first_name
+
+    first_name = property(
+        fget=firstname,
+    )
 
     @property
     def import_firstname(self) -> str:
@@ -156,9 +164,13 @@ class EmployeeManager:
         :return: The employees preferred first name
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.first_name
+
+    import_first_name = property(
+        fget=import_firstname,
+    )
 
     @property
     def middle_name(self) -> str:
@@ -167,7 +179,7 @@ class EmployeeManager:
         :return: The employees middle name
         :rtype: str
         """
-        
+
         return self.employee.middle_name
 
     @property
@@ -177,7 +189,7 @@ class EmployeeManager:
         :return: The employees middle name
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.middle_name
 
@@ -188,8 +200,12 @@ class EmployeeManager:
         :return: The employees preferred last name
         :rtype: str
         """
-        
+
         return self.employee.last_name
+
+    last_name = property(
+        fget=lastname,
+    )
 
     @property
     def import_lastname(self) -> str:
@@ -198,9 +214,13 @@ class EmployeeManager:
         :return: The employees preferred last name
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.last_name
+
+    import_last_name = property(
+        fget=import_lastname,
+    )
 
     @property
     def suffix(self) -> str:
@@ -209,7 +229,7 @@ class EmployeeManager:
         :return: The employees suffix
         :rtype: str
         """
-        
+
         return self.employee.suffix
 
     @property
@@ -219,7 +239,7 @@ class EmployeeManager:
         :return: The employees suffix
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.suffix
 
@@ -239,7 +259,7 @@ class EmployeeManager:
         :return: The set username
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.username
 
@@ -260,7 +280,7 @@ class EmployeeManager:
         :return: The employees type
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.type
 
@@ -290,7 +310,7 @@ class EmployeeManager:
         :return: The location name defined for the Employee
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.location
 
@@ -301,7 +321,7 @@ class EmployeeManager:
         :return: A users email alias
         :rtype: str
         """
-        
+
         return self.employee.email_alias
 
     @property
@@ -311,7 +331,7 @@ class EmployeeManager:
         :return: A users email alias
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.email_alias
 
@@ -322,7 +342,7 @@ class EmployeeManager:
         :return: The AD OU where the employee should be located
         :rtype: str
         """
-        
+
         return self.employee.primary_job.bu.ad_ou
 
     @property
@@ -332,7 +352,7 @@ class EmployeeManager:
         :return: An employees defined title
         :rtype: str
         """
-        
+
         return self.employee.primary_job.name
 
     @property
@@ -342,7 +362,7 @@ class EmployeeManager:
         :return: An employees defined title
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.title
 
@@ -353,7 +373,7 @@ class EmployeeManager:
         :return: The status of the employee
         :rtype: str
         """
-        
+
         return self.employee.status
 
     @property
@@ -363,7 +383,7 @@ class EmployeeManager:
         :return: The status of the employee
         :rtype: str
         """
-        
+
         if self.__employee:
             return self.__employee.status
 
@@ -374,7 +394,7 @@ class EmployeeManager:
         :return: a filepath to the employees photo or None if not set
         :rtype: str
         """
-        
+
         return self.employee.photo
 
     @property
@@ -397,7 +417,7 @@ class EmployeeManager:
         :return: The bussiness unit name
         :rtype: str
         """
-        
+
         return self.employee.primary_job.bu.name
 
     @property
@@ -408,9 +428,11 @@ class EmployeeManager:
         :return: The Employees manager or None if not set
         :rtype: EmployeeManager
         """
-        
+
         try:
-            return EmployeeManager(self.employee.manager or self.employee.primary_job.bu.manager)
+            return EmployeeManager(
+                self.employee.manager or self.employee.primary_job.bu.manager
+            )
         except Exception:
             try:
                 return EmployeeManager(self.employee.primary_job.bu.manager)
@@ -418,7 +440,7 @@ class EmployeeManager:
                 return None
 
     @property
-    def import_manager(self) -> 'EmployeeManager':
+    def import_manager(self) -> "EmployeeManager":
         """The Employee's manager as defined in the HRIS database
 
         :return: The Employees manager or None if not set
@@ -438,24 +460,24 @@ class EmployeeManager:
 
     @property
     def upn(self) -> str:
-        """The userPrincipalName as set in AD 
+        """The userPrincipalName as set in AD
 
         :return: the current UPN from Active Directory
         :rtype: str
         """
         if self.ad_user:
-            return self.ad_user.get_attribute('userPrincipalName')
+            return self.ad_user.get_attribute("userPrincipalName")
 
     def get_guid(self) -> None:
-        """If the employee doesn't have a GUID set yet we will try and retrieve it from AD based off the 
+        """If the employee doesn't have a GUID set yet we will try and retrieve it from AD based off the
         set username. If the AD object is found and the employeeID is set and matches what we have then
         the Employee object is updated and self.ad_user set.
         """
-        
+
         if self.guid == None and self.employee.is_exported_ad:
             try:
                 user = ADUser.from_cn(self.username)
-                if user.get_attribute('employeeId') == self.id:
+                if user.get_attribute("employeeId") == self.id:
                     self.employee.guid = user.guid
                     self.ad_user = user
                     self.employee.save()
@@ -504,25 +526,25 @@ class EmployeeManager:
 
     @property
     def email_aliases(self) -> list:
-        """Gets all of the SMTP proxyAddresses set for the user and returns them as in order of 
+        """Gets all of the SMTP proxyAddresses set for the user and returns them as in order of
         Primary SMTP address with any further aliases
 
         :return: A list of all SMTP proxyAddresses set for the employee
         :rtype: list
         """
-        
+
         proxy_address = []
         try:
-            for address in self.ad_user.get_attribute('proxyAddresses',True):
-                address = address.split(':')
-                if address[0] == 'smtp':
+            for address in self.ad_user.get_attribute("proxyAddresses", True):
+                address = address.split(":")
+                if address[0] == "smtp":
                     proxy_address.append(address[1])
-                if address[0] == 'SMTP':
-                    proxy_address.insert(0,address[1])
+                if address[0] == "SMTP":
+                    proxy_address.insert(0, address[1])
         except:
-            #caught an issues
+            # caught an issues
             return None
-        
+
         return proxy_address
 
     @property
@@ -531,7 +553,7 @@ class EmployeeManager:
         the email_aliases list instead of getting the AD emailAddress attribute which can be
         out of sync with the proxyAddresses
 
-        :return: The primary SMTP addres
+        :return: The primary SMTP address
         :rtype: str
         """
         return self.email_address[0]
