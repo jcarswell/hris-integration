@@ -1,5 +1,5 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import logging
 
@@ -14,16 +14,14 @@ from warnings import warn
 from .text_utils import safe
 from .settings_fields import *
 
-logger = logging.getLogger("ftp_import.helpers")
+logger = logging.getLogger("ftp_import.config")
 
-IMPORT_DEFAULTS = {
-    'import': 'False',
-    'map_to': ''
-}
-FIELD_ITEMS = ('import','map_to')
+IMPORT_DEFAULTS = {"import": "False", "map_to": ""}
+FIELD_ITEMS = ("import", "map_to")
 
-class CsvSetting():
-    PATH_FORMAT = GROUP_MAP + Setting.FIELD_SEP + '%s' + Setting.FIELD_SEP + '%s'
+
+class CsvSetting:
+    PATH_FORMAT = GROUP_MAP + Setting.FIELD_SEP + "%s" + Setting.FIELD_SEP + "%s"
 
     def __init__(self) -> None:
         self.fields = {}
@@ -41,22 +39,22 @@ class CsvSetting():
         for field in fields:
             if field not in self.fields.keys():
                 self.fields[field] = {}
-            
-            self.fields[field]['import'] = strtobool(fields[field]['import'])
 
-            if self.fields[field]['import'] and not fields[field]['map_to']:
+            self.fields[field]["import"] = strtobool(fields[field]["import"])
+
+            if self.fields[field]["import"] and not fields[field]["map_to"]:
                 logger.warning(f'field "{field}" enabled for import with out mapping')
-                self.fields[field]['import'] = False
+                self.fields[field]["import"] = False
 
-            self.fields[field]['map_to'] = fields[field]['map_to']
+            self.fields[field]["map_to"] = fields[field]["map_to"]
 
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
-            field = safe(get_config(CAT_FIELD,field_conf))
+            field = safe(get_config(CAT_FIELD, field_conf))
             if field and field in self.fields.keys():
                 logger.debug(f"Marking {field} for import")
-                self.fields[field]['import'] = True
-                self.fields[field]['map_to'] = self.fields[field]['map_to'] or ''
+                self.fields[field]["import"] = True
+                self.fields[field]["map_to"] = self.fields[field]["map_to"] or ""
 
     def add(self, *args: str) -> None:
         if len(args) < 1:
@@ -64,7 +62,7 @@ class CsvSetting():
 
         for arg in args:
             try:
-                _ = Setting.o2.get(setting=self.PATH_FORMAT % (arg,'import'))
+                _ = Setting.o2.get(setting=self.PATH_FORMAT % (arg, "import"))
 
             except Setting.DoesNotExist:
                 logger.debug(f"Adding field '{arg}'")
@@ -77,21 +75,21 @@ class CsvSetting():
         self.get()
         logger.debug(f"New Fields: {self.fields}")
 
-    def add_field(self,field:str, enable:bool =False, map_to:str =None) -> bool:
+    def add_field(self, field: str, enable: bool = False, map_to: str = None) -> bool:
         try:
-            _ = Setting.o2.get(setting=self.PATH_FORMAT % (field,'import'))
+            _ = Setting.o2.get(setting=self.PATH_FORMAT % (field, "import"))
 
         except Setting.DoesNotExist:
             i = Setting()
-            i.setting = self.PATH_FORMAT % (field,'import')
+            i.setting = self.PATH_FORMAT % (field, "import")
             i.value = str(enable)
             i.field_properties["type"] = "BooleanField"
             i.save()
             i = Setting()
-            i.setting = self.PATH_FORMAT % (field,'map_to')
+            i.setting = self.PATH_FORMAT % (field, "map_to")
             i.value = map_to
-            i.field_properties["type"] = 'ChoiceField'
-            i.field_properties["choices"] = 'validators.import_field_map_to'
+            i.field_properties["type"] = "ChoiceField"
+            i.field_properties["choices"] = "validators.import_field_map_to"
             i.save()
 
             if enable:
@@ -103,21 +101,27 @@ class CsvSetting():
             logger.warning(f"Attempted to create existing CSV Field {field}")
             return False
 
-    def get_by_map_val(self,map_to:str) -> str:
-        for k,v in self.fields.items():
-            if v['map_to'] == map_to:
+    def get_by_map_val(self, map_to: str) -> str:
+        for k, v in self.fields.items():
+            if v["map_to"] == map_to:
                 return k
+
 
 def get_fields() -> dict:
     settings = CsvSetting()
     return settings.fields
+
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
     category_list = SETTINGS_CATAGORIES
     fixtures = CONFIG_DEFAULTS
 
-def get_config(category:str ,item:str) -> Any:
+
+def get_config(category: str, item: str) -> Any:
     """Now deprecated use Config instead to manage the value"""
-    warn(f"get_config is deprecated use Config instead to manage the value",DeprecationWarning)
-    return Config()(category,item)
+    warn(
+        f"get_config is deprecated use Config instead to manage the value",
+        DeprecationWarning,
+    )
+    return Config()(category, item)
