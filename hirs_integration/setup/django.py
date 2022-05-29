@@ -1,5 +1,5 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import string
 import importlib
@@ -11,35 +11,44 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.management import call_command
 
-logger = logging.getLogger('Django Setup Module')
+logger = logging.getLogger("Django Setup Module")
 
-def create_admin(username:str ='admin',email:str ='admin@example.com',
-                 password:str =None) -> str:
-    username = username or 'admin'
-    email = email or 'admin@example.com'
+
+def create_admin(
+    username: str = "admin", email: str = "admin@example.com", password: str = None
+) -> str:
+    username = username or "admin"
+    email = email or "admin@example.com"
 
     qs_email = User.objects.filter(email=email)
     qs_user = User.objects.filter(username=username)
     if len(qs_email) + len(qs_user) == 0:
         logger.debug(f"Creating admin user {username} with email {email}")
-        pw = password or "".join(choice(string.ascii_letters + string.digits)
-                                 for char in range(24))
+        pw = password or "".join(
+            choice(string.ascii_letters + string.digits) for char in range(24)
+        )
         logger.debug(f"with password: {pw}")
         User.objects.create_superuser(username, email=email, password=pw)
         return pw
     else:
-        raise ValueError("An admin account with the specified username or email address"
-                         "already exists")
-   
+        raise ValueError(
+            "An admin account with the specified username or email address"
+            "already exists"
+        )
 
-def setup(service=False,username:str ='admin',
-          email:str ='admin@example.com',password:str = None):
+
+def setup(
+    service=False,
+    username: str = "admin",
+    email: str = "admin@example.com",
+    password: str = None,
+):
     """Once a config file has been created, this function will setup run all the needed
     functions to ensure that the system is ready to roll. This starts by running the
     migrations, creating an admin user, then running any additions configuration needed
     for the installed apps.
 
-    This can be executed as a management command, and run as part of the initail setup or
+    This can be executed as a management command, and run as part of the initial setup or
     as part of the upgrade process.
 
     :param service: Install the cron service, defaults to False
@@ -52,34 +61,38 @@ def setup(service=False,username:str ='admin',
     :type password: str, optional
     """
 
-    call_command('migrate')
-    call_command('collectstatic',interactive=False)
+    call_command("migrate")
+    call_command("collectstatic", interactive=False)
 
     try:
-        logger.debug(f"Creating admin user {username} with email {email}"
-                     f"and password {password}")
-        pw = create_admin(username,email,password)
-        logger.info(f'Admin password: {pw}')
+        logger.debug(
+            f"Creating admin user {username} with email {email}"
+            f"and password {password}"
+        )
+        pw = create_admin(username, email, password)
+        logger.info(f"Admin password: {pw}")
     except ValueError:
-        logger.warn('Admin user already exists')
+        logger.warn("Admin user already exists")
         pw = None
 
     for app in settings.INSTALLED_APPS:
         try:
             importlib.import_module(app).setup()
         except ImportError:
-            logger.debug(f'Unable to import {app}')
+            logger.debug(f"Unable to import {app}")
         except AttributeError:
-            logger.debug(f'No setup function for {app}')
+            logger.debug(f"No setup function for {app}")
 
     from ftp_import.csv import CsvImport
-    ftp_headers = Path(settings.BASE_DIR, 'ftp_csv_headers.csv')
+
+    ftp_headers = Path(settings.BASE_DIR, "ftp_csv_headers.csv")
     if ftp_headers.exists():
-        with open(ftp_headers, 'r') as f:
+        with open(ftp_headers, "r") as f:
             CsvImport(f)
 
     if service:
         import cron
+
         cron.install_service()
 
     if pw:
