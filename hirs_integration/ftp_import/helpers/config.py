@@ -50,7 +50,7 @@ class CsvSetting:
 
     def get_field_config(self):
         for field_conf in CONFIG_DEFAULTS[CAT_FIELD].keys():
-            field = safe(get_config(CAT_FIELD, field_conf))
+            field = safe(Config()(CAT_FIELD, field_conf))
             if field and field in self.fields.keys():
                 logger.debug(f"Marking {field} for import")
                 self.fields[field]["import"] = True
