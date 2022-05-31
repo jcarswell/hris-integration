@@ -17,6 +17,25 @@ from employee.validators import UPNValidator, UsernameValidator
 from .base import EmployeeBase
 
 logger = logging.getLogger("employee.models")
+__all__ = ("employee_upload_to", "Employee", "EmployeeImport")
+
+UPDATE_FIELDS_ALWAYS = [
+    "manager",
+    "primary_job",
+    "jobs",
+    "type",
+    "state",
+    "leave",
+    "start_date",
+]
+UPDATE_FIELDS_OPTIONAL = [
+    "first_name",
+    "last_name",
+    "middle_name",
+    "location",
+    "email_alias",
+    "username",
+]
 
 
 def employee_upload_to(instance, filename):
@@ -309,6 +328,11 @@ class EmployeeImport(EmployeeBase):
 
     @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
+        if instance.employee and not instance.is_matched:
+            instance.is_matched = True
+        elif instance.employee is None and instance.is_matched:
+            instance.is_matched = False
+
         if instance.id:
             try:
                 prev_instance = EmployeeImport.objects.get(id=instance.id)
@@ -320,12 +344,29 @@ class EmployeeImport(EmployeeBase):
         if prev_instance and instance != prev_instance:
             instance.updated_on = timezone.now()
 
+            if instance.is_matched:
+                ec = False
+                for key in UPDATE_FIELDS_OPTIONAL:
+                    if getattr(instance.employee, key, None) == None or getattr(
+                        instance.employee, key
+                    ) == getattr(prev_instance, key):
+                        setattr(instance.employee, key, getattr(instance, key))
+                        ec = True
+                for key in UPDATE_FIELDS_ALWAYS:
+                    if getattr(instance, key, None) != None:
+                        setattr(instance.employee, key, getattr(instance, key))
+                        ec = True
+
+                if prev_instance.employee is None:
+                    instance.employee.employee_id = instance.id
+                    instance.employee.is_imported = True
+                    ec = True
+
+                if ec:
+                    instance.employee.save()
+
         if instance.updated_on is None:
             instance.updated_on = timezone.now()
-
-        if instance.employee and instance.employee.employee_id != instance.id:
-            instance.employee.employee_id = instance.id
-            instance.employee.save()
 
 
 pre_save.connect(EmployeeImport.pre_save, sender=EmployeeImport)
