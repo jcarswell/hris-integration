@@ -240,7 +240,7 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "ChoiceField",
                 "choices": "validators.import_field_choices",
-                "help_text": "Employee status field",
+                "help_text": "Employee status field or comma separated fields listed as active state and leave state",
             },
         },
     },
