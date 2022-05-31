@@ -44,31 +44,35 @@ def setup_group_mapping():
 
     logger.info("Setting up Group Mappings")
     logger.warn("They will needed to be changed before working during an AD export")
-    job = GroupMapping()
-    job.dn = "CN=test group,CN=users,DC=example,DC=net"
-    job.jobs.add(JobRole.objects.last())
-    job.save()
+    map = GroupMapping()
+    map.dn = "CN=test group,CN=users,DC=example,DC=net"
+    map.save()
+    map.jobs.add(JobRole.objects.last())
+    map.save()
 
-    job_not = GroupMapping()
-    job_not.dn = "CN=test not job,CN=users,DC=example,DC=net"
-    job_not.jobs.add(JobRole.objects.first())
-    job_not.jobs_not = True
-    job_not.save()
+    map = GroupMapping()
+    map.dn = "CN=test not job,CN=users,DC=example,DC=net"
+    map.save()
+    map.jobs.add(JobRole.objects.first())
+    map.jobs_not = True
+    map.save()
 
-    loc = GroupMapping()
-    loc.dn = "CN=test location,CN=users,DC=example,DC=net"
-    loc.location.add(Location.objects.last())
-    loc.save()
+    map = GroupMapping()
+    map.dn = "CN=test location,CN=users,DC=example,DC=net"
+    map.save()
+    map.location.add(Location.objects.last())
+    map.save()
 
-    bu = GroupMapping()
-    bu.dn = "CN=test bu,CN=users,DC=example,DC=net"
-    bu.business_unit.add(BusinessUnit.objects.last())
-    bu.save()
+    map = GroupMapping()
+    map.dn = "CN=test bu,CN=users,DC=example,DC=net"
+    map.save()
+    map.business_unit.add(BusinessUnit.objects.last())
+    map.save()
 
-    all = GroupMapping()
-    all.all = True
-    all.dn = "CN=test all,CN=users,DC=example,DC=net"
-    all.save()
+    map = GroupMapping()
+    map.all = True
+    map.dn = "CN=test all,CN=users,DC=example,DC=net"
+    map.save()
 
 
 def setup_ftp_import():
@@ -92,6 +96,7 @@ def setup_ftp_import():
             config.CSV_FAIL_NOTIF: "",
             config.CSV_IMPORT_CLASS: "ftp_import.forms",
             config.CSV_USE_EXP: "True",
+            config.CSV_DATE_FMT: "%m/%d/%Y",
         },
         config.CAT_FIELD: {
             config.FIELD_LOC_NAME: "ll4_desc",
@@ -169,8 +174,6 @@ def setup_ad_export():
         },
         config.EMPLOYEE_CAT: {
             config.EMPLOYEE_DISABLE_LEAVE: "False",
-            config.EMPLOYEE_LEAVE_GROUP_ADD: "active user",
-            config.EMPLOYEE_LEAVE_GROUP_DEL: "leave user",
         },
         config.DEFAULTS_CAT: {
             config.DEFAULT_ORG: "Constco",
@@ -232,27 +235,45 @@ def setup_smtp():
 
 def import_employees():
     import tests.test_import
-    from unittest import TestResult
+    from unittest import main
 
-    result = TestResult()
-    tests.test_import.run(result=result)
-    logger.info(f"{result.testsRun} tests run")
+    test = main(module=tests.test_import, exit=False)
+    logger.info(f"Test result: {test.result}")
+
+
+def setup_organization():
+    from organization.helpers import config
+
+    logger.info("Setting up Organization")
+
+    module_config = {
+        config.GROUPS_CAT: {
+            config.GROUPS_LEAVE_GROUP: "On Leave Group",
+        },
+    }
+
+    set_configuration(config.GROUP_CONFIG, module_config)
 
 
 def run_ad_export():
     import ad_export
 
+    logger.debug("Running AD Export")
+
     ad_export.run()
 
 
 def run_setup():
-    import setup
+    import setup.django
 
-    logger.info("Running setup")
-    setup.setup(service=False)
-    setup_word_mapping()
-    setup_ftp_import()
-    setup_ad_export()
+    g = input("Run setup? [Y/n]: ").lower()
+    if not g or g == "y":
+        logger.info("Running setup")
+        setup.django.setup(service=False)
+        setup_word_mapping()
+        setup_ftp_import()
+        setup_ad_export()
+
     g = input("Run employee import [Y/n]: ").lower()
     if not g or g == "y":
         import_employees()
