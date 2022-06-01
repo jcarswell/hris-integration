@@ -20,9 +20,9 @@ logger = logging.getLogger("employee.models")
 __all__ = ("employee_upload_to", "Employee", "EmployeeImport")
 
 UPDATE_FIELDS_ALWAYS = [
-    "manager",
+    # "manager", # updated in pre_save
     "primary_job",
-    "jobs",
+    # "jobs", # updated in pre_save
     "type",
     "state",
     "leave",
@@ -44,14 +44,14 @@ def employee_upload_to(instance, filename):
 
 class Employee(EmployeeBase, InactiveMixin):
     """The base Employee Form. This represents the mutable entity for each employee.
-    This table used the Modified Preorder Tree Traversal extention to allow for mappings
+    This table used the Modified Preorder Tree Traversal extension to allow for mappings
     between the employee and the employee's manager and my extension direct-reports.
     """
 
     class Meta:
         db_table = "employee"
 
-    #: int: The primary key for the employee. This does not represet the employee id
+    #: int: The primary key for the employee. This does not represent the employee id
     id = models.AutoField(primary_key=True)
     #: int: The Employee ID for the employee.
     employee_id = models.IntegerField(blank=True, null=True, unique=True)
@@ -346,12 +346,27 @@ class EmployeeImport(EmployeeBase):
 
             if instance.is_matched:
                 ec = False
+                if (
+                    instance.manager != prev_instance.manager
+                    and instance.manager.is_matched
+                ):
+                    instance.employee.manager = instance.manager.employee
+                    ec = True
+                for job in instance.jobs.all():
+                    if job not in instance.employee.jobs.all():
+                        instance.employee.jobs.add(job)
+                        ec = True
+
                 for key in UPDATE_FIELDS_OPTIONAL:
-                    if getattr(instance.employee, key, None) == None or getattr(
-                        instance.employee, key
-                    ) == getattr(prev_instance, key):
+                    if (
+                        getattr(instance.employee, key, None) is None
+                        or getattr(instance.employee, key)
+                        == getattr(prev_instance, key)
+                        and getattr(instance, key) != getattr(prev_instance, key)
+                    ):
                         setattr(instance.employee, key, getattr(instance, key))
                         ec = True
+
                 for key in UPDATE_FIELDS_ALWAYS:
                     if getattr(instance, key, None) != None:
                         setattr(instance.employee, key, getattr(instance, key))
@@ -364,6 +379,23 @@ class EmployeeImport(EmployeeBase):
 
                 if ec:
                     instance.employee.save()
+
+        if prev_instance is None and instance.is_matched:
+            if instance.manager.is_matched:
+                instance.employee.manager = instance.manager.employee
+            for job in instance.jobs.all():
+                instance.employee.jobs.add(job)
+            for key in UPDATE_FIELDS_ALWAYS:
+                if getattr(instance, key, None) != None:
+                    setattr(instance.employee, key, getattr(instance, key))
+
+            for key in UPDATE_FIELDS_OPTIONAL:
+                if getattr(instance.employee, key, None) is None:
+                    setattr(instance.employee, key, getattr(instance, key))
+
+            instance.employee.employee_id = instance.id
+            instance.employee.is_imported = True
+            instance.employee.save()
 
         if instance.updated_on is None:
             instance.updated_on = timezone.now()
