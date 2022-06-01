@@ -63,7 +63,7 @@ class CsvImport:
                 logger.info(f"Found new field in CSV File {key}")
                 new_fields.append(key)
             elif key in import_fields:
-                logger.debug("Felid exists and will be imported")
+                logger.debug("Field exists and will be imported")
                 # append the field config to the fields list
                 self.fields.append(import_fields[key])
                 # add the key name to the just added field dict
