@@ -26,19 +26,6 @@ def set_configuration(group: str, config: dict) -> None:
                     raise Exception("Wham!")
 
 
-def setup_word_mapping():
-    from settings.models import WordList
-
-    logger.info("Setting up word mappings")
-
-    wl = {"mgr": "Manager", "Dir": "Director"}
-
-    for key, val in wl.items():
-        w, _ = WordList.objects.get_or_create(src=key)
-        w.replace = val
-        w.save()
-
-
 def setup_group_mapping():
     from organization.models import JobRole, BusinessUnit, Location, GroupMapping
 
@@ -73,6 +60,17 @@ def setup_group_mapping():
     map.all = True
     map.dn = "CN=test all,CN=users,DC=example,DC=net"
     map.save()
+
+
+def setup_word_expansion():
+    from settings.models import WordList
+
+    logger.info("Setting up word expansion")
+
+    WordList.objects.get_or_create(src="Dir", replace="Director")
+    WordList.objects.get_or_create(src="dir", replace="Director")
+    WordList.objects.get_or_create(src="Mgr", replace="Manager")
+    WordList.objects.get_or_create(src="mgr", replace="Manager")
 
 
 def setup_ftp_import():
@@ -270,9 +268,9 @@ def run_setup():
     if not g or g == "y":
         logger.info("Running setup")
         setup.django.setup(service=False)
-        setup_word_mapping()
         setup_ftp_import()
         setup_ad_export()
+        setup_word_expansion
 
     g = input("Run employee import [Y/n]: ").lower()
     if not g or g == "y":
