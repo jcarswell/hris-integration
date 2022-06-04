@@ -45,14 +45,11 @@ class PendingEmployeeImportView(TemplateResponseMixin, LoggedInView):
             field_emp = SelectPicker(choices=choices)
 
             output.append(f'<div class="form-row row-header">')
-            output.append(f'<div class="form-group col-md-5">')
+            output.append(f'<div class="form-group col-md-6">')
             output.append(f"<p><strong>Pending Employee</strong></p>")
             output.append(f"</div>")
-            output.append(f'<div class="form-group col-md-5">')
+            output.append(f'<div class="form-group col-md-6">')
             output.append(f"<p><strong>Target Employee</strong></p>")
-            output.append(f"</div>")
-            output.append(f'<div class="form-group col-md-2">')
-            output.append(f"<p><strong>Manual Import</strong></p>")
             output.append(f"</div>")
             output.append(f"</div>")
 
@@ -61,21 +58,14 @@ class PendingEmployeeImportView(TemplateResponseMixin, LoggedInView):
                 if row.employee != None:
                     employee = pk_to_name(row.employee.id)
                 output.append(f'<div class="form-row">')
-                output.append(f'<div class="form-group col-md-5">')
+                output.append(f'<div class="form-group col-md-6">')
                 output.append(
-                    f'<p><a href="{reverse("employee",args=[row.id])}">'
+                    f'<p><a href="{reverse("employee_imported_edit",args=[row.id])}">'
                     f"<strong>{row.first_name} {row.last_name}</strong></a></p>"
                 )
                 output.append(f"</div>")
-                output.append(f'<div class="form-group col-md-5">')
+                output.append(f'<div class="form-group col-md-6">')
                 output.append(field_emp.render(pk_to_name(row.id), employee))
-                output.append(f"</div>")
-                output.append(f'<div class="form-group col-md-2">')
-                output.append(
-                    '<a href="{}"><ion-icon name="create"></ion-icon></a>'.format(
-                        reverse("employee_manual", args=[row.id])
-                    )
-                )
                 output.append(f"</div>")
                 output.append(f"</div>")
 
@@ -95,17 +85,20 @@ class PendingEmployeeImportView(TemplateResponseMixin, LoggedInView):
 
         logger.debug(f"Processing form {request.POST['form']}")
         if request.POST["form"] == "manual_import_form":
-            for pending_id, employee_id in request.POST.items():
-                logger.debug(f"Processing row {pending_id},{employee_id}")
-                if pending_id[:2] == "id" and employee_id[:2] == "id":
+            for employee_id, mutable_id in request.POST.items():
+                logger.debug(f"Processing row {employee_id},{mutable_id}")
+                if mutable_id[:2] == "id" and employee_id[:2] == "id":
                     try:
-                        PendingImport(
-                            EmployeeImport.objects.get(pk=name_to_pk(employee_id)),
-                            Employee.objects.get(pk=name_to_pk(pending_id)),
+                        employee = EmployeeImport.objects.get(
+                            pk=name_to_pk(employee_id)
                         )
+                        employee.employee = Employee.objects.get(
+                            pk=name_to_pk(mutable_id)
+                        )
+                        employee.save()
 
                     except Exception as e:
-                        errors[pending_id] = str(e)
+                        errors[employee_id] = str(e)
 
         else:
             return JsonResponse(
