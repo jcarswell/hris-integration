@@ -1,6 +1,7 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from email.policy import default
 import logging
 
 from pathlib import Path
@@ -70,7 +71,7 @@ class Employee(EmployeeBase, InactiveMixin):
     photo = models.FileField(upload_to=employee_upload_to, null=True, blank=True)
 
     #: str: The employees password (encrypted at the database level).
-    password = PasswordField(null=True, blank=True)
+    password = PasswordField(null=True, blank=True, default=password_generator)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Employee):
@@ -192,12 +193,6 @@ class Employee(EmployeeBase, InactiveMixin):
         raise ValueError("Could not generate a unique username")
 
     @classmethod
-    def post_save(cls, sender, instance, created, **kwargs):
-        if created and instance.password is not None:
-            instance.password = password_generator()
-            instance.save()
-
-    @classmethod
     def pre_save(cls, sender, instance, raw, using, update_fields, **kwargs):
         try:
             if instance.id:
@@ -252,7 +247,6 @@ class Employee(EmployeeBase, InactiveMixin):
 
 
 pre_save.connect(Employee.pre_save, sender=Employee)
-post_save.connect(Employee.post_save, sender=Employee)
 
 
 class EmployeeImport(EmployeeBase):

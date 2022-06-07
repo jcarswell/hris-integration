@@ -1,6 +1,9 @@
+from email.policy import default
 import logging
 
-from django.db import migrations
+from django.db import migrations, models
+from common.functions import password_generator
+import hris_integration.models.encryption
 
 logger = logging.getLogger("employee.migrations")
 
@@ -184,4 +187,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(migrate_employees),
         migrations.RunPython(migrate_pending),
+        migrations.AlterField(
+            model_name="employee",
+            name="password",
+            field=models.CharField(max_length=20),
+        ),
+        hris_integration.models.encryption.PasswordField(
+            blank=True, max_length=128, null=True, default=password_generator
+        ),
     ]
