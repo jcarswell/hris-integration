@@ -341,7 +341,8 @@ class EmployeeImport(EmployeeBase):
             if instance.is_matched:
                 ec = False
                 if (
-                    instance.manager != prev_instance.manager
+                    instance.manager
+                    and instance.manager != prev_instance.manager
                     and instance.manager.is_matched
                 ):
                     instance.employee.manager = instance.manager.employee
@@ -375,7 +376,7 @@ class EmployeeImport(EmployeeBase):
                     instance.employee.save()
 
         if prev_instance is None and instance.is_matched:
-            if instance.manager.is_matched:
+            if instance.manager and instance.manager.is_matched:
                 instance.employee.manager = instance.manager.employee
             for job in instance.jobs.all():
                 instance.employee.jobs.add(job)
