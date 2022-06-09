@@ -1,4 +1,3 @@
-from email.policy import default
 import logging
 
 from django.db import migrations, models
@@ -190,9 +189,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="employee",
             name="password",
-            field=models.CharField(max_length=20),
-        ),
-        hris_integration.models.encryption.PasswordField(
-            blank=True, max_length=128, null=True, default=password_generator
+            field=hris_integration.models.encryption.PasswordField(
+                blank=True, max_length=128, null=True, default=password_generator
+            ),
         ),
     ]
