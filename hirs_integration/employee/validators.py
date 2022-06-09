@@ -1,29 +1,62 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from hris_integration.validators import ValidationError
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _t
 
-__all__ = ('UsernameValidator','UPNValidator')
+__all__ = ("UsernameValidator", "UPNValidator")
+
 
 @deconstructible
 class UsernameValidatorBase:
     """Class to validate usernames and aliases."""
 
     message = _t("Enter a valid username.")
-    code = 'invalid'
+    code = "invalid"
 
     #: list: The list of invalid characters for a username or email alias
-    invalid_chars = ['!','@','#','$','%','^','&','*','(',')','_','+','=',';',':','\'','"',
-                     ',','<','>',' ','`','~','{','}','|']
+    invalid_chars = [
+        "!",
+        "@",
+        "#",
+        "$",
+        "%",
+        "^",
+        "&",
+        "*",
+        "(",
+        ")",
+        "_",
+        "+",
+        "=",
+        ";",
+        ":",
+        "'",
+        '"',
+        ",",
+        "<",
+        ">",
+        " ",
+        "`",
+        "~",
+        "{",
+        "}",
+        "|",
+    ]
     #: str: The default character to replace invalid characters with
-    substitute = ''
+    substitute = ""
     #: int: The default max length for a username
     max_length = None
 
-    def __init__(self, first:str =None, last:str =None, suffix:str =None,
-                 allowed_char:list =None, max_length:int =None):
+    def __init__(
+        self,
+        first: str = None,
+        last: str = None,
+        suffix: str = None,
+        allowed_char: list = None,
+        max_length: int = None,
+    ):
         """Base initializer for username validator.
 
         :param first: Firstname or username/alias to be validate
@@ -38,15 +71,15 @@ class UsernameValidatorBase:
         :type max_length: int, optional
         """
 
-        self.first = first or ''
-        self.last = last or ''
-        self.suffix = suffix or ''
+        self.first = first or ""
+        self.last = last or ""
+        self.suffix = suffix or ""
         self.max_length = max_length or self.max_length
         if isinstance(allowed_char, list):
             for char in allowed_char:
                 if char in self.invalid_chars:
                     self.invalid_chars.remove(char)
-        elif isinstance(allowed_char,str):
+        elif isinstance(allowed_char, str):
             if allowed_char in self.invalid_chars:
                 self.invalid_chars.remove(allowed_char)
 
@@ -57,11 +90,14 @@ class UsernameValidatorBase:
 
     def __eq__(self, other) -> bool:
         return (
-            isinstance(other, self.__class__) and
-            self.is_valid() == other.is_valid() and
-            self.max_length == other.max_length and
-            self.first == other.first and
-            self.username or None == other.username or None)
+            isinstance(other, self.__class__)
+            and self.is_valid() == other.is_valid()
+            and self.max_length == other.max_length
+            and self.first == other.first
+            and self.username
+            or None == other.username
+            or None
+        )
 
     def parse(self):
         raise NotImplementedError("Must be implemented by subclass")
@@ -72,7 +108,7 @@ class UsernameValidatorBase:
         self.parse()
         for char in self.username:
             if char in self.invalid_chars:
-                self.username = self.username.replace(char,self.substitute)
+                self.username = self.username.replace(char, self.substitute)
 
     def is_valid(self):
         """Check that the username is valid."""
@@ -82,8 +118,8 @@ class UsernameValidatorBase:
         except ValidationError:
             return False
 
-    def __call__(self,value:str =None) -> str:
-        """ Validate the username.
+    def __call__(self, value: str = None) -> str:
+        """Validate the username.
 
         :param value: Username to validate, for compatibility with Django
         :type value: str, optional
@@ -93,7 +129,7 @@ class UsernameValidatorBase:
         try:
             username = value or self.username
         except AttributeError:
-            self.parse() # If the username is not set, call the parser to generate it
+            self.parse()  # If the username is not set, call the parser to generate it
             username = self.username
         for char in username:
             if char in self.invalid_chars:
@@ -114,10 +150,12 @@ class UsernameValidatorBase:
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, UsernameValidatorBase):
-            return (self.username == other.username and
-                    self.invalid_chars == other.invalid_chars and
-                    self.max_length == other.max_length and
-                    self.__class__.__name == other.__class__.__name)
+            return (
+                self.username == other.username
+                and self.invalid_chars == other.invalid_chars
+                and self.max_length == other.max_length
+                and self.__class__.__name__ == other.__class__.__name__
+            )
         return False
 
 
@@ -136,18 +174,21 @@ class UsernameValidator(UsernameValidatorBase):
         Parse the passed values into a username.
         """
 
-        if self.first == '':
+        if self.first == "":
             raise AttributeError("First name/Username is required.")
 
-        if self.last == '' and self.suffix == '':
+        if self.last == "" and self.suffix == "":
             self.username = self.first
 
         else:
             self.username = self.first[0] + self.last
             if self.suffix:
-                self.username = self.username[:self.max_length-len(self.suffix)] + self.suffix
+                self.suffix = str(self.suffix)
+                self.username = (
+                    self.username[: self.max_length - len(self.suffix)] + self.suffix
+                )
 
-        self.username = self.username[:self.max_length]
+        self.username = self.username[: self.max_length]
 
 
 @deconstructible
@@ -165,13 +206,13 @@ class UPNValidator(UsernameValidatorBase):
         Parse the passed values into a username.
         """
 
-        if self.first == '':
+        if self.first == "":
             raise AttributeError("First name/Username is required.")
 
-        if self.last == '' and self.suffix == '':
+        if self.last == "" and self.suffix == "":
             self.username = self.first
 
         else:
             self.username = f"{self.first}.{self.last}{self.suffix}"
 
-        self.username = self.username[:self.max_length]
+        self.username = self.username[: self.max_length]
