@@ -4,6 +4,8 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import mptt.fields
+import organization.models
+
 
 business_unit_mapping = {
     "bu_id": "id",
@@ -72,7 +74,12 @@ class Migration(migrations.Migration):
                 ("is_deleted", models.BooleanField(default=False)),
                 ("id", models.IntegerField(primary_key=True, serialize=False)),
                 ("name", models.CharField(max_length=128)),
-                ("ad_ou", models.CharField(max_length=256)),
+                (
+                    "ad_ou",
+                    models.CharField(
+                        default=organization.models.get_default_ou, max_length=256
+                    ),
+                ),
                 ("lft", models.PositiveIntegerField(editable=False)),
                 ("rght", models.PositiveIntegerField(editable=False)),
                 ("tree_id", models.PositiveIntegerField(db_index=True, editable=False)),

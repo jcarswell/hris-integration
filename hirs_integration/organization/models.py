@@ -7,6 +7,16 @@ from hris_integration.models import ChangeLogMixin, InactiveMixin
 from warnings import warn
 
 
+def get_default_ou() -> str:
+    """Get the default organizational unit for new business units"""
+    from organization.helpers.config import Config, GROUP_CONFIG, CONFIG_DEFAULT_OU
+
+    try:
+        return str(Config()(GROUP_CONFIG, CONFIG_DEFAULT_OU))
+    except Exception:
+        return ""
+
+
 class BusinessUnit(MPTTModel, ChangeLogMixin, InactiveMixin):
     """The Business Units of the organization and the active directory
     organizational unit that is associated with the business unit.
@@ -28,7 +38,7 @@ class BusinessUnit(MPTTModel, ChangeLogMixin, InactiveMixin):
         related_name="business_unit_children",
     )
     #: str: The Active Directory organizational unit that is associated with the business unit
-    ad_ou = models.CharField(max_length=256)
+    ad_ou = models.CharField(max_length=256, default=get_default_ou)
     #: Employee: The Employee that is the manager of the Business Unit
     manager = models.ForeignKey(
         "employee.Employee",
