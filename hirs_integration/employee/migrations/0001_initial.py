@@ -183,7 +183,7 @@ class Migration(migrations.Migration):
                 ("level", models.PositiveIntegerField(editable=False)),
                 (
                     "employee",
-                    models.ForeignKey(
+                    models.OneToOneField(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,

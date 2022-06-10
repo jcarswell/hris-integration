@@ -5,8 +5,9 @@ from email.policy import default
 import logging
 
 from pathlib import Path
+from sqlite3 import IntegrityError
 from django.db import models
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.utils import timezone
 from django.conf import settings
 from common.functions import password_generator
@@ -14,6 +15,7 @@ from hris_integration.models.encryption import PasswordField
 from hris_integration.models import InactiveMixin
 from time import time
 from employee.validators import UPNValidator, UsernameValidator
+from extras.models import Notification
 
 from .base import EmployeeBase
 
@@ -262,7 +264,7 @@ class EmployeeImport(EmployeeBase):
     #: bool: If the employee has been matched
     is_matched = models.BooleanField(default=False)
     #: Employee: The matched Employee object.
-    employee = models.ForeignKey(
+    employee = models.OneToOneField(
         Employee, on_delete=models.PROTECT, blank=True, null=True
     )
 
@@ -368,9 +370,41 @@ class EmployeeImport(EmployeeBase):
                         ec = True
 
                 if prev_instance.employee is None:
-                    instance.employee.employee_id = instance.id
-                    instance.employee.is_imported = True
-                    ec = True
+                    try:
+                        instance.employee.employee_id = instance.id
+                        instance.employee.is_imported = True
+                        instance.employee.save()
+                    except IntegrityError:
+                        logger.warning(
+                            "Employee ID is already associated with an employee,"
+                            "attempting to clear"
+                        )
+                        e = Employee.objects.get(employee_id=instance.id)
+                        if e != instance.employee:
+                            e.employee_id = None
+                            e.is_imported = False
+                            logger.warning(f"Unlinked employee id from {str(e)}")
+                            e.save()
+                            try:
+                                instance.employee.employee_id = instance.id
+                                instance.employee.is_imported = True
+                                instance.employee.save()
+                            except IntegrityError:
+                                logger.error(
+                                    f"Failed to unlink employee id {instance.id} from employee {str(e)}."
+                                    f"Converting {str(instance)} to a pending employee."
+                                )
+                                instance.is_matched = False
+                                ec = True
+                                Notification.objects.create(
+                                    message=f"Source employee {str(instance)} and employee {str(instance.employee)} "
+                                    f"are in an inconsistent state. Please validate that multiple "
+                                    f"employees are not associated with the same employee ID.",
+                                    level=Notification.ERROR,
+                                    source="Employee Import",
+                                    source_repr=repr(instance),
+                                    source_id=instance.id,
+                                )
 
                 if ec:
                     instance.employee.save()
@@ -388,9 +422,42 @@ class EmployeeImport(EmployeeBase):
                 if getattr(instance.employee, key, None) is None:
                     setattr(instance.employee, key, getattr(instance, key))
 
-            instance.employee.employee_id = instance.id
-            instance.employee.is_imported = True
-            instance.employee.save()
+            if instance.employee:
+                try:
+                    instance.employee.employee_id = instance.id
+                    instance.employee.is_imported = True
+                    instance.employee.save()
+                    ec = True
+                except IntegrityError:
+                    logger.warning(
+                        "Employee ID is already associated with an employee, attempting to clear"
+                    )
+                    e = Employee.objects.get(employee_id=instance.id)
+                    if e != instance.employee:
+                        e.employee_id = None
+                        e.is_imported = False
+                        logger.warning(f"Unlinked employee id from {str(e)}")
+                        e.save()
+                        try:
+                            instance.employee.employee_id = instance.id
+                            instance.employee.is_imported = True
+                            ec = True
+                        except IntegrityError:
+                            logger.error(
+                                f"Failed to unlink employee id {instance.id} from employee {str(e)}."
+                                f"Converting {str(instance)} to a pending employee."
+                            )
+                            instance.is_matched = False
+                            ec = True
+                            Notification.objects.create(
+                                message=f"Source employee {str(instance)} and employee {str(instance.employee)} "
+                                f"are in an inconsistent state. Please validate that multiple "
+                                f"employees are not associated with the same employee ID.",
+                                level=Notification.ERROR,
+                                source="Employee Import",
+                                source_repr=repr(instance),
+                                source_id=instance.id,
+                            )
 
         if instance.updated_on is None:
             instance.updated_on = timezone.now()
