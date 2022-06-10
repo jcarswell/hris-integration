@@ -1,8 +1,9 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from hris_integration.models import ChangeLogMixin
 from django.db import models
+
 
 class Notification(ChangeLogMixin):
     """System Generated Notifications"""
@@ -14,22 +15,22 @@ class Notification(ChangeLogMixin):
     CRITICAL = 0
 
     #: list: the list of possible notification levels
-    levelchoices = [
-        (0,'Critical'),
-        (1,'Error'),
-        (2,'Warning'),
-        (3,'Info'),
+    level_choices = [
+        (0, "Critical"),
+        (1, "Error"),
+        (2, "Warning"),
+        (3, "Info"),
     ]
 
     class Meta:
-        db_table = 'notifications'
+        db_table = "notifications"
 
     #: id: The unique id of the notification
     id = models.AutoField(primary_key=True)
     #: str: The notification message
     message = models.CharField(max_length=512)
     #: int: The level of the notification (0-3)
-    level = models.IntegerField(choices=levelchoices)
+    level = models.IntegerField(choices=level_choices)
     #: bool: Is acknowledged
     is_acknowledged = models.BooleanField(default=False)
     #: bool: Is cleared
