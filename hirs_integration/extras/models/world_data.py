@@ -1,7 +1,8 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from django.db import models
+
 
 def get_country(country_code):
     """
@@ -9,17 +10,18 @@ def get_country(country_code):
     """
     return Country.objects.get(code=country_code)
 
+
 class Country(models.Model):
     """Countries of the world"""
 
     data_targets = [
-        ('name', 'name', str),
-        ('iso2', 'code', str),
-        ('iso3', 'iso3', str),
+        ("name", "name", str),
+        ("iso2", "code", str),
+        ("iso3", "iso3", str),
     ]
 
     class Meta:
-        db_table = 'countries'
+        db_table = "countries"
 
     id = models.AutoField(primary_key=True)
     #: str: Country name
@@ -34,14 +36,14 @@ class State(models.Model):
     """Country States"""
 
     data_targets = [
-        ('name', 'name', str),
-        ('state_code', 'code', str),
-        ('country_code', 'country', get_country),
-        ('type', 'type', str),        
+        ("name", "name", str),
+        ("state_code", "code", str),
+        ("country_code", "country", get_country),
+        ("type", "type", str),
     ]
 
     class Meta:
-        db_table = 'states'
+        db_table = "states"
 
     id = models.AutoField(primary_key=True)
     #: str: State name
