@@ -61,8 +61,8 @@ class EmployeeManager:
     def get(self):
         """Get the specific sub-objects for the employee"""
 
-        self._qs_phone = Phone.objects.filter(employee=self.__qs_emp)
-        self._qs_addr = Address.objects.filter(employee=self.__qs_emp)
+        self._qs_phone = Phone.objects.filter(employee=self.employee)
+        self._qs_addr = Address.objects.filter(employee=self.employee)
         self.group_manager = GroupManager(
             self.employee.primary_job,
             self.employee.primary_job.business_unit,
@@ -80,7 +80,7 @@ class EmployeeManager:
 
     def __str__(self) -> str:
         """Return the str method for the source employee object"""
-        return str(self.__qs_emp)
+        return str(self.employee)
 
     def __repr__(self) -> str:
         """Return the approximate call needed to re-create this class"""
@@ -124,7 +124,7 @@ class EmployeeManager:
             if phone.primary:
                 return phone.number
 
-        return None
+        return self._qs_phone[0]
 
     @property
     def address(self) -> Address:
@@ -135,13 +135,13 @@ class EmployeeManager:
         """
 
         if self._qs_addr is None:
-            return {}
+            return None
 
         for addr in self._qs_addr:
             if addr.primary or addr.label.lower == "office":
                 return addr
 
-        return None
+        return self._qs_addr[0]
 
     @property
     def firstname(self) -> str:
@@ -337,7 +337,7 @@ class EmployeeManager:
 
     @property
     def ou(self) -> str:
-        """The OU as defined by the employess connected business unit
+        """The OU as defined by the employees connected business unit
 
         :return: The AD OU where the employee should be located
         :rtype: str
@@ -414,7 +414,7 @@ class EmployeeManager:
     def bu(self) -> str:
         """The Employees connected business unit name
 
-        :return: The bussiness unit name
+        :return: The bushiness unit name
         :rtype: str
         """
 
