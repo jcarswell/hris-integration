@@ -15,8 +15,6 @@ from django.urls import reverse
 from django.http import HttpResponseBadRequest, JsonResponse
 from employee.models import Employee, EmployeeImport
 
-from .forms.ftp_import import PendingImport
-
 logger = logging.getLogger("ftp_import.view")
 
 
