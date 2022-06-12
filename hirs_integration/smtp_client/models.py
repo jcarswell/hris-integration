@@ -12,12 +12,12 @@ class EmailTemplates(models.Model):
     class Meta:
         db_table = "email_templates"
 
-    #: str: The name of the template.
-    template_name = models.CharField(blank=False, unique=True, max_length=64)
-    #: str: The subject of the email. May contain jinja2 variables.
-    email_subject = models.CharField(blank=False, max_length=78)
-    #: str: The body of the email. The text should be in HTML format and would contain jinja2 variables.
-    email_body = models.TextField()
+    #: The name of the template.
+    template_name: str = models.CharField(blank=False, unique=True, max_length=64)
+    #: The subject of the email. May contain jinja2 variables.
+    email_subject: str = models.CharField(blank=False, max_length=78)
+    #: The body of the email. The text should be in HTML format and would contain jinja2 variables.
+    email_body: str = models.TextField()
 
     def __str__(self) -> str:
         return self.template_name
