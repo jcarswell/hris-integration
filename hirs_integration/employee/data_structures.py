@@ -1,12 +1,17 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import logging
+
 from pyad import ADUser
 from datetime import datetime
-
 from organization.group_manager import GroupManager
+from user_applications.models import Account
 
 from .models import Employee, EmployeeImport, Phone, Address
+
+
+logger = logging.getLogger("ad_export.EmployeeManager")
 
 
 class EmployeeManager:
@@ -69,10 +74,44 @@ class EmployeeManager:
             self.employee.location,
         )
 
+        for app in Account.objects.filter(employee=self.employee):
+            logger
+            self.group_manager.add_application(app.software)
+
         if self.guid == None:
             self.get_guid()
         if self.guid:
             self.ad_user = ADUser.from_guid(self.guid)
+
+    def groups_add(self) -> list:
+        """
+        Return the list of groups that should be added to the employee.
+
+        :return: List of group DNs
+        :rtype: list
+        """
+
+        if not self.employee.state:
+            return []
+        elif self.employee.leave:
+            return self.group_manager.groups_leave + self.group_manager.add_groups
+        else:
+            return self.group_manager.add_groups
+
+    def groups_remove(self) -> list:
+        """
+        List of groups that should be removed from the employee.
+
+        :return: List of group DNs
+        :rtype: list
+        """
+
+        if not self.employee.state:
+            return []
+        elif self.employee.leave:
+            return self.group_manager.remove_groups
+        else:
+            return self.group_manager.groups_leave + self.group_manager.remove_groups
 
     def pre_merge(self):
         """Needs to be defined for each specific module"""
