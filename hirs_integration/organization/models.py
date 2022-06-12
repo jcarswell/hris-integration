@@ -142,18 +142,18 @@ class GroupMapping(ChangeLogMixin):
     dn = models.CharField(max_length=256)
     #: bool: Whether the group applies to all employees
     all = models.BooleanField(default=False)
-    #: JobRole: The Job Role that the group applies to
 
+    #: JobRole: The Job Role that the group applies to
     jobs = models.ManyToManyField(JobRole, blank=True)
     #: bool: Negates the Job Role constraint
     jobs_not = models.BooleanField(default=False)
-    #: BusinessUnit: The Business Unit that the group applies to
 
+    #: BusinessUnit: The Business Unit that the group applies to
     business_unit = models.ManyToManyField(BusinessUnit, blank=True)
     #: bool: Negates the Business Unit constraint
     business_unit_not = models.BooleanField(default=False)
-    #: Location: The Location that the group applies to
 
+    #: Location: The Location that the group applies to
     location = models.ManyToManyField(Location, blank=True)
     #: bool: Negates the Location constraint
     location_not = models.BooleanField(default=False)
