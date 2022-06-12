@@ -8,7 +8,10 @@ Documentation for the core project source code.
     :maxdepth: 3
     :caption: Code and Model References
 
-    settings
+    employee/*
+    organization/*
+    user_applications/*
+    settings/*
     validators
     ftp_import/*
     ad_export/*

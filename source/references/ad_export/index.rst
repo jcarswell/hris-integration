@@ -2,7 +2,7 @@ Active Directory Export
 =======================
 
 Process Flow
-^^^^^^^^^^^^
+------------
 
 .. image:: /_static/ad_export.svg
 

@@ -57,31 +57,20 @@ The following variables are currently supported in each template
 | New User Notification | `employees` which is a list of new employees derived from the employee model object |
 
 ### Variable: employee
-:*employee*: The referenced [employee model](models/employee) object
-:*overrides*: The referenced [employee overrides model](models/employee_overrides) object
-:*designations*: The employees designations
-:*phone*: Primary phone number
-:*firstname*: The preferred First name
-:*lastname*: The preferred Last name
-:*username*: A users legacy log in user name
+:*first_name*: The preferred First name
+:*last_name*: The preferred Last name
 :*password*: The default first log in password
-:*location*: The defined Home location
-:*email_alias*: The users email_alias *see upn or email_address*
-:*ou*: The Active Directory Organizational Unit
 :*title*: The primary job role
-:*status*: The status of the employee
-:*id*: The Employee ID
+:*designations*: The employees designations
+:*location*: The defined Home location
 :*bu*: The Business Unit based on the Primary Job Role
 :*manager*: The reporting Manager [employee model](models/employee) object
-:*upn*: The modern *email style* user log in name
-:*pending*: Defines if the employee has been manually entered pending a import from the 
-    upstream HRIS Database or if the employee is based off the upstream HRIS Database.
-    
-    When True variable such as ID or location may be unavailable
 :password_expiry_date: The date that a users password will expire
 :password_expiration_days: The number of days until a users password will expire
-:email_aliases: A list of all email addresses for a user
 :email_address: The Primary email address for the user
+
+For a full list of available variables refer to the [Employee Manager](models/employee_manager)
+documentation.
 
 ### Variable: employees
 A list of [employee model](models/employee) objects. A for loop is required to iterate through this list

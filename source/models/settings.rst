@@ -5,14 +5,21 @@ Settings Model
 
 This model is used to store most user configurable elements
 
-.. autoclass:: hirs_admin.models.Setting
+.. autoclass:: settings.models.Setting
     :members:
-    :undoc-members:
 
 
-Settings Model Manager (o2)
----------------------------
+Settings Model Manager
+-----------------------
 
-.. autoclass:: hirs_admin.models.SettingsManager
-    :memebers:
-    :undoc-members:
+.. autoclass:: settings.models.SettingsManager
+    :members: get_by_path
+
+
+.. _model_wordlist:
+
+Word List Model
+===============
+
+.. autoclass:: settings.models.WordList
+    :members:
