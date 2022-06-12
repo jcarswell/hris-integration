@@ -10,8 +10,8 @@ Model: :ref:`model_settings`
 Field Definition
 ----------------
 
-A field is made up of a number of configuable elements that tell the rendering engine how to
-display a specfic field as well as the FieldManager what type of data should be expected.
+A field is made up of a number of configurable elements that tell the rendering engine how to
+display a specific field as well as the FieldManager what type of data should be expected.
 
 :**Field Definition**: At minimum this needs to have field_properties and should define 
     the field type.
@@ -37,13 +37,13 @@ display a specfic field as well as the FieldManager what type of data should be 
     | }
 
     :*Type*: dictionary
-:default_value: The inital value that will be set for the field
+:default_value: The initial value that will be set for the field
 :hidden: Encrypt the value in the database and render the value as a
     password field
     
     :*Type*: boolean
 :field_properties: In addition to the base field option there are some 
-    extra properties avaliable depending on field type. All 
+    extra properties available depending on field type. All 
     properties and field type are based off of the built in 
     Django form fields.
 
@@ -78,7 +78,7 @@ display a specfic field as well as the FieldManager what type of data should be 
 :field_properties.help_text: Field hint to help users know what they are setting
 
     :*Type*: string
-:field_properties.validators: A list addiional validators that are used to validate a field.
+:field_properties.validators: A list additional validators that are used to validate a field.
     
     If you have specific validators they should be defined in your validators
     sub-module in the root of your module.
