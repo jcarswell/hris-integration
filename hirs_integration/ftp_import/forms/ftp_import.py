@@ -687,11 +687,12 @@ class EmployeeForm(BaseImport):
         """
         The main save logic for a new employee. This will create a new EmployeeImport object
         and attempt to match it to an existing employee.
-         - If no match is found, then the Employee object will be created as well.
-         - If the employee is matched to an existing pending user with a configured level
-           of certainty, then the employee will be matched to that existing object.
-         - If the employee is matched to multiple users, then the employee will be left in
-           an unmatched state, to be manually matched.
+
+        - If no match is found, then the Employee object will be created as well.
+        - If the employee is matched to an existing pending user with a configured level
+          of certainty, then the employee will be matched to that existing object.
+        - If the employee is matched to multiple users, then the employee will be left in
+          an unmatched state, to be manually matched.
         """
 
         for key, value in self.kwargs.items():
