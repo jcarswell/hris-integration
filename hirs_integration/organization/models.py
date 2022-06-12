@@ -25,22 +25,22 @@ class BusinessUnit(MPTTModel, ChangeLogMixin, InactiveMixin):
     class Meta:
         db_table = "business_unit"
 
-    #: id: The ID of the Business Unit as defined by the organization
-    id = models.IntegerField(primary_key=True)
-    #: str: The name of the Business Unit
-    name = models.CharField(max_length=128, null=False, blank=False)
+    #: The ID of the Business Unit as defined by the organization
+    id: int = models.IntegerField(primary_key=True)
+    #: The name of the Business Unit
+    name: str = models.CharField(max_length=128, null=False, blank=False)
     #: The parent Business Unit of the Business Unit. May be null.
-    parent = TreeForeignKey(
+    parent: "BusinessUnit" = TreeForeignKey(
         "self",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="business_unit_children",
     )
-    #: str: The Active Directory organizational unit that is associated with the business unit
-    ad_ou = models.CharField(max_length=256, default=get_default_ou)
-    #: Employee: The Employee that is the manager of the Business Unit
-    manager = models.ForeignKey(
+    #: The Active Directory organizational unit that is associated with the business unit
+    ad_ou: str = models.CharField(max_length=256, default=get_default_ou)
+    #: The Employee that is the manager of the Business Unit
+    manager: "employee.models.Employee" = models.ForeignKey(
         "employee.Employee",
         null=True,
         blank=True,
@@ -67,20 +67,20 @@ class JobRole(ChangeLogMixin, InactiveMixin):
     class Meta:
         db_table = "job_role"
 
-    #: int: The ID of the Job Role as defined by the organization
-    id = models.IntegerField(verbose_name="Job ID", primary_key=True)
-    #: str: The name of the Job Role
-    name = models.CharField(max_length=255, verbose_name="Job Name")
-    #: BusinessUnit: The Business Unit that the Job Role belongs to
-    business_unit = models.ForeignKey(
+    #: The ID of the Job Role as defined by the organization
+    id: int = models.IntegerField(verbose_name="Job ID", primary_key=True)
+    #: The name of the Job Role
+    name: str = models.CharField(max_length=255, verbose_name="Job Name")
+    #: The Business Unit that the Job Role belongs to
+    business_unit: BusinessUnit = models.ForeignKey(
         BusinessUnit,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="Business Units",
     )
-    #: int: The number of positions that are available for this Job Role
-    seats = models.IntegerField(default=0, verbose_name="Seats")
+    #: The number of positions that are available for this Job Role
+    seats: int = models.IntegerField(default=0, verbose_name="Seats")
 
     def __str__(self) -> str:
         return self.name
@@ -98,18 +98,18 @@ class Location(MPTTModel, ChangeLogMixin, InactiveMixin):
     class Meta:
         db_table = "location"
 
-    #: int: The ID of the Location as defined by the organization
-    id = models.IntegerField(
+    #: The ID of the Location as defined by the organization
+    id: int = models.IntegerField(
         primary_key=True,
     )
-    #: str: The name of the Location
-    name = models.CharField(
+    #: The name of the Location
+    name: str = models.CharField(
         max_length=128,
         null=False,
         blank=False,
     )
     #: The parent Location of the Location. May be null.
-    parent = TreeForeignKey(
+    parent: "Location" = TreeForeignKey(
         "self",
         on_delete=models.SET_NULL,
         null=True,
@@ -138,22 +138,22 @@ class GroupMapping(ChangeLogMixin):
     class Meta:
         db_table = "group_mapping"
 
-    #: str: The Distinguished Name of the Active Directory group
-    dn = models.CharField(max_length=256)
-    #: bool: Whether the group applies to all employees
-    all = models.BooleanField(default=False)
+    #: The Distinguished Name of the Active Directory group
+    dn: str = models.CharField(max_length=256)
+    #: Whether the group applies to all employees
+    all: bool = models.BooleanField(default=False)
 
-    #: JobRole: The Job Role that the group applies to
-    jobs = models.ManyToManyField(JobRole, blank=True)
-    #: bool: Negates the Job Role constraint
-    jobs_not = models.BooleanField(default=False)
+    #: The Job Role that the group applies to
+    jobs: JobRole = models.ManyToManyField(JobRole, blank=True)
+    #: Negates the Job Role constraint
+    jobs_not: bool = models.BooleanField(default=False)
 
-    #: BusinessUnit: The Business Unit that the group applies to
-    business_unit = models.ManyToManyField(BusinessUnit, blank=True)
-    #: bool: Negates the Business Unit constraint
-    business_unit_not = models.BooleanField(default=False)
+    #: The Business Unit that the group applies to
+    business_unit: BusinessUnit = models.ManyToManyField(BusinessUnit, blank=True)
+    #: Negates the Business Unit constraint
+    business_unit_not: bool = models.BooleanField(default=False)
 
-    #: Location: The Location that the group applies to
-    location = models.ManyToManyField(Location, blank=True)
-    #: bool: Negates the Location constraint
-    location_not = models.BooleanField(default=False)
+    #: The Location that the group applies to
+    location: Location = models.ManyToManyField(Location, blank=True)
+    #: Negates the Location constraint
+    location_not: bool = models.BooleanField(default=False)

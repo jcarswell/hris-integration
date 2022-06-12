@@ -41,7 +41,18 @@ UPDATE_FIELDS_OPTIONAL = [
 ]
 
 
-def employee_upload_to(instance, filename):
+def employee_upload_to(instance: "Employee", filename: str) -> str:
+    """
+    The upload_to file path resolver function for the Employee model's image field.
+
+    :param instance: the Employee instance
+    :type instance: Employee
+    :param filename: The filename of the uploaded file
+    :type filename: str
+    :return: the file path
+    :rtype: str
+    """
+
     return f"employeephoto/{instance.id}/{filename}"
 
 
@@ -54,28 +65,29 @@ class Employee(EmployeeBase, InactiveMixin):
     class Meta:
         db_table = "employee"
 
-    #: int: The primary key for the employee. This does not represent the employee id
     id = models.AutoField(primary_key=True)
-    #: int: The Employee ID for the employee.
-    employee_id = models.IntegerField(blank=True, null=True, unique=True)
-    #: bool: If this model has a matched EmployeeImport record.
-    is_imported = models.BooleanField(default=False)
-    #: bool: If the employee has been exported to Active Directory. Used for filtering.
-    is_exported_ad = models.BooleanField(default=False)
-    #: str: The Active Directory unique identifier for the employee.
-    guid = models.CharField(max_length=40, null=True, blank=True)
+    #: The Employee ID for the employee.
+    employee_id: int = models.IntegerField(blank=True, null=True, unique=True)
+    #: If this model has a matched EmployeeImport record.
+    is_imported: bool = models.BooleanField(default=False)
+    #: If the employee has been exported to Active Directory. Used for filtering.
+    is_exported_ad: bool = models.BooleanField(default=False)
+    #: The Active Directory unique identifier for the employee.
+    guid: str = models.CharField(max_length=40, null=True, blank=True)
 
-    #: str: The nickname of the employee.
-    nickname = models.CharField(max_length=96, null=True, blank=True)
-    #: str: Designations that the employee holds
-    designations = models.CharField(max_length=256, blank=True)
-    #: str: The path the the employees uploaded file.
-    photo = models.FileField(upload_to=employee_upload_to, null=True, blank=True)
+    #: The nickname of the employee.
+    nickname: str = models.CharField(max_length=96, null=True, blank=True)
+    #: Designations that the employee holds
+    designations: str = models.CharField(max_length=256, blank=True)
+    #: The path the the employees uploaded file.
+    photo: str = models.FileField(upload_to=employee_upload_to, null=True, blank=True)
 
-    #: str: The employees password (encrypted at the database level).
-    password = PasswordField(null=True, blank=True, default=password_generator)
+    #: The employees password (encrypted at the database level).
+    password: str = PasswordField(null=True, blank=True, default=password_generator)
 
     def __eq__(self, other) -> bool:
+        """Checks if the two models are the same using key fields."""
+
         if not isinstance(other, Employee):
             return False
 
@@ -252,23 +264,25 @@ pre_save.connect(Employee.pre_save, sender=Employee)
 
 
 class EmployeeImport(EmployeeBase):
-    """This Class is used to store the data that is imported from the upstream
+    """
+    This Class is used to store the data that is imported from the upstream
     HRIS Database system.
     """
 
     class Meta:
         db_table = "employee_import"
 
-    #: int: The employee's id in the upstream HRIS system.
-    id = models.IntegerField(primary_key=True)
-    #: bool: If the employee has been matched
-    is_matched = models.BooleanField(default=False)
-    #: Employee: The matched Employee object.
-    employee = models.OneToOneField(
+    #: The employee's id in the upstream HRIS system.
+    id: int = models.IntegerField(primary_key=True)
+    #: If the employee has been matched
+    is_matched: bool = models.BooleanField(default=False)
+    #: The matched Employee object.
+    employee: Employee = models.OneToOneField(
         Employee, on_delete=models.PROTECT, blank=True, null=True
     )
 
     def __eq__(self, other) -> bool:
+        """Check if two EmployeeImport objects are equal using key values."""
         if not isinstance(other, Employee):
             return False
 
@@ -319,7 +333,7 @@ class EmployeeImport(EmployeeBase):
             raise TypeError("Model instances without primary key value are un-hashable")
         return hash(self.pk)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.id}: {self.first_name} {self.last_name}"
 
     @classmethod

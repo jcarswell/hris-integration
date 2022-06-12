@@ -58,25 +58,25 @@ class Setting(models.Model):
     class Meta:
         db_table = "setting"
 
-    #: CONST str: The field separator for the setting path
-    FIELD_SEP = "/"
-    #: CONST str: The base field type for a setting
-    DEFAULT_FIELD = "CharField"
-    #: CONST dict: The base field properties for a setting
-    __BASE_PROPERTIES__ = {
+    #: CONST -- The field separator for the setting path
+    FIELD_SEP: str = "/"
+    #: CONST -- The base field type for a setting
+    DEFAULT_FIELD: str = "CharField"
+    #: CONST -- The base field properties for a setting
+    __BASE_PROPERTIES__: dict = {
         "type": DEFAULT_FIELD,
         "required": False,
         "disabled": False,
     }
 
-    #: str: The setting path
-    setting = models.CharField(max_length=768, unique=True)
-    #: str: The setting value
-    _value = models.TextField(null=True, blank=True)
-    #: str: The field properties for the setting allowing for correct type conversion and rendering
-    _field_properties = models.TextField(null=True, blank=True)
-    #: bool: Whether the value is encrypted in the database or stored in plaintext
-    hidden = models.BooleanField(default=False)
+    #: The setting path
+    setting: str = models.CharField(max_length=768, unique=True)
+    #: The setting value
+    _value: str = models.TextField(null=True, blank=True)
+    #: The field properties for the setting allowing for correct type conversion and rendering
+    _field_properties: str = models.TextField(null=True, blank=True)
+    #: Whether the value is encrypted in the database or stored in plaintext
+    hidden: bool = models.BooleanField(default=False)
 
     objects = SettingsManager()
     o2 = objects
@@ -225,15 +225,15 @@ pre_save.connect(Setting.pre_save, sender=Setting)
 
 
 class WordList(models.Model):
-    """A list of shorthand words and there expanded form for the word expansion feature"""
+    """A list of words or acronyms and there preferred form for the word replacement feature"""
 
     class Meta:
         db_table = "word_list"
 
-    #: str: The word to be expanded
-    src = models.CharField(max_length=256)
-    #: str: The expanded form of the word
-    replace = models.CharField(max_length=256)
+    #: The word to be expanded
+    src: str = models.CharField(max_length=256)
+    #: The expanded form of the word
+    replace: str = models.CharField(max_length=256)
 
     def __str__(self) -> str:
         return f"{self.src} -> {self.replace}"

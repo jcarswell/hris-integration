@@ -21,12 +21,12 @@ class GroupManager:
     be added when an employee is on leave and removed when the employee returns.
     """
 
-    #: list: The groups to be added to the employee
-    add_groups = []
-    #: list: The groups to be removed from the employee
-    remove_groups = []
-    #: list: List of groups to be added when an employee is on leave
-    groups_leave = []
+    #: The groups to be added to the employee
+    add_groups: list = []
+    #: The groups to be removed from the employee
+    remove_groups: list = []
+    #: List of groups to be added when an employee is on leave
+    groups_leave: list = []
 
     def __init__(
         self,

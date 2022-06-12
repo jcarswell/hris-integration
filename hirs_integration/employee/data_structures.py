@@ -24,16 +24,16 @@ class EmployeeManager:
     duplication every time an interaction is needed with the employee.
     """
 
-    #: ADUser: The ADUser object related to the employee
-    ad_user = None
-    #: EmployeeImport: The source HRIS Employee object
-    __employee = None
+    #: The ADUser object related to the employee
+    ad_user: ADUser = None
+    #: The source HRIS Employee object
+    __employee: EmployeeImport = None
     #: The QuerySet of the Phone objects for the employee
-    _qs_phone = None
+    _qs_phone: "django.db.models.QuerySet" = None
     #: The QuerySet of the Address objects for the employee
-    _qs_addr = None
-    #: bool: True if the employee is imported
-    merge = False
+    _qs_addr: "django.db.models.QuerySet" = None
+    #: True if the employee is imported
+    merge: bool = False
 
     def __init__(self, employee: Employee) -> None:
         """

@@ -19,18 +19,18 @@ class Software(ChangeLogMixin):
         db_table = "software"
 
     id = models.AutoField(primary_key=True)
-    #: str: The name of the software.
-    name = models.CharField(max_length=256)
-    #: str: The description of the software.
-    description = models.TextField(blank=True)
-    #: bool: If the software is enabled for licensing.
-    licensed = models.BooleanField(default=False)
-    #: str: The AD OU that the software is associated with.
-    mapped_group = models.CharField(max_length=256, blank=True)
-    #: int: The number of licenses available for this software. 0 = no limit. (default=0)
-    max_users = models.IntegerField(default=0)
+    #: The name of the software.
+    name: str = models.CharField(max_length=256)
+    #: The description of the software.
+    description: str = models.TextField(blank=True)
+    #: If the software is enabled for licensing.
+    licensed: bool = models.BooleanField(default=False)
+    #: The AD OU that the software is associated with.
+    mapped_group: str = models.CharField(max_length=256, blank=True)
+    #: The number of licenses available for this software. 0 = no limit. (default=0)
+    max_users: int = models.IntegerField(default=0)
     #: The employees that have a license for this software.
-    employees = models.ManyToManyField(Employee, blank=True)
+    employees: Employee = models.ManyToManyField(Employee, blank=True)
 
     def __str__(self) -> str:
         return self.name
@@ -47,14 +47,14 @@ class Account(ChangeLogMixin):
         db_table = "software-account"
 
     id = models.AutoField(primary_key=True)
-    #: Employee: The employee linked to this tracking instance.
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    #: Software: The software related to the tracking instance.
-    software = models.ForeignKey(Software, on_delete=models.CASCADE)
-    #: str: Notes related to this specific tracking instance.
-    notes = models.TextField(blank=True)
-    #: date: The date that the license/allocation expires.
-    expire_date = models.DateField(blank=True, null=True)
+    #: The employee linked to this tracking instance.
+    employee: Employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    #: The software related to the tracking instance.
+    software: Software = models.ForeignKey(Software, on_delete=models.CASCADE)
+    #: Notes related to this specific tracking instance.
+    notes: str = models.TextField(blank=True)
+    #: The date that the license/allocation expires.
+    expire_date: "datetime.date" = models.DateField(blank=True, null=True)
 
     def __str__(self) -> str:
         return f"{self.employee} - {self.software}"

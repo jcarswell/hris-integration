@@ -2,6 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import logging
+from typing import List
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _t
@@ -22,7 +23,7 @@ class EmployeeState(models.Model):
     STATE_ACT = "active"
     STATE_LEA = "leave"
 
-    status_choices = [
+    status_choices: List[tuple] = [
         (STATE_TERM, _t("Terminated")),
         (STATE_ACT, _t("Active")),
         (STATE_LEA, _t("Leave")),
@@ -31,11 +32,13 @@ class EmployeeState(models.Model):
     class Meta:
         abstract = True
 
-    state = models.BooleanField(default=True)
-    leave = models.BooleanField(default=False)
+    #: Whether the employee is active or not
+    state: bool = models.BooleanField(default=True)
+    #: If the employee is on leave
+    leave: bool = models.BooleanField(default=False)
 
     @property
-    def status(self):
+    def status(self) -> str:
         if self.state and self.leave:
             return self.STATE_LEA
         elif self.state:
@@ -69,7 +72,8 @@ class EmployeeState(models.Model):
 
 
 class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
-    """This represent the common fields between the mutable employee model
+    """
+    This represent the common fields between the mutable employee model
     and the upstream HRIS data model.
     """
 
@@ -80,57 +84,60 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
         parent_attr = "manager"
         order_insertion_by = ["first_name"]
 
-    #: datetime: The start date of the employee.
-    start_date = models.DateField(default=timezone.now)
-    #: datetime: The date and time the record was last updated. this cannot use auto_now_add
-    updated_on = models.DateTimeField(auto_now_add=False, null=True, blank=True)
-    #: str: The first name of the employee.
-    first_name = models.CharField(max_length=256)
-    #: str: The last name of the employee.
-    last_name = models.CharField(max_length=256)
-    #: str: The middle name of the employee.
-    middle_name = models.CharField(max_length=256, blank=True)
-    #: str: Suffix of the employee.
-    suffix = models.CharField(max_length=20, null=True, blank=True)
+    #: The start date of the employee.
+    start_date: "datetime.datetime" = models.DateField(default=timezone.now)
+    #: The date and time the record was last updated. this cannot use auto_now_add
+    updated_on: "datetime.datetime" = models.DateTimeField(
+        auto_now_add=False, null=True, blank=True
+    )
+    #: The first name of the employee.
+    first_name: str = models.CharField(max_length=256)
+    #: The last name of the employee.
+    last_name: str = models.CharField(max_length=256)
+    #: The middle name of the employee.
+    middle_name: str = models.CharField(max_length=256, blank=True)
+    #: Suffix of the employee.
+    suffix: str = models.CharField(max_length=20, null=True, blank=True)
 
-    #: TreeForeignKey: The manager of the employee.
+    #: The manager of the employee.
     manager = TreeForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True)
-    #: str: The employees Primary Job Role.
-    primary_job = models.ForeignKey(
+    #: The employees Primary Job Role.
+    primary_job: JobRole = models.ForeignKey(
         JobRole,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name=f"employee.{__name__}.primary_job+",
     )
-    #: ManyToManyField: Any jobs that the employee is cross-trained into.
-    jobs = models.ManyToManyField(
+    #: Any jobs that the employee is cross-trained into.
+    jobs: JobRole = models.ManyToManyField(
         JobRole, blank=True, related_name=f"employee.{__name__}.jobs+"
     )
-    #: ForeignKey: The location of the employee.
-    location = models.ForeignKey(
+    #: The location of the employee.
+    location: Location = models.ForeignKey(
         Location, null=True, blank=True, on_delete=models.SET_NULL
     )
 
-    #: str: The employee's username.
-    username = models.CharField(
+    #: The employee's username.
+    username: str = models.CharField(
         max_length=256,
         null=True,
         blank=True,
         unique=True,
         validators=[UsernameValidator],
     )
-    #: str: The Employees email_alias
+    #: The Employees email_alias
     email_alias = models.CharField(
         max_length=128, null=True, blank=True, unique=True, validators=[UPNValidator]
     )
-    type = models.CharField(max_length=64, null=True, blank=True)
+    #: The employee type as defined by the HRIS system.
+    type: str = models.CharField(max_length=64, null=True, blank=True)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.objects.get(id={self.id})"
 
     @property
-    def secondary_jobs(self):
+    def secondary_jobs(self) -> "django.db.models.QuerySet":
         """Returns the query set for secondary jobs"""
         return self.jobs.all()
 
