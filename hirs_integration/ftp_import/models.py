@@ -7,5 +7,5 @@ from django.db import models
 class FileTrack(models.Model):
     """Table to track which files have been imported already"""
 
-    #: str: The name of the file.
+    #: str: The name of the imported file.
     name = models.CharField(max_length=255, unique=True)
