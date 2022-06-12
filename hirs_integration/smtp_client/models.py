@@ -1,15 +1,22 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from django.db import models
 
 
 class EmailTemplates(models.Model):
+    """
+    The email templates that are available to be used when sending emails.
+    """
+
     class Meta:
-        db_table = 'email_templates'
-    
-    template_name = models.CharField(blank=False,unique=True,max_length=64)
-    email_subject = models.CharField(blank=False,max_length=78)
+        db_table = "email_templates"
+
+    #: str: The name of the template.
+    template_name = models.CharField(blank=False, unique=True, max_length=64)
+    #: str: The subject of the email. May contain jinja2 variables.
+    email_subject = models.CharField(blank=False, max_length=78)
+    #: str: The body of the email. The text should be in HTML format and would contain jinja2 variables.
     email_body = models.TextField()
 
     def __str__(self) -> str:
