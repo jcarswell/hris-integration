@@ -192,6 +192,7 @@ class EmployeeManager:
 
         return self.employee.first_name
 
+    #: str: The employees first name
     first_name = property(
         fget=firstname,
     )
@@ -207,6 +208,7 @@ class EmployeeManager:
         if self.__employee:
             return self.__employee.first_name
 
+    #: str: The employees first name as defined in the upstream HRIS database
     import_first_name = property(
         fget=import_firstname,
     )
@@ -242,6 +244,7 @@ class EmployeeManager:
 
         return self.employee.last_name
 
+    #: str: The Employees last name
     last_name = property(
         fget=lastname,
     )
@@ -257,6 +260,7 @@ class EmployeeManager:
         if self.__employee:
             return self.__employee.last_name
 
+    #: str: The Employees last name based on the source HRIS database
     import_last_name = property(
         fget=import_lastname,
     )
