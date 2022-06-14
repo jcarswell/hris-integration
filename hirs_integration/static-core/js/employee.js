@@ -259,7 +259,6 @@ function submit_phone(e) {
     var id = $(e.currentTarget).find('input[name=id]');
     var url = phones_url;
     var method = 'POST';
-    console.log(id)
     if (id.length > 0) {
         method = 'PUT';
         url += id[0].value+'/';
@@ -437,9 +436,9 @@ function update_software(e) {
     })
     .done(function(r) {
         if (method === 'POST') {
-            $("#software-list").append(softwareListTemplate(r));
             software[r['id']] = r;
-            software[r['id']]['software_name'] = $("option[value='"+r['software']+"']",f).text();
+            software[r['id']]['software_name'] = $("option[value='id_"+r['software']+"']",f).text();
+            $("#software-list").append(softwareListTemplate(software[r['id']]));
         } else {
             Object.keys(r).forEach(function(k) {
                 software[r['id']][k] = r[k];
@@ -451,7 +450,6 @@ function update_software(e) {
 }
 function delete_software(e) {
     var id = $(e).closest('.modal-content').find('input[name=id]').val();
-    console.log(e,id);
     $.ajax({
         method: 'DELETE',
         url: accounts_url + id + '/',
@@ -520,7 +518,6 @@ function employee_undo() {
             t = $('select[name=' + e + ']');
         }
         if (t.val() != employee_import[e] && ["","None"].indexOf(employee_import[e]) === -1) {
-            console.log(t.val(), employee_import[e]);
             var action;
             if (t.is('select')) {
                 action = 'revert_select';
