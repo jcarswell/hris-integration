@@ -1,7 +1,7 @@
 const phoneTemplate = (phone) => {
     return `<div class="tab-pane fade" id="phone-${phone['id']}"
     role="tabpanel" aria-labelledby="phone-${phone['id']}-tab">
-      <form id="phone-form-${phone['id']}" class="phone-form">
+      <form id="phone-form-${phone['id']}" class="phone-form" autocomplete="off">
         <input type="hidden" name="id" value="${phone['id']}"/>
         <div class="form-row">
           <div class="form-group col-md-5">
@@ -42,7 +42,7 @@ const phoneFormBase = {
 const addressTemplate = (address) => {
     return `<div class="tab-pane fade" id="address-${address['id']}"
     role="tabpanel" aria-labelledby="address-${address['id']}-tab">
-      <form id="address-form-${address['id']}" class="address-form">
+      <form id="address-form-${address['id']}" class="address-form" autocomplete="off">
         <input type="hidden" name="id" value="${address['id']}"/>
         <div class="form-group">
           <label for="label">Label</label>
@@ -109,7 +109,7 @@ const addressFormBase = {
 };
 const softwareTemplate = (s) => {
     return `<div class="modal-body">
-    <form id="software-form-${s['id']}">
+    <form id="software-form-${s['id']}" autocomplete="off">
         <input type="hidden" name="id" value="${s['id']}"/>
         <div class="form-group">
             <label for="software">Software</label>
@@ -142,7 +142,7 @@ const softwareListTemplate = (s) => {
             </button>`
 }
 const softwareNewTemplate = `<div class="modal-body">
-    <form id="software-form-0">
+    <form id="software-form-0" autocomplete="off">
         <div class="form-group">
             <label for="software">Software</label>
             <select class="form-control" name="software" required>

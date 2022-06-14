@@ -57,7 +57,7 @@
       <div id="sec-edit">
         <hr>
         <h4>Edit</h4>
-        <form id="edit">
+        <form id="edit" autocomplete="off">
           {% csrf_token %}
           <input type="hidden" name="id" value="{{ employee.pk }}">
           <div class="form-row">
@@ -195,7 +195,8 @@
         <hr>
         <h3 id="password">Default Password</h3>
         <div class="input-group">
-          <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}">
+          <input type="password" class="form-control" data-toggle="password" value="{{ employee.password }}"
+            autocomplete="off">
         </div>
       </div>
       {% endif %}
@@ -212,7 +213,7 @@
         <div class="tab-content" id="phones">
           <div class="tab-pane fade show active" id="phone-new"
                role="tabpanel" aria-labelledby="phone-new-tab">
-            <form id="phone-form-0" class="phone-form">
+            <form id="phone-form-0" class="phone-form" autocomplete="off">
               <div class="form-row">
                 <div class="form-group col-md-5">
                   <label for="label">Label</label>
@@ -243,7 +244,7 @@
         <div class="tab-content" id="addresses">
           <div class="tab-pane fade show active" id="address-new" role="tabpanel" 
           aria-labelledby="address-new-tab">
-            <form id="address-form-0" class="address-form">
+            <form id="address-form-0" class="address-form" autocomplete="off">
               <div class="form-group">
                 <label for="label">Label</label>
                 <input type="text" class="form-control" name="label" required
