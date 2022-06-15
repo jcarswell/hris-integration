@@ -229,6 +229,7 @@ class WordList(models.Model):
 
     class Meta:
         db_table = "word_list"
+        unique_together = ("src", "replace")
 
     #: The word to be expanded
     src: str = models.CharField(max_length=256)

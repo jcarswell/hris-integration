@@ -87,6 +87,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "word_list",
+                "unique_together": {("src", "replace")},
             },
         ),
         migrations.RunPython(migrate_data),
