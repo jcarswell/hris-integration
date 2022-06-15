@@ -9,40 +9,56 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('employee', '0001_initial'),
+        ("employee", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Software',
+            name="Software",
             fields=[
-                ('updated_on', models.DateTimeField(auto_now_add=True, null=True)),
-                ('created_on', models.DateTimeField(auto_now=True, null=True)),
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=256)),
-                ('description', models.TextField(blank=True)),
-                ('licensed', models.BooleanField(default=False)),
-                ('mapped_group', models.CharField(blank=True, max_length=256)),
-                ('max_users', models.IntegerField(default=0)),
-                ('employees', models.ManyToManyField(blank=True, to='employee.Employee')),
+                ("updated_on", models.DateTimeField(auto_now_add=True, null=True)),
+                ("created_on", models.DateTimeField(auto_now=True, null=True)),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("name", models.CharField(max_length=256, unique=True)),
+                ("description", models.TextField(blank=True)),
+                ("licensed", models.BooleanField(default=False)),
+                ("mapped_group", models.CharField(blank=True, max_length=256)),
+                ("max_users", models.IntegerField(default=0)),
+                (
+                    "employees",
+                    models.ManyToManyField(blank=True, to="employee.Employee"),
+                ),
             ],
             options={
-                'db_table': 'software',
+                "db_table": "software",
             },
         ),
         migrations.CreateModel(
-            name='Account',
+            name="Account",
             fields=[
-                ('updated_on', models.DateTimeField(auto_now_add=True, null=True)),
-                ('created_on', models.DateTimeField(auto_now=True, null=True)),
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('notes', models.TextField(blank=True)),
-                ('expire_date', models.DateField(blank=True, null=True)),
-                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='employee.employee')),
-                ('software', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='user_applications.software')),
+                ("updated_on", models.DateTimeField(auto_now_add=True, null=True)),
+                ("created_on", models.DateTimeField(auto_now=True, null=True)),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("notes", models.TextField(blank=True)),
+                ("expire_date", models.DateField(blank=True, null=True)),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="employee.employee",
+                    ),
+                ),
+                (
+                    "software",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="user_applications.software",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'software-account',
+                "db_table": "software-account",
+                "unique_together": {("employee", "software")},
             },
         ),
     ]

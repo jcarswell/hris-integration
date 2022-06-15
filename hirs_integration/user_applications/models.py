@@ -20,7 +20,7 @@ class Software(ChangeLogMixin):
 
     id = models.AutoField(primary_key=True)
     #: The name of the software.
-    name: str = models.CharField(max_length=256)
+    name: str = models.CharField(max_length=256, unique=True)
     #: The description of the software.
     description: str = models.TextField(blank=True)
     #: If the software is enabled for licensing.
@@ -45,6 +45,7 @@ class Account(ChangeLogMixin):
 
     class Meta:
         db_table = "software-account"
+        unique_together = ("employee", "software")
 
     id = models.AutoField(primary_key=True)
     #: The employee linked to this tracking instance.
