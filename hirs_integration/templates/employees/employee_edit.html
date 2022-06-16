@@ -339,9 +339,9 @@ var employee_import = {
   "suffix": "{{ employee_import.suffix }}",
   "username": "{{ employee_import.username }}",
   "email_alias": "{{ employee_import.email_alias }}",
-  "location": "{{ employee_import.location.pk }}",
+  "location": "id_{{ employee_import.location.pk }}",
   "status": "{{ employee_import.status }}",
-  "primary_job": "{{ employee_import.primary_job.pk }}",
+  "primary_job": "id_{{ employee_import.primary_job.pk }}",
   "jobs": [
   {% for job in employee_import.jobs.all %}
     "id_{{ job.id }}",
