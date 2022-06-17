@@ -111,29 +111,34 @@ class Employee(TemplateResponseMixin, LoggedInView):
             if len(request.FILES) > 1:
                 errors += list(request.FILES.keys())
             else:
-                upload = models.employee_upload_to(employee, request.FILES["file"].name)
-                if not Path(settings.MEDIA_ROOT, upload).exists():
-                    Path(settings.MEDIA_ROOT, upload).mkdir(parents=True)
-                if (
-                    request.FILES["photo"].name
-                    and request.FILES["photo"].name != employee.photo
-                ):
-                    with open(
-                        Path(settings.MEDIA_ROOT, upload, request.FILES["photo"].name),
-                        "wb+",
-                    ) as destination:
-                        logger.debug(
-                            f"Saving {request.FILES['photo'].name} to {destination.name}"
-                        )
-                        for chunk in request.FILES["photo"].chunks():
-                            destination.write(chunk)
+                upload = models.employee_upload_to(
+                    employee, request.FILES["photo"].name
+                )
+                previous_photo = employee.photo
+                if not Path(settings.MEDIA_ROOT, upload).parent.exists():
+                    Path(settings.MEDIA_ROOT, upload).parent.mkdir(parents=True)
 
+                if Path(settings.MEDIA_ROOT, upload).exists():
+                    logger.debug("Replacing existing file with new version")
+                    Path(settings.MEDIA_ROOT, upload).unlink()
+
+                with open(
+                    Path(settings.MEDIA_ROOT, upload),
+                    "wb+",
+                ) as destination:
+                    logger.debug(
+                        f"Saving {request.FILES['photo'].name} to {destination.name}"
+                    )
+                    for chunk in request.FILES["photo"].chunks():
+                        destination.write(chunk)
+
+                if previous_photo and previous_photo != upload:
                     try:
-                        Path(settings.MEDIA_ROOT, upload, str(employee.photo)).unlink()
-                    except FileNotFoundError:
+                        Path(str(previous_photo)).unlink()
+                    except (FileNotFoundError, PermissionError):
                         logger.warning("Unable to remove previous photo")
-                    employee.photo = request.FILES["photo"].name
-                    logger.debug(f"photo file saved as: {employee.photo}")
+                employee.photo = upload
+                logger.debug(f"photo file saved as: {employee.photo}")
 
         employee.save()
         return JsonResponse({"status": "success", "errors": errors})
