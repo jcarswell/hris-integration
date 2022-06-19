@@ -3,10 +3,12 @@
 
 import logging
 
+from warnings import warn
 from pyad import ADUser
 from datetime import datetime
 from organization.group_manager import GroupManager
 from user_applications.models import Account
+from active_directory import search
 
 from .models import Employee, EmployeeImport, Phone, Address
 
@@ -37,10 +39,9 @@ class EmployeeManager:
 
     def __init__(self, employee: Employee) -> None:
         """
-        Initialization of the Manager requires that either a base Employee
-        object is passed in.
+        Initialization of the Manager requires that a base Employee object is passed in.
 
-        :param employee: The source object that the Manager is be for
+        :param employee: The source object that the Manager is based from
         :type employee: Employee
         :raises ValueError: Did not get a valid employee object
         """
@@ -61,7 +62,45 @@ class EmployeeManager:
                 self.pre_merge()
 
         except EmployeeImport.DoesNotExist:
+            logger.debug(f"Unable to get EmployeeImport object for {str(employee)}")
             self.__employee = None
+
+    @classmethod
+    def from_employee_id(cls, employee_id: int) -> "EmployeeManager":
+        """
+        Helper function, allowing the EmployeeManager to be initialized based on the
+        employee id instead of passing an Employee object
+
+        :param employee_id: The employee's ID to set up on
+        :type employee_id: int
+        :return: An EmployeeManager instance based on the employee id
+        :rtype: EmployeeManager
+        """
+
+        return cls(Employee.objects.get(employee_id=employee_id))
+
+    @classmethod
+    def from_source(cls, employee: EmployeeImport) -> "EmployeeManager":
+        """
+        Helper function allowing the EmployeeManager to be initialized based on the source
+        Employee Object
+
+        :param employee: The source Employee to build from
+        :type employee: EmployeeImport
+        :raises TypeError: If the employee is not an EmployeeImport object
+        :raises ValueError: If a Employee object has not been created for the
+            EmployeeImport object yet.
+        :return: An EmployeeManager instance
+        :rtype: EmployeeManager
+        """
+
+        if not isinstance(employee, EmployeeImport):
+            raise TypeError(f"Received and invalid object")
+
+        if not employee.is_matched and employee.employee is None:
+            raise ValueError(f"{str(employee)} has not created as an Employee Yet.")
+
+        return cls(employee.employee)
 
     def get(self):
         """Get the specific sub-objects for the employee"""
@@ -80,8 +119,8 @@ class EmployeeManager:
 
         if self.guid == None:
             self.get_guid()
-        if self.guid:
-            self.ad_user = ADUser.from_guid(self.guid)
+        else:
+            self.ad_user = search.get_by_guid(self.guid)
 
     def groups_add(self) -> list:
         """
@@ -123,7 +162,7 @@ class EmployeeManager:
 
     def __repr__(self) -> str:
         """Return the approximate call needed to re-create this class"""
-        return f"<{self.__class__.__name__}({repr(self.employee)})>"
+        return f"{self.__class__.__name__}({repr(self.employee)})"
 
     @property
     def designations(self) -> str:
@@ -190,15 +229,21 @@ class EmployeeManager:
         :rtype: str
         """
 
+        warn("firstname is deprecated in favour of first_name", DeprecationWarning)
         return self.employee.first_name
 
-    #: str: The employees first name
-    first_name = property(
-        fget=firstname,
-    )
+    @property
+    def first_name(self) -> str:
+        """The Employee's first name based on the mutable employee object
+
+        :return: The employees preferred first name
+        :rtype: str
+        """
+
+        return self.employee.first_name
 
     @property
-    def import_firstname(self) -> str:
+    def import_first_name(self) -> str:
         """The Employee's first name as defined in the upstream HRIS database
 
         :return: The employees preferred first name
@@ -207,11 +252,6 @@ class EmployeeManager:
 
         if self.__employee:
             return self.__employee.first_name
-
-    #: str: The employees first name as defined in the upstream HRIS database
-    import_first_name = property(
-        fget=import_firstname,
-    )
 
     @property
     def middle_name(self) -> str:
@@ -242,15 +282,21 @@ class EmployeeManager:
         :rtype: str
         """
 
+        warn("lastname is deprecated in favour of last_name", DeprecationWarning)
         return self.employee.last_name
 
-    #: str: The Employees last name
-    last_name = property(
-        fget=lastname,
-    )
+    @property
+    def last_name(self) -> str:
+        """The Employee's last name based on the mutable employee object
+
+        :return: The employees preferred last name
+        :rtype: str
+        """
+
+        return self.employee.last_name
 
     @property
-    def import_lastname(self) -> str:
+    def import_last_name(self) -> str:
         """The Employee's last name as defined in the upstream HRIS database
 
         :return: The employees preferred last name
@@ -259,11 +305,6 @@ class EmployeeManager:
 
         if self.__employee:
             return self.__employee.last_name
-
-    #: str: The Employees last name based on the source HRIS database
-    import_last_name = property(
-        fget=import_lastname,
-    )
 
     @property
     def suffix(self) -> str:
@@ -386,7 +427,7 @@ class EmployeeManager:
         :rtype: str
         """
 
-        return self.employee.primary_job.bu.ad_ou
+        return self.employee.primary_job.business_unit.ad_ou
 
     @property
     def title(self) -> str:
@@ -407,7 +448,7 @@ class EmployeeManager:
         """
 
         if self.__employee:
-            return self.__employee.title
+            return self.__employee.primary_job.name
 
     @property
     def status(self) -> str:
@@ -461,7 +502,7 @@ class EmployeeManager:
         :rtype: str
         """
 
-        return self.employee.primary_job.bu.name
+        return self.employee.primary_job.business_unit.name
 
     @property
     def manager(self):
@@ -474,7 +515,7 @@ class EmployeeManager:
 
         try:
             return EmployeeManager(
-                self.employee.manager or self.employee.primary_job.bu.manager
+                self.employee.manager or self.employee.primary_job.business_unit.manager
             )
         except Exception:
             try:
@@ -494,10 +535,12 @@ class EmployeeManager:
             return None
 
         try:
-            return EmployeeManager(self.__employee.manager)
+            return EmployeeManager(self.__employee.manager.employee)
         except Exception:
             try:
-                return EmployeeManager(self.__employee.primary_job.bu.manager)
+                return EmployeeManager(
+                    self.__employee.primary_job.business_unit.manager
+                )
             except Exception:
                 return None
 
@@ -512,21 +555,36 @@ class EmployeeManager:
             return self.ad_user.get_attribute("userPrincipalName")
 
     def get_guid(self) -> None:
-        """If the employee doesn't have a GUID set yet we will try and retrieve it from AD based off the
-        set username. If the AD object is found and the employeeID is set and matches what we have then
-        the Employee object is updated and self.ad_user set.
+        """
+        If the employee doesn't have a GUID set yet we will try and retrieve it from AD
+        based off the set username. If the AD object is found and the employeeID is set
+        and matches what we have then the Employee object is updated and self.ad_user set.
         """
 
         if self.guid == None and self.employee.is_exported_ad:
+            user = None
             try:
-                user = ADUser.from_cn(self.username)
-                if user.get_attribute("employeeId") == self.id:
-                    self.employee.guid = user.guid
-                    self.ad_user = user
-                    self.employee.save()
+                user = search.get_by_username(self.username)
+                logger.debug(f"Got {user} by username, type {user.__class__.__name__}")
 
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Caught error while trying to fetch ad user guid: {e}")
                 return None
+
+            if (
+                user
+                and str(user.get_attribute("employeeId")[0])
+                == str(self.employee.employee_id)
+                or str(user.get_attribute("employeeNumber")[0])
+                == str(self.employee.employee_id)
+            ):
+                self.employee.guid = str(user.guid)
+                self.ad_user = user
+                self.employee.save()
+            else:
+                logger.debug(
+                    f"Employee ID on user is different {user.get_attribute('employeeId')}"
+                )
 
     @property
     def guid(self) -> str:
@@ -556,7 +614,10 @@ class EmployeeManager:
         :rtype: datetime
         """
 
-        return self.ad_user.get_expiration
+        if self.ad_user:
+            return self.ad_user.get_expiration()
+        else:
+            return datetime(1970, 1, 1)
 
     @property
     def password_expiration_days(self) -> int:
@@ -565,7 +626,9 @@ class EmployeeManager:
         :return: The number of days till the password will expire
         :rtype: int
         """
-        return (self.password_expiry_date - datetime.now()).days
+
+        if self.ad_user:
+            return (self.password_expiry_date - datetime.now()).days
 
     @property
     def email_aliases(self) -> list:
@@ -599,4 +662,7 @@ class EmployeeManager:
         :return: The primary SMTP address
         :rtype: str
         """
-        return self.email_address[0]
+
+        address = self.email_aliases
+        if address:
+            return address[0]
