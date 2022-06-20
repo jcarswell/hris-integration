@@ -4,7 +4,6 @@
 import logging
 
 from warnings import warn
-from pyad import ADUser
 from datetime import datetime
 from organization.group_manager import GroupManager
 from user_applications.models import Account
@@ -27,7 +26,7 @@ class EmployeeManager:
     """
 
     #: The ADUser object related to the employee
-    ad_user: ADUser = None
+    ad_user: "pyad.ADUser" = None
     #: The source HRIS Employee object
     __employee: EmployeeImport = None
     #: The QuerySet of the Phone objects for the employee
