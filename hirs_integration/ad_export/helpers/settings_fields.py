@@ -13,6 +13,7 @@ CATEGORY_SETTINGS = (CONFIG_CAT, EMPLOYEE_CAT, DEFAULTS_CAT)
 
 ## Config Fields
 EMPLOYEE_DISABLE_LEAVE = "disable_on_leave"
+EMPLOYEE_IMPORT_ANY = "import_any_phone_address"
 DEFAULT_ORG = "organization"
 DEFAULT_PHONE = "office_phone"
 DEFAULT_FAX = "fax_number"
@@ -131,6 +132,16 @@ CONFIG_DEFAULTS = {
             "field_properties": {
                 "type": "BooleanField",
                 "help_text": "Disable user accounts when they are on leave",
+            },
+        },
+        EMPLOYEE_IMPORT_ANY: {
+            "label": "Import any Address and Phone Number",
+            "default_value": "False",
+            "field_properties": {
+                "type": "BooleanField",
+                "help_text": "Import the imported addresses and phone number regardless "
+                "of if the address is marked as primary. Note this may expose personal "
+                "information",
             },
         },
     },
