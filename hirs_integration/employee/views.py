@@ -13,6 +13,7 @@ from common.functions import name_to_pk, pk_to_name
 from django.http import JsonResponse
 from organization.models import JobRole, Location
 from django.conf import settings
+from distutils.util import strtobool
 
 from . import models, forms
 
@@ -38,8 +39,22 @@ class Employee(TemplateResponseMixin, LoggedInView):
 
         if emp_id == None:
             self.template_name = "employees/employee_list.html"
-            context = self.get_context(**kwargs)
-            context["employees"] = models.Employee.objects.all() or None
+
+            logger.debug(list(x.lower() for x in request.GET.keys()))
+            if "all" in list(x.lower() for x in request.GET.keys()):
+                logger.debug("it exists")
+                for k, v in request.GET.items():
+                    if k.lower() == "all":
+                        all = bool(strtobool(v))
+            else:
+                all = False
+
+            context = self.get_context(**kwargs, all=all)
+            logger.debug(request.GET)
+            if all:
+                context["employees"] = models.Employee.objects.all()
+            else:
+                context["employees"] = models.Employee.objects.filter(state=True)
             return self.render_to_response(context)
 
         if emp_id > 0:
