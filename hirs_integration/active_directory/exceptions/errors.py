@@ -17,3 +17,9 @@ from pyad.pyadexceptions import (
 
 class ActiveDirectoryError(HrisIntegrationBaseError):
     pass
+
+
+class TooManyResults(ActiveDirectoryError):
+    def __init__(self, *args: object, result_count: int = None) -> None:
+        self.result_count = result_count
+        super().__init__(*args)

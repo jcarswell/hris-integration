@@ -3,6 +3,7 @@
 
 from .errors import (
     ActiveDirectoryError,
+    TooManyResults,
     noExecutedQuery,
     invalidResults,
     InvalidAttribute,
@@ -16,6 +17,7 @@ from .errors import (
 
 __all__ = (
     "ActiveDirectoryError",
+    "TooManyResults",
     "noExecutedQuery",
     "invalidResults",
     "InvalidAttribute",
