@@ -1,5 +1,4 @@
 asgiref>=3.4.1
-astroid==2.5.1
 bcrypt
 cffi
 click==8.0.3
