@@ -572,6 +572,8 @@ class EmployeeManager:
             user = None
             try:
                 user = search.get_by_username(self.username)
+                if user is None:
+                    return None
                 logger.debug(f"Got {user} by username, type {user.__class__.__name__}")
 
             except Exception as e:
