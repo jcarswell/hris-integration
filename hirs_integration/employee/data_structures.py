@@ -35,6 +35,8 @@ class EmployeeManager:
     _qs_addr: "django.db.models.QuerySet" = None
     #: True if the employee is imported
     merge: bool = False
+    #: Only return primary objects for Phone and Address
+    only_primary = False
 
     def __init__(self, employee: Employee) -> None:
         """
@@ -187,7 +189,7 @@ class EmployeeManager:
             return self.employee.start_date
 
     @property
-    def phone(self) -> str:
+    def phone(self) -> Phone:
         """Returns the employees primary phone number
 
         :return: a phone number or None if there is no Phone numbers or primary phone number
@@ -200,6 +202,9 @@ class EmployeeManager:
         for phone in self._qs_phone:
             if phone.primary:
                 return phone.number
+
+        if self.only_primary:
+            return None
 
         return self._qs_phone[0]
 
@@ -217,6 +222,9 @@ class EmployeeManager:
         for addr in self._qs_addr:
             if addr.primary or addr.label.lower == "office":
                 return addr
+
+        if self.only_primary:
+            return None
 
         return self._qs_addr[0]
 
