@@ -9,6 +9,7 @@ from warnings import warn
 
 def get_default_ou() -> str:
     """Get the default organizational unit for new business units"""
+
     from organization.helpers.config import Config, GROUP_CONFIG, CONFIG_DEFAULT_OU
 
     try:
@@ -18,7 +19,8 @@ def get_default_ou() -> str:
 
 
 class BusinessUnit(MPTTModel, ChangeLogMixin, InactiveMixin):
-    """The Business Units of the organization and the active directory
+    """
+    The Business Units of the organization and the active directory
     organizational unit that is associated with the business unit.
     """
 
@@ -129,7 +131,8 @@ class Location(MPTTModel, ChangeLogMixin, InactiveMixin):
 
 
 class GroupMapping(ChangeLogMixin):
-    """The Mapping table that defines the relationship between the AD groups and each
+    """
+    The Mapping table that defines the relationship between the AD groups and each
     of the defined job roles, business units, and locations.
     Each mapping has can either have a negative constraint or a positive constraint or
     be marked to apply to all employees.
