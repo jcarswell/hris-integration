@@ -1,3 +1,3 @@
-from .base import HrisIntegrationBaseError,SetupError
+from .base import HrisIntegrationBaseError, SetupError
 
-__all__ = ('HrisIntegrationBaseError','SetupError')
+__all__ = ("HrisIntegrationBaseError", "SetupError")
