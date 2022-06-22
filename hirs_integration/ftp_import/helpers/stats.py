@@ -1,11 +1,13 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import time
+
 
 def fmt_date(sec):
     t = time.gmtime(sec)
     return f"{t.tm_year}/{t.tm_mon}/{t.tm_mday} {t.tm_hour}:{t.tm_min:02d}"
+
 
 class Stats:
     time_start = None
@@ -21,21 +23,21 @@ class Stats:
     @property
     def runtime(self):
         if self.time_start and self.time_end:
-            return int(round(self.time_end - self.time_start,0))
+            return int(round(self.time_end - self.time_start, 0))
         return None
 
     def __str__(self):
         output = [
-            f'\tStart Time:            {fmt_date(self.time_start)}',
-            f'\tEnd Time:              {fmt_date(self.time_end)}',
-            f'\tTotal Processing Time: {self.runtime}s',
-            f'\tFiles Processed:       {len(self.files)}'
-            f'\tRows Processed:        {self.rows_processed}',
-            f'\tRows Imported:         {self.rows_imported}',
-            f'\tPending Users:         {len(self.pending_users)}',
-            f'\tNew users:             {len(self.new_users)}',
-            f'\t# of Warning:          {len(self.warnings)}',
-            f'\t# of Errors:           {len(self.errors)}'
+            f"\tStart Time:            {fmt_date(self.time_start)}",
+            f"\tEnd Time:              {fmt_date(self.time_end)}",
+            f"\tTotal Processing Time: {self.runtime}s",
+            f"\tFiles Processed:       {len(self.files)}"
+            f"\tRows Processed:        {self.rows_processed}",
+            f"\tRows Imported:         {self.rows_imported}",
+            f"\tPending Users:         {len(self.pending_users)}",
+            f"\tNew users:             {len(self.new_users)}",
+            f"\t# of Warning:          {len(self.warnings)}",
+            f"\t# of Errors:           {len(self.errors)}",
         ]
         return "\n".join(output)
 
@@ -52,7 +54,7 @@ class Stats:
             f"<tr><td>Files Processed</td><td>{len(self.files)}</td></tr>",
             f"<tr><td>Rows Processed</td><td>{self.rows_processed}</td></tr>",
             f"<tr><td>Rows Imported</td><td>{self.rows_imported}</td></tr>",
-            "</table>"
+            "</table>",
         ]
 
         if self.pending_users:
