@@ -3,7 +3,7 @@
 
 import logging
 
-from .app import ExtrasConfig
+from .apps import ExtrasConfig
 
 __all__ = ("ExtrasConfig", "setup")
 logger = logging.getLogger("extras.setup")
