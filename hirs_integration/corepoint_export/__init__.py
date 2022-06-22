@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from .exceptions import ConfigError
-from apps import CorepointExportConfig
+from .apps import CorepointExportConfig
 
 __all__ = ("setup", "run", "ConfigError", "CorepointExportConfig")
 
@@ -19,11 +19,11 @@ def run(full=False):
     from .form import BaseExport
     import importlib
 
-    modelclass = importlib.import_module(
+    model_class = importlib.import_module(
         config.Config()(config.CAT_CONFIG, config.CONFIG_MODEL_FORM)
     )
-    if hasattr(modelclass, "form") and isinstance(modelclass.form(), BaseExport):
-        modelclass.form(not full).run()
+    if hasattr(model_class, "form") and isinstance(model_class.form(), BaseExport):
+        model_class.form(not full).run()
     else:
         raise ConfigError(
             "configured form does not appear to be a valid module. Please Ensure"
