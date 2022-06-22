@@ -6,6 +6,6 @@ from django.utils.translation import gettext_lazy as _t
 
 
 class ExtrasConfig(AppConfig):
-    name = "Extras"
+    name = "extras"
     verbose_name = _t("HRIS Integration Extras")
     default_auto_field = "django.db.models.AutoField"
