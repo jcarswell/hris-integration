@@ -1,9 +1,10 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from hris_integration.validators import ValidationError
 
-def setting_parse(setting =None,html_id:str =None):
+
+def setting_parse(setting=None, html_id: str = None):
     """
     Converts either a Setting object to an html safe id that can be back parsed
     or converts a html safe id into a Setting object
@@ -20,13 +21,15 @@ def setting_parse(setting =None,html_id:str =None):
     """
 
     from .models import Setting
-    
-    if setting and isinstance(setting,Setting):
+
+    if setting and isinstance(setting, Setting):
         return ".".join(setting.setting.split(Setting.FIELD_SEP))
-    if html_id and isinstance(html_id,str):
-        s = html_id.split('.')
+    if html_id and isinstance(html_id, str):
+        s = html_id.split(".")
         if len(s) != 3:
-            raise ValidationError("provided ID is not a properly formated setting id string")
+            raise ValidationError(
+                "Provided ID is not a properly formatted setting id string"
+            )
         qs = Setting.o2.get_by_path(*s)
         if len(qs) != 1:
             raise ValidationError("provided ID did not return a valid settings object")
