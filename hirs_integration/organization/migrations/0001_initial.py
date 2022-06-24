@@ -7,54 +7,6 @@ import mptt.fields
 import organization.models
 
 
-business_unit_mapping = {
-    "bu_id": "id",
-    "name": "name",
-    "parent": "parent",
-    "ad_ou": "ad_od",
-    "manager": "manager",
-}
-jobs_mapping = {"job_id": "id", "name": "name", "bu": "business_unit", "seats": "seats"}
-location_mapping = {"bld_id": "id", "name": "name"}
-
-
-def migrate_data(apps, schema_editor):
-    b = apps.get_model("hirs_admin", "BusinessUnit")
-    l = apps.get_model("hirs_admin", "Location")
-    j = apps.get_model("hirs_admin", "JobRole")
-    business_unit = apps.get_model("organization", "BusinessUnit")
-    location = apps.get_model("organization", "Location")
-    job = apps.get_model("organization", "JobRole")
-
-    for o in b.objects.all():
-        d = {}
-        for k, v in business_unit_mapping.items():
-            d[v] = getattr(o, k)
-
-        business_unit.objects.create(**d)
-
-    for o in l.objects.all():
-        d = {}
-        for k, v in location_mapping.items():
-            d[v] = getattr(o, k)
-
-        location.objects.create(**d)
-
-    for o in j.objects.all():
-        d = {}
-        for k, v in jobs_mapping.items():
-            d[v] = getattr(o, k)
-
-        job.objects.create(**d)
-
-
-def migrate_group_mapping(apps, schema_editor):
-    g = apps.get_model("hirs_admin", "GroupMapping")
-    group = apps.get_model("organization", "GroupMapping")
-    for o in g.objects.all():
-        group.objects.create()
-
-
 class Migration(migrations.Migration):
 
     initial = True
@@ -200,6 +152,4 @@ class Migration(migrations.Migration):
                 "db_table": "group_mapping",
             },
         ),
-        migrations.RunPython(migrate_data),
-        migrations.RunPython(migrate_group_mapping),
     ]
