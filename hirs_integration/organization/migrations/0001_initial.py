@@ -5,6 +5,50 @@ from django.db import migrations, models
 import django.db.models.deletion
 import mptt.fields
 import organization.models
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+jobs_mapping = {"job_id": "id", "name": "name", "bu": "business_unit", "seats": "seats"}
+
+
+def migrate_data(apps, schema_editor):
+    b = apps.get_model("hirs_admin", "BusinessUnit")
+    l = apps.get_model("hirs_admin", "Location")
+    j = apps.get_model("hirs_admin", "JobRole")
+    business_unit = apps.get_model("organization", "BusinessUnit")
+    location = apps.get_model("organization", "Location")
+    job = apps.get_model("organization", "JobRole")
+
+    for o in b.objects.all():
+        d = {
+            "id": o.pk,
+            "name": o.name,
+            "ad_od": o.ad_ou,
+        }
+
+    for o in l.objects.all():
+        location.objects.create(id=o.pk, name=o.name, lft=0, rght=0, tree_id=0, level=0)
+
+    for o in j.objects.all():
+        {"job_id": "id", "name": "name", "bu": "business_unit", "seats": "seats"}
+        d = {
+            "id": o.pk,
+            "name": o.name,
+            "seats": o.seats,
+        }
+        try:
+            d["business_unit"] = business_unit.objects.get(pk=o.bu.pk)
+        except business_unit.DoesNotExist:
+            logger.warning(
+                f"Business unit {o.bu} does not exist post migration. {o} will created "
+                "without a business unit assigned."
+            )
+        except AttributeError:
+            pass  # We don't care if the business unit is not set.
+
+        job.objects.create(**d)
 
 
 class Migration(migrations.Migration):
@@ -152,4 +196,5 @@ class Migration(migrations.Migration):
                 "db_table": "group_mapping",
             },
         ),
+        migrations.RunPython(migrate_data),
     ]
