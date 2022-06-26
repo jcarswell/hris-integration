@@ -1,10 +1,11 @@
 import logging
 from typing import List, Tuple
 
-from django.db import migrations, models
+from django.db import migrations
 from common.functions import password_generator
 import hris_integration.models.encryption
 from hris_integration.models.encryption import FieldEncryption
+from django.utils import timezone
 
 logger = logging.getLogger("employee.migrations")
 
@@ -39,6 +40,7 @@ def migrate_employees(apps, schema_editor):
             "leave": e.leave,
             "location": location.objects.get(id=e.location.pk) if e.location else None,
             "type": e.type,
+            "updated_on": timezone.now(),
             # This is a known issue with mptt. Once the migration is done, the rebuild will get called
             "lft": 0,
             "rght": 0,
