@@ -95,7 +95,7 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
     #: The last name of the employee.
     last_name: str = models.CharField(max_length=256)
     #: The middle name of the employee.
-    middle_name: str = models.CharField(max_length=256, blank=True)
+    middle_name: str = models.CharField(max_length=256, blank=True, null=True)
     #: Suffix of the employee.
     suffix: str = models.CharField(max_length=20, null=True, blank=True)
 

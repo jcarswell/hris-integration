@@ -57,7 +57,10 @@ class Migration(migrations.Migration):
                 ("updated_on", models.DateTimeField(blank=True, null=True)),
                 ("first_name", models.CharField(max_length=256)),
                 ("last_name", models.CharField(max_length=256)),
-                ("middle_name", models.CharField(blank=True, max_length=256)),
+                (
+                    "middle_name",
+                    models.CharField(blank=True, null=True, max_length=256),
+                ),
                 ("suffix", models.CharField(blank=True, max_length=20, null=True)),
                 (
                     "username",
@@ -85,7 +88,10 @@ class Migration(migrations.Migration):
                 ("is_exported_ad", models.BooleanField(default=False)),
                 ("guid", models.CharField(blank=True, max_length=40, null=True)),
                 ("nickname", models.CharField(blank=True, max_length=96, null=True)),
-                ("designations", models.CharField(blank=True, max_length=256)),
+                (
+                    "designations",
+                    models.CharField(blank=True, null=True, max_length=256),
+                ),
                 (
                     "photo",
                     models.FileField(
@@ -152,7 +158,10 @@ class Migration(migrations.Migration):
                 ("updated_on", models.DateTimeField(blank=True, null=True)),
                 ("first_name", models.CharField(max_length=256)),
                 ("last_name", models.CharField(max_length=256)),
-                ("middle_name", models.CharField(blank=True, max_length=256)),
+                (
+                    "middle_name",
+                    models.CharField(blank=True, null=True, max_length=256),
+                ),
                 ("suffix", models.CharField(blank=True, max_length=20, null=True)),
                 (
                     "username",

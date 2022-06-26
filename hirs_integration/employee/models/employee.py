@@ -5,8 +5,7 @@ from email.policy import default
 import logging
 
 from pathlib import Path
-from sqlite3 import IntegrityError
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.utils import timezone
 from django.conf import settings
@@ -78,7 +77,7 @@ class Employee(EmployeeBase, InactiveMixin):
     #: The nickname of the employee.
     nickname: str = models.CharField(max_length=96, null=True, blank=True)
     #: Designations that the employee holds
-    designations: str = models.CharField(max_length=256, blank=True)
+    designations: str = models.CharField(max_length=256, blank=True, null=True)
     #: The path the the employees uploaded file.
     photo: str = models.FileField(upload_to=employee_upload_to, null=True, blank=True)
 
