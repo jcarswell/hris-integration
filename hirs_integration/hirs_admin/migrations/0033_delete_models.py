@@ -6,123 +6,123 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('employee', '0003_migrate_data'),
-        ('organization', '0001_initial'),
-        ('hirs_admin', '0032_pre_migration_employee'),
-        ('settings', '0001_initial'),
+        ("employee", "0003_migrate_data"),
+        ("organization", "0002_migrate_data"),
+        ("hirs_admin", "0032_pre_migration_employee"),
+        ("settings", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='businessunit',
-            name='manager',
+            model_name="businessunit",
+            name="manager",
         ),
         migrations.RemoveField(
-            model_name='businessunit',
-            name='parent',
+            model_name="businessunit",
+            name="parent",
         ),
         migrations.DeleteModel(
-            name='CsvPending',
+            name="CsvPending",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='jobs',
+            model_name="employee",
+            name="jobs",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='location',
+            model_name="employee",
+            name="location",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='manager',
+            model_name="employee",
+            name="manager",
         ),
         migrations.RemoveField(
-            model_name='employee',
-            name='primary_job',
+            model_name="employee",
+            name="primary_job",
         ),
         migrations.RemoveField(
-            model_name='employeeaddress',
-            name='employee',
+            model_name="employeeaddress",
+            name="employee",
         ),
         migrations.RemoveField(
-            model_name='employeeoverrides',
-            name='_location',
+            model_name="employeeoverrides",
+            name="_location",
         ),
         migrations.RemoveField(
-            model_name='employeeoverrides',
-            name='employee',
+            model_name="employeeoverrides",
+            name="employee",
         ),
         migrations.RemoveField(
-            model_name='employeepending',
-            name='employee',
+            model_name="employeepending",
+            name="employee",
         ),
         migrations.RemoveField(
-            model_name='employeepending',
-            name='jobs',
+            model_name="employeepending",
+            name="jobs",
         ),
         migrations.RemoveField(
-            model_name='employeepending',
-            name='location',
+            model_name="employeepending",
+            name="location",
         ),
         migrations.RemoveField(
-            model_name='employeepending',
-            name='manager',
+            model_name="employeepending",
+            name="manager",
         ),
         migrations.RemoveField(
-            model_name='employeepending',
-            name='primary_job',
+            model_name="employeepending",
+            name="primary_job",
         ),
         migrations.RemoveField(
-            model_name='employeephone',
-            name='employee',
+            model_name="employeephone",
+            name="employee",
         ),
         migrations.RemoveField(
-            model_name='groupmapping',
-            name='bu',
+            model_name="groupmapping",
+            name="bu",
         ),
         migrations.RemoveField(
-            model_name='groupmapping',
-            name='jobs',
+            model_name="groupmapping",
+            name="jobs",
         ),
         migrations.RemoveField(
-            model_name='groupmapping',
-            name='loc',
+            model_name="groupmapping",
+            name="loc",
         ),
         migrations.RemoveField(
-            model_name='jobrole',
-            name='bu',
+            model_name="jobrole",
+            name="bu",
         ),
         migrations.DeleteModel(
-            name='BusinessUnit',
+            name="BusinessUnit",
         ),
         migrations.DeleteModel(
-            name='Employee',
+            name="Employee",
         ),
         migrations.DeleteModel(
-            name='EmployeeAddress',
+            name="EmployeeAddress",
         ),
         migrations.DeleteModel(
-            name='EmployeeOverrides',
+            name="EmployeeOverrides",
         ),
         migrations.DeleteModel(
-            name='EmployeePending',
+            name="EmployeePending",
         ),
         migrations.DeleteModel(
-            name='EmployeePhone',
+            name="EmployeePhone",
         ),
         migrations.DeleteModel(
-            name='GroupMapping',
+            name="GroupMapping",
         ),
         migrations.DeleteModel(
-            name='JobRole',
+            name="JobRole",
         ),
         migrations.DeleteModel(
-            name='Location',
+            name="Location",
         ),
         migrations.DeleteModel(
-            name='Setting',
+            name="Setting",
         ),
         migrations.DeleteModel(
-            name='WordList',
+            name="WordList",
         ),
     ]
