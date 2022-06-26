@@ -1,7 +1,6 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from email.policy import default
 import logging
 
 from pathlib import Path
@@ -163,6 +162,8 @@ class Employee(EmployeeBase, InactiveMixin):
     def reset_username(cls, instance: "Employee") -> None:
         """Regenerate a username, useful for new employees or re-hired employees
 
+        :param instance: The employee to reset the username for
+        :param instance: Employee
         :raises ValueError: If the username cannot be generated after 10 cycles
         """
         for x in range(0, 10):
@@ -184,8 +185,12 @@ class Employee(EmployeeBase, InactiveMixin):
 
     @classmethod
     def reset_upn(cls, instance: "Employee") -> None:
-        """Regenerate a users upn or email_alias, useful for new employees or re-hired employees
+        """
+        Regenerate a users upn or email_alias, useful for new employees or re-hired
+        employees
 
+        :param instance: The employee to reset the upn for
+        :param instance: Employee
         :raises ValueError: If the username cannot be generated after 10 cycles
         """
         for x in range(0, 10):
@@ -404,15 +409,19 @@ class EmployeeImport(EmployeeBase):
                                 instance.employee.save()
                             except IntegrityError:
                                 logger.error(
-                                    f"Failed to unlink employee id {instance.id} from employee {str(e)}."
-                                    f"Converting {str(instance)} to a pending employee."
+                                    f"Failed to unlink employee id {instance.id} from "
+                                    f"employee {str(e)}. Converting {str(instance)} to a "
+                                    "pending employee."
                                 )
                                 instance.is_matched = False
                                 ec = True
                                 Notification.objects.create(
-                                    message=f"Source employee {str(instance)} and employee {str(instance.employee)} "
-                                    f"are in an inconsistent state. Please validate that multiple "
-                                    f"employees are not associated with the same employee ID.",
+                                    message=(
+                                        f"Source employee {str(instance)} and employee "
+                                        f"{str(instance.employee)} are in an inconsistent "
+                                        f"state. Please validate that multiple employees are "
+                                        f"not associated with the same employee ID."
+                                    ),
                                     level=Notification.ERROR,
                                     source="Employee Import",
                                     source_repr=repr(instance),
@@ -443,7 +452,8 @@ class EmployeeImport(EmployeeBase):
                     ec = True
                 except IntegrityError:
                     logger.warning(
-                        "Employee ID is already associated with an employee, attempting to clear"
+                        "Employee ID is already associated with an employee, attempting "
+                        "to clear"
                     )
                     e = Employee.objects.get(employee_id=instance.id)
                     if e != instance.employee:
@@ -457,15 +467,19 @@ class EmployeeImport(EmployeeBase):
                             ec = True
                         except IntegrityError:
                             logger.error(
-                                f"Failed to unlink employee id {instance.id} from employee {str(e)}."
-                                f"Converting {str(instance)} to a pending employee."
+                                f"Failed to unlink employee id {instance.id} from employee "
+                                f"{str(e)}. Converting {str(instance)} to a pending "
+                                "employee."
                             )
                             instance.is_matched = False
                             ec = True
                             Notification.objects.create(
-                                message=f"Source employee {str(instance)} and employee {str(instance.employee)} "
-                                f"are in an inconsistent state. Please validate that multiple "
-                                f"employees are not associated with the same employee ID.",
+                                message=(
+                                    f"Source employee {str(instance)} and employee "
+                                    f"{str(instance.employee)} are in an inconsistent "
+                                    f"state. Please validate that multiple employees are "
+                                    f"not associated with the same employee ID."
+                                ),
                                 level=Notification.ERROR,
                                 source="Employee Import",
                                 source_repr=repr(instance),
