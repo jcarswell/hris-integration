@@ -23,8 +23,13 @@ def migrate_data(apps, schema_editor):
             "hidden": item.hidden,
         }
         new = Setting.objects.create(**d)
-        if new.group == "ftp_import_field_mapping" and new.value in field_remap.keys():
-            new.value = field_remap[new.value]
+
+        if (
+            new.setting[:24] == "ftp_import_field_mapping"
+            and new._value in field_remap.keys()
+        ):
+            new._value = field_remap[new.value]
+
         new.save()
         del d
         del new

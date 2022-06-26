@@ -25,7 +25,13 @@ def migrate_data(apps, schema_editor):
                 f"Employee {o.manager.emp_id} does not exist post migration. {o} will "
                 "not have a manager set."
             )
-        b.parent = business_unit.objects.get(id=o.parent.pk)
+        except AttributeError:
+            pass
+
+        if o.parent:
+            b.parent = business_unit.objects.get(id=o.parent.pk)
+
+        b.save()
 
 
 def migrate_group_mapping(apps, schema_editor):
@@ -46,10 +52,21 @@ def migrate_group_mapping(apps, schema_editor):
 
         for i in o.jobs.all():
             grp.jobs.add(job.objects.get(id=i.pk))
-        for i in o.business_unit.all():
+        for i in o.bu.all():
             grp.business_unit.add(business_unit.objects.get(id=i.pk))
-        for i in o.location.all():
+        for i in o.loc.all():
             grp.location.add(location.objects.get(id=i.pk))
+
+
+def rebuild_tree(apps, schema_editor):
+    from organization.models import BusinessUnit, Location
+    from django.db import transaction
+
+    with transaction.atomic():
+        BusinessUnit.objects.rebuild()
+
+    with transaction.atomic():
+        Location.objects.rebuild()
 
 
 class Migration(migrations.Migration):
@@ -65,4 +82,5 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(migrate_data),
         migrations.RunPython(migrate_group_mapping),
+        migrations.RunPython(rebuild_tree),
     ]

@@ -22,11 +22,9 @@ def migrate_data(apps, schema_editor):
     job = apps.get_model("organization", "JobRole")
 
     for o in b.objects.all():
-        d = {
-            "id": o.pk,
-            "name": o.name,
-            "ad_od": o.ad_ou,
-        }
+        business_unit.objects.create(
+            id=o.pk, name=o.name, ad_ou=o.ad_ou, lft=0, rght=0, tree_id=0, level=0
+        )
 
     for o in l.objects.all():
         location.objects.create(id=o.pk, name=o.name, lft=0, rght=0, tree_id=0, level=0)
