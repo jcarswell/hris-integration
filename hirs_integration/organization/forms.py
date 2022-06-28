@@ -119,7 +119,7 @@ class Location(Form):
 
     class Meta(MetaBase):
         model = models.Location
-        fields = ("id", "name")
+        fields = ("id", "name", "parent")
         labels = {"id": _t("Number"), "name": _t("Name")}
         disabled = ("id",)
         required = ("id", "name")
