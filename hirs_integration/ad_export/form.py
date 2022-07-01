@@ -21,7 +21,7 @@ from .helpers import config
 from .helpers.ad_interface import AD
 from smtp_client.actions.template import SmtpTemplate
 
-logger = logging.getLogger("as_export.form")
+logger = logging.getLogger("ad_export.form")
 
 
 class BaseExport:
