@@ -15,6 +15,7 @@ from jinja2 import Environment, PackageLoader
 from django.conf import settings
 from time import time
 from pywintypes import com_error
+from datetime import datetime
 
 from .exceptions import ADResultsError
 from .helpers import config
@@ -70,6 +71,7 @@ class BaseExport:
         If the employee is new their AD account is created first.
         Then all of the attributes are updated. see :ref:`references/ad_export/index`
         """
+        logger.debug("Starting AD Export main loop")
         for employee in self.employees:
             logger.debug(f"Processing {str(employee)}")
             if isinstance(employee.ad_user, ADUser):
@@ -101,6 +103,10 @@ class BaseExport:
                         logger.warning(
                             "Encounter constraint violation while updating "
                             f"{employee.ad_user}"
+                        )
+                    elif e.args[2][5] == -2147019886:
+                        logger.error(
+                            f"Uniqueness violation while updating {employee.ad_user}"
                         )
                     else:
                         logger.warn(
@@ -235,14 +241,17 @@ class BaseExport:
             logger.warn(f"Manager {employee.manager.id} does not have a valid AD User")
             employee.ad_user.clear_managedby(False)
 
-        if employee.status:
+        if employee.enabled:
+            logger.debug(f"Enabling AD User")
             employee.ad_user.enable(False)
         else:
+            logger.debug(f"Disabling AD User and removing manager")
             employee.ad_user.disable(False)
             employee.ad_user.clear_managedby(False)
             if "manager" in attribs:
                 attribs.pop("manager")
 
+        logger.debug(f"Setting attributes: {attribs}")
         self._ad.update_attributes(employee.ad_user, **attribs)
         self.update_groups(employee)
 
@@ -253,6 +262,7 @@ class BaseExport:
         :type employee: config.EmployeeManager
         """
 
+        logger.debug(f"Updating groups for {employee}")
         self._ad.groups_add(employee.ad_user, employee.groups_add())
         self._ad.groups_remove(employee.ad_user, employee.groups_remove())
 
@@ -362,7 +372,8 @@ class ADUserExport(BaseExport):
             self._ad.update_attributes(user, acsCard1State=True, acsCard2Status=True)
             user.clear_managedby(False)
 
-        if user.get_last_login():
+        if user.get_last_login() > datetime(1970, 1, 1):
+            logger.debug(f"{employee} has logged in at least once, clearing password")
             employee.clear_password()
 
     def run_post(self):
