@@ -1,19 +1,38 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
 
-from django.core.exceptions import ValidationError
+"""
+This is the core validator module that ensure all validators from installed apps are 
+available as needed for any validators or choices to be used.
+"""
 
-__all__ = ('import_validator',)
+import importlib
+import logging
 
-def import_validator(value) -> None:
-    import importlib
+from warnings import warn
+from hris_integration.settings import INSTALLED_APPS
+
+logger = logging.getLogger('common.validators')
+
+## Dynamically import all validators from installed apps
+__ALL_APPS__ = []
+
+apps = INSTALLED_APPS + ["hris_integration"]
+for app in apps:
     try:
-        lib = importlib.import_module(value)
-        if not hasattr(lib,'form'):
-            raise ValueError
+        module = importlib.import_module(app + ".validators")
+        if hasattr(module,'__all__'):
+            __ALL_APPS__.append(module)
+            for validator in module.__all__:
+                logger.debug(f"Trying to add {module.__name__}.{validator} to global name space")
+                if validator not in globals():
+                    try:
+                        globals()[validator] = eval(f"module.{validator}")
+                    except AttributeError:
+                        logger.warn(f"Failed to import {validator}")
+                else:
+                    warn(f"{validator} from {module} is duplicated ")
+        else:
+            logger.debug(f"{module.__name__} exists but is missing an __all__ attribute")
     except ModuleNotFoundError:
-        raise ValidationError(f"{value} does not exist",
-                              params={'value': value})
-    except ValueError:
-        raise ValidationError(f"{value} is missing the 'form' method",
-                              params={'value': value})
+        logger.debug(f'App {app} has no validators module')

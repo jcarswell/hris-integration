@@ -1,8 +1,9 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from common.exceptions import HrisIntegrationBaseError
+from hris_integration.exceptions import HrisIntegrationBaseError
 from django.core.exceptions import ObjectDoesNotExist
+
 
 class SmtpClientBaseError(HrisIntegrationBaseError):
     pass
@@ -20,6 +21,7 @@ class SmtpToInvalid(SmtpClientBaseError):
     pass
 
 
-class InvlaidTemplate(SmtpClientBaseError,ObjectDoesNotExist):
+class InvalidTemplate(SmtpClientBaseError, ObjectDoesNotExist):
     """The requested template does not exist"""
+
     template_name = None

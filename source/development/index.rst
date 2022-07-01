@@ -100,11 +100,11 @@ your_module/app.py
 Base django app config - your app must be added to the INSTALLED_APPS setting
 
 your_module/exceptions/__init__.py
-"""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 Import all non-base exceptions and warning if you have them
 
 your_module/exceptions/errors.py
-"""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""
 Defines ``YourModuleBaseError``. Optionally extended from ``common.exceptions.HrisIntegrationBaseError``
 
 Define any additional errors that assist with troubleshooting error or catching specific conditions
@@ -119,19 +119,17 @@ The following is only required if you have user configurable options.
 
 Imports:
 
-- settings_fields.*
-- common.functions.ConfigurationManagerBase
-- hirs_admin.models.Setting
+- .settings_fields.*
+- settings.config_manager.ConfigurationManagerBase
 
 **Defines**
 
 .. code-block:: python
 
-    class Config(common.functions.ConfigurationManagerBase):
+    class Config(settings.config_manager.ConfigurationManagerBase):
         root_group = GROUP_CONFIG
-        catagory_list = CATAGORY_SETTINGS
+        category_list = CATEGORY_SETTINGS
         fixtures = CONFIG_DEFAULTS
-        Setting = hirs_admin.models.Setting
 
 Additionally define any other classes/function needed to support the configuration for ``your_module``
 
@@ -148,8 +146,8 @@ If you have any configurable options, you will need to define this file with the
 :GROUP_CONFIG: *string* Your module name or a descriptive reference which defines your root configuration Group 
 :CONFIG_CAT: *string* Your basic configuration Category. 
     CONFIG_CAT = "configuration" is only a suggestion, it should be descriptive supporting your modules.
-    however you must define at minimum one Category must be defined and it's name added to CATAGORY_SETTINGS.
-:CATAGORY_SETTINGS: *tuple* A list of your defined Catagories
+    however you must define at minimum one Category must be defined and it's name added to CATEGORY_SETTINGS.
+:CATEGORY_SETTINGS: *tuple* A list of your defined Catagories
 
 It is strongly recommended that you define meaningful CONSTANTS for each of your fields to reduce the chance
 of typos as they are referenced throughout your_module.

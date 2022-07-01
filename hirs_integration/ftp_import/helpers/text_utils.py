@@ -1,13 +1,14 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from datetime import datetime
 from typing import Union
-from string import ascii_letters,digits
+from string import ascii_letters, digits
 from fuzzywuzzy import fuzz
-from django.utils.timezone import make_aware,is_aware
+from django.utils.timezone import make_aware, is_aware
 
-def int_or_str(val:str) -> Union[int,str]:
+
+def int_or_str(val: str) -> Union[int, str]:
     """
     Converts a giving string into an int or returns the original string
 
@@ -20,14 +21,15 @@ def int_or_str(val:str) -> Union[int,str]:
     Returns:
         Union[int,str]: the transformed value
     """
-    if type(val) not in [int,str]:
+    if type(val) not in [int, str]:
         raise ValueError("value is not an int or str")
     try:
         return int(val)
     except ValueError:
         return val
 
-def safe(val:str) -> str:
+
+def safe(val: str) -> str:
     """Cleans a string for safe parsing in the database and function. Helps ensure
     that the source value is always future matchable.
 
@@ -39,14 +41,15 @@ def safe(val:str) -> str:
     """
     output = []
     for l in val:
-        if l == ' ':
-            output.append('_')
-        elif l not in ascii_letters+digits+'_':
-            output.append('-')
+        if l == " ":
+            output.append("_")
+        elif l not in ascii_letters + digits + "_":
+            output.append("-")
         else:
             output.append(l.lower())
 
     return "".join(output)
+
 
 def decode(s) -> str:
     """Decodes a bytes object to a string
@@ -57,14 +60,15 @@ def decode(s) -> str:
     Returns:
         str: decoded string value
     """
-    if isinstance(s,bytes):
-        return s.decode('utf-8')
-    elif isinstance(s,str):
+    if isinstance(s, bytes):
+        return s.decode("utf-8")
+    elif isinstance(s, str):
         return s
     else:
         return str(s)
 
-def clean_phone(s:str,pretty=True) -> int:
+
+def clean_phone(s: str, pretty=True) -> int:
     """Pretty format source phone number and strips non-numeric characters
 
     Args:
@@ -84,8 +88,15 @@ def clean_phone(s:str,pretty=True) -> int:
     else:
         return "".join(output)
 
-def fuzz_name(csv_fname:str,csv_lname:str,emp_fname:str,emp_lname:str,match_pcent:int =80) -> tuple[bool,int]:
-    """Compares and employees name and scores it on likely hood of match. Returns true if the match 
+
+def fuzz_name(
+    csv_fname: str,
+    csv_lname: str,
+    emp_fname: str,
+    emp_lname: str,
+    match_pcent: int = 80,
+) -> tuple[bool, int]:
+    """Compares and employees name and scores it on likely hood of match. Returns true if the match
     percentage is above [default] 80%.
 
     Args:
@@ -99,20 +110,26 @@ def fuzz_name(csv_fname:str,csv_lname:str,emp_fname:str,emp_lname:str,match_pcen
         tuple[bool,int]: If a potential match was found and what matching percentage was.
     """
 
-    ratios = (fuzz.token_sort_ratio(csv_fname,emp_fname) +
-             fuzz.token_sort_ratio(csv_lname,emp_lname) +
-             fuzz.partial_ratio(f"{csv_fname} {csv_lname}".lower(),f"{emp_fname} {emp_lname}".lower()))
+    ratios = (
+        fuzz.token_sort_ratio(csv_fname, emp_fname)
+        + fuzz.token_sort_ratio(csv_lname, emp_lname)
+        + fuzz.partial_ratio(
+            f"{csv_fname} {csv_lname}".lower(), f"{emp_fname} {emp_lname}".lower()
+        )
+    )
 
-    if ratios/3 >= float(match_pcent):
-        return True,int(round(match_pcent,0))
+    if ratios / 3 >= float(match_pcent):
+        return True, int(round(match_pcent, 0))
     else:
-        return False,int(round(match_pcent,0))
+        return False, int(round(match_pcent, 0))
 
-def parse_date(date_str:str) -> datetime:
-    from .config import CAT_CSV,CSV_DATE_FMT,Config
+
+def parse_date(date_str: str) -> datetime:
+    from .config import CAT_CSV, CSV_DATE_FMT, Config
+
     setting = Config()
-    setting.get(CAT_CSV,CSV_DATE_FMT)
-    dt = datetime.strptime(date_str,setting.value)
+    setting.get(CAT_CSV, CSV_DATE_FMT)
+    dt = datetime.strptime(date_str, setting.value)
     if not is_aware(dt):
         dt = make_aware(dt)
 

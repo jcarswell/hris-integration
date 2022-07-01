@@ -1,0 +1,73 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{{ site.name|default:"HRIS Sync" }}{% endblock %}</title>
+  <link rel="shortcut icon" type="image/png" href="{% static 'favicon.png' %}"/>
+  {% block meta %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% endblock %}
+
+  {% block base_style %}
+  {% include 'components/styles.html' %}
+  {% endblock %}
+  {% block extra_style %}{% endblock %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="hold-transition sidebar-mini {% block body_class %}layout-fixed{% endblock %}">
+  {% block body %}
+  <div class="wrapper">
+    {% block nav_header %}
+    {% include 'components/main_header.html' %}
+    {% endblock %}
+
+    {% block nav_sidebar %}
+    {% include 'components/main_sidebar.html' %}
+    {% endblock %}
+
+    {% block content_wrapper %}
+    <div class="content-wrapper">
+      {% block content_header %}
+      <section class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        {% block page_title %}
+        <div class="ml-3 flex-wrap d-flex flex-md-nowrap">
+          <h3>{{ page.title|default:"" }}</h3>
+          <small class="m-auto pl-3">{{ page.description|default:"" }}</small>
+        </div>
+        {% endblock %}
+        {% block page_actions %}{% endblock %}
+      </section>
+      {% endblock %}
+
+      {% block content_outer %}
+      <section class="content">
+        {% block content %}{% endblock %}
+      </section>
+      {% endblock %}
+      </div>
+      {% endblock content_wrapper %}
+    </div>
+{% endblock body %}
+{% block modal %}
+<div class="modal" tabindex="-1" role="dialog" id="modal-default" style="display: none;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Please update the .modal-title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% block modal_body %}{% endblock%}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block base_js %}
+{% include 'components/scripts.html' %}
+{% endblock %}
+{% block extra_js %}{% endblock %}
+{% block extra_foot %}{% endblock %}
+</body>
+</html>

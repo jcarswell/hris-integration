@@ -1,7 +1,6 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt) 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import json
 import logging
 import unittest
 import time
@@ -10,60 +9,89 @@ from ftp_import.forms import form
 from ftp_import import csv
 from ftp_import.helpers.stats import Stats
 from ftp_import import ObjectCreationError
-from hirs_admin.models import CsvPending
 from pathlib import Path
-from warnings import warn
+from employee.models import Employee
 
-logger = logging.getLogger('test.csv_import')
+logger = logging.getLogger("test.csv_import")
+
+employees = [
+    {
+        "first_name": "Josh",
+        "last_name": "Kelly",
+    },
+    {
+        "first_name": "Mitilda",
+        "last_name": "Jacob",
+    },
+]
+
 
 class manual_import(form):
-    def __init__(self,field_config,**kwargs):
-        super().__init__(field_config,**kwargs)
-        if hasattr(self, 'csv_pending'):
-            self.csv_pending.givenname = kwargs['first_name']
-            self.csv_pending.lastname = kwargs['last_name']
-            self.csv_pending.save()
-        else:
-            warn(f'Stats test will fail as {self.employee_id} is already pending')
+    def save_post(self):
+        logger.debug("converting source employee back to pending")
+        if self.employee.is_matched and self.employee:
+            e = Employee.objects.get(id=self.employee.employee.id)
+            self.employee.employee = None
+            self.employee.is_matched = False
+            self.employee.save()
+            e.delete()
+            Stats.pending_users.append(str(self.employee))
 
-class CsvManual(csv.CsvImport):
+
+class PendingImport(csv.CsvImport):
     def add_data(self):
-        for row in range(0,len(self.data)):
+        for row in range(0, len(self.data)):
             try:
-                manual_import(self.fields,**self.data[row])
+                i = manual_import(self.fields, **self.data[row])
+                i.save()
+                Stats.rows_processed += 1
             except ValueError as e:
-                logger.error("Failed to save Employee refere to previous logs for more details")
+                logger.error(
+                    "Failed to save Employee refer to previous logs for more details"
+                )
                 Stats.errors.append(f"Line: {row} - Error: {e}")
             except ObjectCreationError as e:
-                logger.error("Caught exception while creating employee, failed to create reference object. "
-                             "Refer to above logs")
+                logger.error(
+                    f"Caught exception '{str(e)}' while creating employee, failed to create "
+                    "reference object. Refer to above logs"
+                )
                 Stats.errors.append(f"Line: {row} - Error: {e}")
+            except Exception as e:
+                logger.debug(e)
+
 
 class TestCSVImport(unittest.TestCase):
     def setUp(self):
         Stats.time_start = time.time()
 
     def test_base_import(self):
-        FILE = 'employee_data.csv'
-        path = str(Path(__file__).resolve().parent) + '\\' + FILE
+        pms = []
+        for employee in employees:
+            e, n = Employee.objects.get_or_create(**employee)
+            if n:
+                logger.debug(f"Created employee for import match test: {str(e)}")
+                pms.append(repr(e))
+        FILE = "employee_data.csv"
+        path = str(Path(__file__).resolve().parent) + "\\" + FILE
         with open(path) as data:
             csv.CsvImport(data)
         Stats.files.append(FILE)
+        for employee in pms:
+            e = eval(employee)
+            self.assertIsNotNone(e.employee_id)
 
     def test_manual_import(self):
-        FILE = 'employee_data2.csv'
-        path = str(Path(__file__).resolve().parent) + '\\' + FILE
+        FILE = "employee_data2.csv"
+        path = str(Path(__file__).resolve().parent) + "\\" + FILE
         with open(path) as data:
-            CsvManual(data)
+            PendingImport(data)
         Stats.files.append(FILE)
 
     def test_stats(self):
-        Stats.time_end = time.time
-        self.assertGreater(Stats.rows_processed,26)
-        self.assertEquals(Stats.errors,1)
-        self.assertTrue(4 <= len(Stats.pending_users) <= 5)
-
-    def tearDown(self) -> None:
+        self.assertGreater(Stats.rows_processed, 26)
+        self.assertEqual(len(Stats.errors), 1)
+        self.assertEqual(len(Stats.pending_users), 4)
+        Stats.time_end = time.time()
         logger.info(Stats())
-        
-        
+        logger.info("Warnings: \n" + "\n - ".join(Stats.warnings))
+        logger.info("Errors: \n" + "\n - ".join(Stats.errors))

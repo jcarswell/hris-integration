@@ -5,7 +5,6 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": "C:\\Users\\jcarswell\\Python39-32\\python.exe",
 		"git.ignoreLimitWarning": true,
 		"files.associations": {
 			"**/*.html": "html",
@@ -19,7 +18,8 @@
 		"cSpell.words": [
 			"corepoint",
 			"HRIS"
-		]
+		],
+		"editor.rulers": [90,110]
 	},
 	"launch": {
 		"version": "0.2.0",

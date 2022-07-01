@@ -4,8 +4,9 @@
 import logging
 
 from typing import Any
-from hirs_admin.models import Setting
-from common.functions import ConfigurationManagerBase,FieldConversion
+from settings.models import Setting
+from settings.config_manager import ConfigurationManagerBase,FieldConversion
+from warnings import warn
 
 from .data_structures import CronJob
 from .settings_fields import *
@@ -18,7 +19,6 @@ ITEM_JOBS = (ITEM_ARGS,ITEM_PATH,ITEM_SCHEDULE,ITEM_STATE)
 
 logger = logging.getLogger('cron.config_helper')
 
-
 def get_jobs(keep_disabled:bool =False) -> dict:
     jobs = Setting.o2.get_by_path(GROUP_JOBS)
     output = {}
@@ -28,14 +28,14 @@ def get_jobs(keep_disabled:bool =False) -> dict:
         field = FieldConversion(job.field_properties.get("type","CharField"))
         
         if job.item not in ITEM_JOBS:
-            logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")    
-        elif job.catagory not in job_list.keys():
-            job_list[job.catagory] = {job.item:field(job.value)}
+            logger.warning(f"Got invalid config item {job.item_text} for job {job.category_text}")    
+        elif job.category not in job_list.keys():
+            job_list[job.category] = {job.item:field(job.value)}
         else:
-            job_list[job.catagory][job.item] = field(job.value)
+            job_list[job.category][job.item] = field(job.value)
         
         if job.item == ITEM_SCHEDULE:
-            job_list[job.catagory][job.item] = CronJob(field.value)
+            job_list[job.category][job.item] = CronJob(field.value)
 
     for job in job_list.keys():
         if (keep_disabled and not job_list[job][ITEM_STATE]) or job_list[job][ITEM_STATE]:
@@ -52,13 +52,13 @@ def get_job(job_name:str) -> dict:
 
     for job in jobs:
         if job.item not in ITEM_JOBS:
-            logger.warning(f"Got invalid config item {job.item_text} for job {job.catagory_text}")
+            logger.warning(f"Got invalid config item {job.item_text} for job {job.category_text}")
         else:
             output[job.item] = [FieldConversion(job.field_properties.get("type","CharField"))(job.value),job]
 
     logger.debug(f"Job Config {job_name} - {output}")        
     if output.keys != list(ITEM_JOBS):
-        logger.error(f"job {job_name} is missing required paramaters. Exluding job")
+        logger.error(f"job {job_name} is missing required paramaters. Excluding job")
         return {}
     else:
         output[ITEM_SCHEDULE][0] = CronJob(output[job][ITEM_SCHEDULE][0])
@@ -67,13 +67,14 @@ def get_job(job_name:str) -> dict:
 
 class Config(ConfigurationManagerBase):
     root_group = GROUP_CONFIG
-    catagory_list = CATAGORY_SETTINGS
+    category_list = CATEGORY_SETTINGS
     fixtures = CONFIG_DEFAULTS
-    Setting = Setting
 
-def get_config(catagory:str ,item:str) -> Any:
-    """Now depricated use Config instead to manage the value"""
-    return Config()(catagory,item)
+
+def get_config(category:str ,item:str) -> Any:
+    """Now deprecated use Config instead to manage the value"""
+    warn("get_config is deprecated use Config instead to manage the value", DeprecationWarning)
+    return Config()(category,item)
 
 def set_job(name, path, schedule, args, state):
     query_path = GROUP_JOBS + Setting.FIELD_SEP + name + Setting.FIELD_SEP + '%s'
