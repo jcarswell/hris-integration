@@ -16,6 +16,8 @@ logger = logging.getLogger("hris_integration.views.core")
 
 
 class ListView(TemplateResponseMixin, LoggedInView):
+    """A simple list view of all the objects in the model."""
+
     form = None
     template_name = "base/base_list.html"
     http_method_names = ["get", "head", "options", "trace"]
@@ -55,6 +57,8 @@ class ListView(TemplateResponseMixin, LoggedInView):
         return self.render_to_response(context)
 
     def list_rows(self):
+        """Generate the rows for the list view."""
+
         logger.debug("requested list_rows")
         output = []
         pk = get_model_pk_name(self._model)
@@ -83,6 +87,8 @@ class ListView(TemplateResponseMixin, LoggedInView):
 
 
 class FormView(TemplateResponseMixin, LoggedInView):
+    """The edit view for a model object."""
+
     form = None
     template_name = "base/base_edit.html"
     enable_delete = True
@@ -129,19 +135,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         self.page_description = getattr(self.form, "description", None)
         context = self.get_context(form_delete=self.enable_delete, **kwargs)
 
-        if self._form == None:
-            # theres no pk in the request so return the list view
-            self.template_name = "base/base_list.html"
-
-            labels = []
-            for field in self.fields:
-                labels.append(self.form.base_fields[field].label)
-
-            context["form_fields"] = labels
-            context["form_row"] = self.list_rows()
-
-        else:
-            context["form"] = self._form
+        context["form"] = self._form
 
         logger.debug(f"context: {context}")
         return self.render_to_response(context)
@@ -194,23 +188,6 @@ class FormView(TemplateResponseMixin, LoggedInView):
         response = JsonResponse(res)
 
         return response
-
-    def list_rows(self):
-        logger.debug("requested list_rows")
-        output = []
-        for row in self._model.objects.all():
-            output.append(f'<tr id="{row.pk}">')
-            for field in self.fields:
-                val = getattr(row, field)
-                url = f"{self.request.path}{row.pk}/"
-
-                if field[-2:] == "id":
-                    val = f"<strong>{val}</strong>"
-
-                output.append(f'<td><a href="{url}">{val}</a></td>')
-        logger.debug(f"Output contains: {output}")
-
-        return mark_safe("\n".join(output))
 
     def delete(self, request, *args, **kwargs):
         try:
