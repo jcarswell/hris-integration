@@ -90,6 +90,21 @@ class EmployeeManager(EmployeeManager):
             self.employee.guid = guid
 
     @property
+    def enabled(self) -> bool:
+        """
+        return whether the employee should be enabled or not
+
+        :return: If the employee is enabled
+        :rtype: bool
+        """
+
+        disable_on_leave = self.config(EMPLOYEE_CAT, EMPLOYEE_DISABLE_LEAVE)
+        if not self.employee.state or self.employee.leave and disable_on_leave:
+            return False
+        else:
+            return True
+
+    @property
     def upn(self) -> str:
         """
         We want the configured UPN not what is set against the AD User as the base model does
@@ -152,10 +167,10 @@ def get_employees(
     else:
         employees = Employee.objects.all()
 
-    logger.debug(f"Got {len(employees)} Employees")
-
     for employee in employees:
         add_emp(employee)
+
+    logger.debug(f"Processed {len(output)} Employees")
 
     return output
 
