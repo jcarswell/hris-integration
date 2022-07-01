@@ -206,9 +206,10 @@ class GroupManager:
 
         output = []
         dn = []
-        logger.debug(f"parsing the following groups: {groups}")
         if not groups:
             return []
+
+        logger.debug(f"parsing the following groups: {groups}")
 
         for group in groups.strip("'\"").split(","):
             if group and len(group.split("=")) == 1:
@@ -239,7 +240,7 @@ class GroupManager:
             try:
                 validators.DnValidator(output[x])
             except validators.ValidationError:
-                logger.warn(f"got invalid or incomplete DN: {output[x]}")
+                logger.warn(f"Got invalid or incomplete DN: {output[x]}")
                 output.pop(x)
 
         return output
