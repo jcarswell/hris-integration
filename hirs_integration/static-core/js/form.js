@@ -4,7 +4,24 @@ function doneProcess(ret_data,focus) {
   $('.is-invalid',focus).removeClass("is-invalid");
   $('.alert').alert('close');
   createAlert();
-  if (ret_data["status"] != "success") {
+  if (ret_data["status"] === "error") {
+    Object.keys(ret_data).forEach(function (key) {
+      if (key === "errors") {
+        alert_error(ret_data[key]);
+        alert_triggered = true;
+      } else if (key === "fields") {
+        for (var i = 0; i < ret_data[key].length; i++) {
+          $('[name="'+ret_data[key][i]+'"]',focus).addClass('is-invalid')
+          .selectpicker("setStyle");
+        }
+      }
+      else {
+        $('[name="'+ret_data[key]+'"]',focus).addClass('is-invalid')
+          .selectpicker("setStyle");
+        $('[name="'+ret_data[key]+'"]',focus)
+          .after('<div class="invalid-feedback">' + ret_data[key] + "</div>");
+      }
+    });
     $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
     if (Array.isArray(ret_data.fields)) {
       ret_data.fields.forEach(e => {$('input[name="'+e+'"]').addClass('is-invalid');})
@@ -15,11 +32,41 @@ function doneProcess(ret_data,focus) {
       alert_error(ret_data['errors']);
     }
   } else {
-    $('button:submit',focus).removeClass('btn-primary').removeClass('btn-danger').addClass('btn-success');
+    $('button:submit',focus).removeClass('btn-primary').removeClass('btn-danger')
+      .addClass('btn-success');
     $('#alert-container').addClass("d-none");
   }
 }
 function errorProcess(jqXHR,status,error,focus) {
+  console.log(jqXHR);
+  console.log(status);
+  console.log(error);
+  if (focus === undefined) {focus = $('body');}
+  var alert_triggered = false;
+  if (jqXHR.responseJSON === undefined) {
+    if (jqXHR.responseText !== undefined) {
+      alert_error(jqXHR.responseText);
+    } else {
+      alert_error(`An error has occurred. Server returned status ${jqXHR.status}`);
+    }
+    return;
+  }
+  Object.keys(jqXHR.responseJSON).forEach(function (key) {
+    if (key === "errors") {
+      alert_error(jqXHR.responseJSON[key]);
+      alert_triggered = true;
+    } else if (key === "fields") {
+      for (var i = 0; i < jqXHR.responseJSON[key].length; i++) {
+        $('input[name="'+jqXHR.responseJSON[key][i]+'"]',focus).addClass('is-invalid');
+      }
+    }
+    else {
+      $('input[name="'+jqXHR.responseJSON[key][i]+'"]',focus).addClass('is-invalid');
+    }
+  });
+  if (!alert_triggered) {
+    alert_error("Please check the form for errors.");
+  }
   $('button:submit',focus).removeClass('btn-primary').addClass('btn-danger');
   alert_error(error,status)
 }
@@ -77,12 +124,17 @@ function do_delete() {
   .fail(function(jqXHR,status,error) {errorProcess(jqXHR,status,error);});
 }
 function serialize_form(f) {
-  var ret = []
+  var ret = new FormData();
   $(f).find('input').each(function(i,e) {
-    if (e.type == "checkbox" || e.type == "radio") {
-      ret.push({name:e.name,value:e.checked});
+    if (e.name == "" || e.name === undefined) {}
+    else if (e.type === "checkbox" || e.type === "radio") {
+      ret.append(e.name,e.checked);
     } else {
-      ret.push({name:e.name,value:e.value});
+      if (e.value === "" || e.value === undefined) {
+        ret.append(e.name,null);
+      } else {
+        ret.append(e.name,e.value);
+      }
     }
   });
   $(f).find('select').each(function(i,e) {
@@ -90,10 +142,15 @@ function serialize_form(f) {
     $(e).find(':selected').each(function(i,s) {
       selected.push(s.value);
     });
-    ret.push({name:e.name,value:selected});
+    if (selected.length > 0) {
+      ret.append(e.name,selected);
+    }
   });
   $(f).find('textarea').each(function(i,e) {
-    ret.push({name:e.name,value:e.value});
+    ret.append(e.name,e.value);
+  });
+  $(f).find('input[type="file"]').each(function(i,e) {
+    ret.append(e.name,e.files[0],e.files[0].name);
   });
   return ret
 }
@@ -160,8 +217,10 @@ $(function() {
     if (id !== undefined) {
       id.disabled = false;
       id.readOnly = false;
-      $('<input type="submit" name="submit-new" class="btn btn-primary" onclick="s_new($(this).closest(\'form\'))" style="margin: 4pt 0 0 auto;" value="Submit & New"/>')
-      .insertBefore('button[name=submit]','.container');
+      $('<input type="submit" name="submit-new" class="btn btn-primary" ' + 
+        'onclick="s_new($(this).closest(\'form\'))" style="margin: 4pt 0 0 auto;" ' +
+        'value="Submit & New"/>')
+        .insertBefore('button[name=submit]','.container');
       $('button[name=submit]').attr('style','margin: 4pt 0 0 4pt;');
     }
   }
