@@ -30,19 +30,19 @@ class GroupManager:
 
     def __init__(
         self,
-        job: "employee.models.JobRole",
-        bu: "employee.models.BusinessUnit",
-        location: "employee.models.Location",
+        job: "organization.models.JobRole",
+        bu: "organization.models.BusinessUnit",
+        location: "organization.models.Location",
     ) -> None:
         """
         Setup the GroupManager class
 
         :param job: The primary job of the employee
-        :type job: employee.models.JobRole
+        :type job: organization.models.JobRole
         :param bu: The business unit that the employee belongs to
-        :type bu: employee.models.BusinessUnit
+        :type bu: organization.models.BusinessUnit
         :param location: The location that the employee is located in
-        :type location: employee.models.Location
+        :type location: organization.models.Location
         """
 
         self.add_groups = []
@@ -60,7 +60,7 @@ class GroupManager:
         self.parse_config_groups()
 
     def get_jobs(
-        self, groups: "django.db.models.QuerySet", job: "employee.models.JobRole"
+        self, groups: "django.db.models.QuerySet", job: "organization.models.JobRole"
     ) -> None:
         """
         Parse the groups associated or explicitly not associated with the job role.
@@ -68,7 +68,7 @@ class GroupManager:
         :param groups: The queryset of groups to check against
         :type groups: django.db.models.QuerySet
         :param job: The job role to parse
-        :type job: employee.models.JobRole
+        :type job: organization.models.JobRole
         """
 
         for group in groups:
@@ -82,7 +82,7 @@ class GroupManager:
     def get_business_units(
         self,
         groups: "django.db.models.QuerySet",
-        business_unit: "employee.models.BusinessUnit",
+        business_unit: "organization.models.BusinessUnit",
     ) -> None:
         """
         Parse the groups associated or explicitly not associated with the business unit.
@@ -90,7 +90,7 @@ class GroupManager:
         :param groups: The queryset of groups to check against
         :type groups: django.db.models.QuerySet
         :param business_unit: The business unit to parse
-        :type business_unit: employee.models.BusinessUnit
+        :type business_unit: organization.models.BusinessUnit
         """
 
         for group in groups:
@@ -111,7 +111,9 @@ class GroupManager:
                 self._add(group.dn)
 
     def get_locations(
-        self, groups: "django.db.models.QuerySet", location: "employee.models.Location"
+        self,
+        groups: "django.db.models.QuerySet",
+        location: "organization.models.Location",
     ) -> None:
         """
         Parse the groups associated or explicitly not associated with the location.
@@ -119,7 +121,7 @@ class GroupManager:
         :param groups: The queryset of groups to check against
         :type groups: django.db.models.QuerySet
         :param location: The location to parse
-        :type location: employee.models.Location
+        :type location: organization.models.Location
         """
 
         for group in groups:
