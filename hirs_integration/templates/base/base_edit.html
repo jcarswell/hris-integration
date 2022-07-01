@@ -40,7 +40,7 @@
 var id = $('#form_list input[type=number]')[0]
 $("#form_list").submit(function(e) {
   e.preventDefault();
-  data = new FormData(this);
+  data = serialize_form(this);
   
   var href = get_basepath();
   if (url_params.has('next')) {
