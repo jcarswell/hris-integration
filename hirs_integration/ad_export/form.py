@@ -95,7 +95,7 @@ class BaseExport:
                     logger.debug(f"Updating AD instance")
                     self.update_user(employee)
                     self.update_user_extra(employee, employee.ad_user)
-                    employee.ad_user._flush()  # ensure that updates are committed
+                    employee.ad_user.flush()  # ensure that updates are committed
                 except com_error as e:
                     if e.args[2][5] == -2147016657:
                         logger.warning(
@@ -110,7 +110,7 @@ class BaseExport:
                         logger.debug(f"Error: {str(e.args[2])}")
                         sleep(60)
                         try:
-                            employee.ad_user._flush()  # ensure that updates are committed
+                            employee.ad_user.flush()  # ensure that updates are committed
                         except Exception as e:
                             logger.exception(
                                 f"Caught {str(e)} while updating employee {str(employee)}"
