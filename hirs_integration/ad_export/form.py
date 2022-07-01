@@ -71,9 +71,11 @@ class BaseExport:
         Then all of the attributes are updated. see :ref:`references/ad_export/index`
         """
         for employee in self.employees:
+            logger.debug(f"Processing {str(employee)}")
             if isinstance(employee.ad_user, ADUser):
                 self._ad.move(employee.ad_user, employee)
-            elif employee.ad_user is None and employee.status:
+            elif employee.ad_user is None and employee.employee.state:
+                logger.debug(f"Creating new user for {str(employee)}")
                 employee = self.new_user_pre(employee)
                 try:
                     employee.ad_user = self._ad.create_user(employee)
@@ -90,34 +92,41 @@ class BaseExport:
 
             if isinstance(employee.ad_user, ADUser):
                 try:
+                    logger.debug(f"Updating AD instance")
                     self.update_user(employee)
                     self.update_user_extra(employee, employee.ad_user)
                     employee.ad_user._flush()  # ensure that updates are committed
                 except com_error as e:
-                    logger.warn(
-                        f"Caught Error updating user {str(e)}. Trying to back off for 60s"
-                    )
-                    sleep(60)
-                    try:
-                        self.update_user(employee)
-                        self.update_user_extra(employee, employee.ad_user)
-                        employee.ad_user._flush()  # ensure that updates are committed
-                    except Exception as e:
-                        logger.exception(
-                            f"Caught {str(e)} while updating employee {str(employee)}"
+                    if e.args[2][5] == -2147016657:
+                        logger.warning(
+                            "Encounter constraint violation while updating "
+                            f"{employee.ad_user}"
                         )
-                        self.errors.append(
-                            f"Failed to update {str(employee)} - Error {str(e)}"
+                    else:
+                        logger.warn(
+                            f"Caught Error updating user {str(e.args[2][2])}. Trying "
+                            "to back off for 60s"
                         )
-                        employee.ad_user.flush()
+                        logger.debug(f"Error: {str(e.args[2])}")
+                        sleep(60)
+                        try:
+                            employee.ad_user._flush()  # ensure that updates are committed
+                        except Exception as e:
+                            logger.exception(
+                                f"Caught {str(e)} while updating employee {str(employee)}"
+                            )
+                            self.errors.append(
+                                f"Failed to update {str(employee)} - Error {str(e)}"
+                            )
+                            employee.ad_user.flush()
                 except Exception as e:
                     logger.exception(
-                        f"Caught {str(e)} while updating employee {str(employee)}"
+                        f"Caught {str(e.args[2][2])} while updating employee {str(employee)}"
                     )
+                    logger.debug(f"Error: {str(e.args[2])}")
                     self.errors.append(
-                        f"Failed to update {str(employee)} - Error {str(e)}"
+                        f"Failed to update {str(employee)} - Error {str(e[2][2])}"
                     )
-                    employee.ad_user.flush()
 
         self.run_post_new_users()
 
@@ -181,7 +190,8 @@ class BaseExport:
             logger.debug(msg)
 
     def update_user(self, employee: config.EmployeeManager) -> None:
-        """Main logic that set the users attributes, disables or enables
+        """
+        Main logic that set the users attributes, disables or enables
         the users account, set the Employee photo,
 
         :param employee: the current employee that's being processed
@@ -200,7 +210,7 @@ class BaseExport:
         }
 
         if employee.phone:
-            attribs["homePhone"] = employee.phone.number
+            attribs["telephoneNumber"] = employee.phone.number
 
         if employee.address:
             attribs["streetAddress"] = employee.address.street1
@@ -212,7 +222,7 @@ class BaseExport:
         if employee.ad_user.get_attribute("employeeID") != employee.id:
             attribs["employeeID"] = employee.id
 
-        if employee.photo:
+        if employee.photo.readable():
             with open(employee.photo.path, "rb") as photo:
                 attribs["thumbnailPhoto"] = b64encode(photo.read())
 
@@ -339,7 +349,7 @@ class ADUserExport(BaseExport):
         """
         # TODO: This need to be removed from the public code base
         if employee.status:
-            if employee.employee.status == config.STAT_LEA:
+            if employee.employee.status == config.STATE_LEA:
                 self._ad.update_attributes(
                     user, acsCard1State=True, acsCard2Status=True
                 )
