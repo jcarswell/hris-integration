@@ -12,7 +12,7 @@ from active_directory import search
 from .models import Employee, EmployeeImport, Phone, Address
 
 
-logger = logging.getLogger("ad_export.EmployeeManager")
+logger = logging.getLogger("employee.data_structures")
 
 
 class EmployeeManager:
@@ -196,7 +196,7 @@ class EmployeeManager:
         :rtype: str
         """
 
-        if self._qs_phone is None:
+        if self._qs_phone is None or len(self._qs_phone) == 0:
             return None
 
         for phone in self._qs_phone:
@@ -216,7 +216,7 @@ class EmployeeManager:
         :rtype: Address
         """
 
-        if self._qs_addr is None:
+        if self._qs_addr is None or len(self._qs_addr) == 0:
             return None
 
         for addr in self._qs_addr:
