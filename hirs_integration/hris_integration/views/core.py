@@ -88,7 +88,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
     enable_delete = True
     edit_postfix = "_edit"
 
-    def setup(self, request, *args, **kwargs):
+    def setup(self, request: "django.http.HttpRequest", *args, **kwargs):
         super().setup(request, *args, **kwargs)
 
         if self.form == None:
@@ -120,10 +120,11 @@ class FormView(TemplateResponseMixin, LoggedInView):
             self._form = None
 
     @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: "django.http.HttpRequest", *args, **kwargs):
+        logger.debug(f"dispatching {request.method}")
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: "django.http.HttpRequest", *args, **kwargs):
         self.page_title = getattr(self.form, "name", None)
         self.page_description = getattr(self.form, "description", None)
         context = self.get_context(form_delete=self.enable_delete, **kwargs)
@@ -145,9 +146,20 @@ class FormView(TemplateResponseMixin, LoggedInView):
         logger.debug(f"context: {context}")
         return self.render_to_response(context)
 
-    def post(self, request, *args, **kwargs):
-        logger.debug("Got post")
+    def post(self, request: "django.http.HttpRequest", *args, **kwargs) -> JsonResponse:
+        """
+        Creates or updates a model instance based on the given form data.
+
+        :param request: The request object
+        :type request: django.http.HttpRequest
+        :return: A JSON response containing status and errors or status and updated field
+            values of the created/updated model
+        :rtype: JsonResponse
+        """
+
         logger.debug(f"post data is: {request.POST}")
+        if kwargs["id"] != 0 and request.POST.get("id", 0) != kwargs.get("id", 0):
+            return HttpResponseBadRequest("The ID may not be changed once set")
         if self._form.is_valid():
             logger.debug("Form is valid, saving()")
             save_data = self._form.save()
@@ -159,18 +171,29 @@ class FormView(TemplateResponseMixin, LoggedInView):
             ers = []
             for e in self._form._errors.values():
                 ers.append("<br>".join(e))
-            return JsonResponse(
-                {
-                    "status": "error",
-                    "fields": list(self._form._errors.keys()),
-                    "errors": ers,
-                }
-            )
+            response = {
+                "status": "error",
+                "fields": list(self._form._errors.keys()),
+                "errors": ers,
+            }
+            response.update(dict((k, v[0]) for k, v in self._form._errors.items()))
+            logger.debug(f"response: {response}")
+            return JsonResponse(response)
 
-        return JsonResponse({"status": "success", "id": save_data.pk})
+        res = {"status": "success", "id": save_data.pk}
+        for field in self.fields:
+            res[field] = getattr(save_data, field)
+            if not isinstance(res[field], (str, int, bool)):
+                if hasattr(res[field], "id"):
+                    res[field] = res[field].id
+                elif hasattr(res[field], "all"):
+                    res[field] = [x.id for x in res[field].all()]
+                else:
+                    res[field] = str(res[field])
 
-    def put(self, request, *args, **kwargs):
-        self.post(request, *args, **kwargs)
+        response = JsonResponse(res)
+
+        return response
 
     def list_rows(self):
         logger.debug("requested list_rows")
@@ -186,6 +209,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
 
                 output.append(f'<td><a href="{url}">{val}</a></td>')
         logger.debug(f"Output contains: {output}")
+
         return mark_safe("\n".join(output))
 
     def delete(self, request, *args, **kwargs):
