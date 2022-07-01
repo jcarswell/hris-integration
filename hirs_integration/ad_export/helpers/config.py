@@ -75,7 +75,7 @@ class EmployeeManager(EmployeeManager):
     @property
     def guid(self) -> str:
         # needs to be defined locally otherwise setter freaks out... :(
-        return super().guid()
+        return super().guid
 
     @guid.setter
     def guid(self, guid: str) -> None:
