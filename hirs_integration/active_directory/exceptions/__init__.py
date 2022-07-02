@@ -24,7 +24,7 @@ from .errors import (
     NotSupportedError,
     OperationalError,
 )
-from .com_error_helper import get_com_exception
+from .com_error_helper import get_com_exception, decode_com_error, raise_from_com
 
 __all__ = (
     "ActiveDirectoryError",
@@ -48,5 +48,5 @@ __all__ = (
     "ProgrammingError",
     "NotSupportedError",
     "OperationalError",
-    "get_com_exception",
+    "raise_from_com",
 )

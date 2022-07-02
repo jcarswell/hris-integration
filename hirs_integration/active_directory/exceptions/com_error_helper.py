@@ -318,3 +318,27 @@ def get_com_exception(error_code: int) -> Tuple[str, str, Exception]:
         return AD_EXCEPTIONS[hex(error_code % 2**32).strip("L")]
     except KeyError:
         return ("Unknown Error", "An unknown error occurred.", DatabaseError)
+
+
+def raise_from_com(error, message=None, exception=None):
+    """
+    Raise an exception from a COM error.
+    """
+    if isinstance(error[2], tuple):
+        err, msg, exc = get_com_exception(error[2][5])
+    elif isinstance(error, int):
+        get_com_exception(error)
+    else:
+        err, msg, exc = get_com_exception(error[2])
+
+    if message:
+        msg = message
+    raise exc(msg, err, com_error=exception)
+
+
+def decode_com_error(error_code: int) -> str:
+    """
+    Decode the error code and return the error message.
+    """
+
+    return hex(error_code % 2**32).strip("L")

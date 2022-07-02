@@ -31,8 +31,9 @@ class Error(ActiveDirectoryError):
     derived as per the PEP-249 specification.
     """
 
-    def __init__(self, *args: object) -> None:
+    def __init__(self, *args: object, com_error: "pywintypes.com_error") -> None:
         super().__init__(*args)
+        self.com_error = com_error
 
 
 class Warning(ActiveDirectoryError):
