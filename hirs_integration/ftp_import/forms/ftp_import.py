@@ -33,7 +33,7 @@ class BaseImport:
     supporting functions along with the shell to which processing happens.
 
     Initialization:
-      The class expects a list of felid configuration data that will be provided as kwargs.
+      The class expects a list of field configuration data that will be provided as kwargs.
       The list should be structured as:
       [
           {
@@ -903,7 +903,10 @@ class EmployeeForm(BaseImport):
             map_val = self.get_map_to(key)
             if hasattr(address, map_val):
                 if map_val[:6] == "street":
-                    if 1 < len(value.split(",")) < 4:
+                    if isinstance(value, list):
+                        for x in range(len(value) if len(value) < 3 else 3):
+                            setattr(address, f"street{x}", value[x])
+                    elif 1 < len(value.split(",")) < 4:
                         value = value.split(",")
                         for x in range(len(value)):
                             setattr(address, f"street{x}", value[x])
