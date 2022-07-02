@@ -16,6 +16,7 @@ from .errors import (
     OperationalError,
 )
 
+#: Error codes for the Active Directory API. Each error is composed of (error_code, error_message, exception_class).
 AD_EXCEPTIONS: Dict[hex, Tuple[AnyStr, AnyStr, Error]] = {
     "0x8007202f": (
         "LDAP_CONSTRAINT_VIOLATION",
@@ -306,7 +307,6 @@ AD_EXCEPTIONS: Dict[hex, Tuple[AnyStr, AnyStr, Error]] = {
         ProgrammingError,
     ),
 }
-"""Error codes for the Active Directory API. Each error is composed of (error_code, error_message, exception_class)."""
 
 
 def get_com_exception(error_code: int) -> Tuple[str, str, Exception]:
