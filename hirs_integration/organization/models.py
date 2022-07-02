@@ -40,7 +40,9 @@ class BusinessUnit(MPTTModel, ChangeLogMixin, InactiveMixin):
         related_name="business_unit_children",
     )
     #: The Active Directory organizational unit that is associated with the business unit
-    ad_ou: str = models.CharField(max_length=256, default=get_default_ou)
+    ad_ou: str = models.CharField(
+        max_length=256, default=get_default_ou, null=False, blank=False
+    )
     #: The Employee that is the manager of the Business Unit
     manager: "employee.models.Employee" = models.ForeignKey(
         "employee.Employee",

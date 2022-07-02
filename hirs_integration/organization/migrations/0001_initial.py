@@ -71,7 +71,10 @@ class Migration(migrations.Migration):
                 (
                     "ad_ou",
                     models.CharField(
-                        default=organization.models.get_default_ou, max_length=256
+                        default=organization.models.get_default_ou,
+                        max_length=256,
+                        null=False,
+                        blank=False,
                     ),
                 ),
                 ("lft", models.PositiveIntegerField(editable=False)),
