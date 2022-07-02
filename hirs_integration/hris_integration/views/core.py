@@ -152,7 +152,11 @@ class FormView(TemplateResponseMixin, LoggedInView):
         """
 
         logger.debug(f"post data is: {request.POST}")
-        if kwargs["id"] != 0 and request.POST.get("id", 0) != kwargs.get("id", 0):
+        if int(kwargs["id"]) != 0 and int(request.POST.get("id", 0)) != int(
+            kwargs.get("id", 0)
+        ):
+            logger.warn(f"ID in post data does not match ID in url")
+            logger.debug(f"ID in post data: {request.POST.get('id', 0)}")
             return HttpResponseBadRequest("The ID may not be changed once set")
         if self._form.is_valid():
             logger.debug("Form is valid, saving()")
@@ -193,6 +197,7 @@ class FormView(TemplateResponseMixin, LoggedInView):
         try:
             pk = kwargs["id"]
         except KeyError:
+            logger.warn("No ID in kwargs")
             return HttpResponseBadRequest()
 
         o = self._model.objects.get(pk=pk)
