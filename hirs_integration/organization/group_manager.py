@@ -7,7 +7,7 @@ from pyad import ADGroup
 from organization.models import GroupMapping
 from common import validators
 
-logger = logging.getLogger("ad_export.GroupManager")
+logger = logging.getLogger("organization.GroupManager")
 
 
 class GroupManager:
