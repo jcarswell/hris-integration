@@ -13,7 +13,18 @@ from .errors import (
     win32Exception,
     genericADSIException,
     comException,
+    Error,
+    Warning,
+    InterfaceError,
+    DatabaseError,
+    DataError,
+    IntegrityError,
+    InternalError,
+    ProgrammingError,
+    NotSupportedError,
+    OperationalError,
 )
+from .com_error_helper import get_com_exception
 
 __all__ = (
     "ActiveDirectoryError",
@@ -27,4 +38,15 @@ __all__ = (
     "win32Exception",
     "genericADSIException",
     "comException",
+    "Error",
+    "Warning",
+    "InterfaceError",
+    "DatabaseError",
+    "DataError",
+    "IntegrityError",
+    "InternalError",
+    "ProgrammingError",
+    "NotSupportedError",
+    "OperationalError",
+    "get_com_exception",
 )
