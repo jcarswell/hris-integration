@@ -53,13 +53,14 @@ class BaseExport:
     call points that can be used to inject custom logic via sub-classing, these calls
     are:
 
-    - new_user_pre: Called before a AD user is created providing an opportunity to update the
-        EmployeeManager instance before the being passed to the AD User creation process.
-    - new_user_post: Called once the AD user is created, but before the main update_user method
-        is called.
+    - new_user_pre: Called before a AD user is created providing an opportunity to
+        update the EmployeeManager instance before the being passed to the AD User
+        creation process.
+    - new_user_post: Called once the AD user is created, but before the main
+        update_user method is called.
     - update_user_extra: Called after the basic employee update has been called
-    - run_post: Any final task that should be run once everything has been completed, such as
-        executing actions against the new_users list
+    - run_post: Any final task that should be run once everything has been completed,
+        such as executing actions against the new_users list
     """
 
     def __init__(self, full=False) -> None:
@@ -242,9 +243,12 @@ class BaseExport:
             attribs["telephoneNumber"] = employee.phone.number
 
         if employee.address:
-            street = eval(
-                str(employee.address.street1)
-            )  # Catch a list stored as a string
+            try:
+                street = eval(
+                    str(employee.address.street1)
+                )  # Catch a list stored as a string
+            except SyntaxError:
+                street = None
             if isinstance(street, list):
                 attribs["streetAddress"] = "\r\n".join(street)
             else:
@@ -348,6 +352,8 @@ class BaseExport:
 class ADUserExport(BaseExport):
     """Extends the BaseExport class with the ability to create Exchange mailboxes"""
 
+    mailboxes: List[str] = []
+
     def __init__(self, full: bool = False) -> None:
         """Adds the mailboxes list to track all the new users that need to get created"""
 
@@ -359,7 +365,8 @@ class ADUserExport(BaseExport):
 
         :param username: The username for the Employee
         :type username: string
-        :param email_alias: The email alias which is used only when creating remote mailboxes
+        :param email_alias: The email alias which is used only when creating remote
+            mailboxes
         :type email_alias: string
         :return: The mailbox creation command
         :rtype: string
@@ -370,7 +377,10 @@ class ADUserExport(BaseExport):
             return f"Enable-Mailbox {username}"
         elif type.lower() == "remote":
             route_address = self.config(config.CONFIG_CAT, config.CONFIG_ROUTE_ADDRESS)
-            return f"Enable-RemoteMailbox {username} -RemoteRoutingAddress {email_alias}@{route_address}"
+            return (
+                f"Enable-RemoteMailbox {username} -RemoteRoutingAddress {email_alias}"
+                f"@{route_address}"
+            )
         else:
             logger.warning(
                 f"mailbox type {type} is not supported use either remote or local"
@@ -479,8 +489,9 @@ class ADUserExport(BaseExport):
         )
 
     def __del__(self):
-        """In the event that we terminate early ensure that users mailboxes are setup or at least written to file
-        before the class is deleted
+        """
+        In the event that we terminate early ensure that users mailboxes are setup
+        or at least written to file before the class is deleted
         """
 
         if self.mailboxes:
