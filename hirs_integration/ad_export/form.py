@@ -16,11 +16,22 @@ from django.conf import settings
 from time import time
 from pywintypes import com_error
 from datetime import datetime
+from smtp_client.actions.template import SmtpTemplate
+from active_directory.exceptions import (
+    InterfaceError,
+    DatabaseError,
+    DataError,
+    IntegrityError,
+    InternalError,
+    ProgrammingError,
+    NotSupportedError,
+    OperationalError,
+    get_com_exception,
+)
 
 from .exceptions import ADResultsError
 from .helpers import config
 from .helpers.ad_interface import AD
-from smtp_client.actions.template import SmtpTemplate
 
 logger = logging.getLogger("ad_export.form")
 
@@ -75,7 +86,13 @@ class BaseExport:
         for employee in self.employees:
             logger.debug(f"Processing {str(employee)}")
             if isinstance(employee.ad_user, ADUser):
-                self._ad.move(employee.ad_user, employee)
+                try:
+                    self._ad.move(employee.ad_user, employee)
+                except AttributeError:
+                    logger.error(
+                        f"Failed to move {str(employee)} this is likely due to a missing "
+                        "primary job, business unit, or AD OU for the business unit"
+                    )
             elif employee.ad_user is None and employee.employee.state:
                 logger.debug(f"Creating new user for {str(employee)}")
                 employee = self.new_user_pre(employee)
@@ -93,46 +110,49 @@ class BaseExport:
                     logger.exception(f"Error creating user {str(employee)}")
 
             if isinstance(employee.ad_user, ADUser):
+                logger.debug(f"Updating AD instance")
                 try:
-                    logger.debug(f"Updating AD instance")
                     self.update_user(employee)
                     self.update_user_extra(employee, employee.ad_user)
-                    employee.ad_user.flush()  # ensure that updates are committed
+                except AttributeError as e:
+                    self.errors.append(
+                        f"Configuration for employee {str(employee)} is invalid"
+                    )
+                    logger.warn(f"Can't update {str(employee)} - {str(e)}")
+                try:
+                    employee.ad_user.flush()
                 except com_error as e:
-                    if e.args[2][5] == -2147016657:
-                        logger.warning(
-                            "Encounter constraint violation while updating "
-                            f"{employee.ad_user}"
-                        )
-                    elif e.args[2][5] == -2147019886:
-                        logger.error(
-                            f"Uniqueness violation while updating {employee.ad_user}"
-                        )
-                    else:
+                    err, msg, excp = get_com_exception(e.args[2][5])
+                    if excp == OperationalError:
                         logger.warn(
-                            f"Caught Error updating user {str(e.args[2][2])}. Trying "
+                            f"Caught {err} error updating user {str(employee)}. Trying "
                             "to back off for 60s"
                         )
-                        logger.debug(f"Error: {str(e.args[2])}")
+                        logger.debug(
+                            f'Error: "{err}", Message: "{msg}", code: {e.args[2][5]}'
+                        )
                         sleep(60)
                         try:
-                            employee.ad_user.flush()  # ensure that updates are committed
-                        except Exception as e:
-                            logger.exception(
-                                f"Caught {str(e)} while updating employee {str(employee)}"
-                            )
-                            self.errors.append(
-                                f"Failed to update {str(employee)} - Error {str(e)}"
-                            )
                             employee.ad_user.flush()
-                except Exception as e:
-                    logger.exception(
-                        f"Caught {str(e.args[2][2])} while updating employee {str(employee)}"
-                    )
-                    logger.debug(f"Error: {str(e.args[2])}")
-                    self.errors.append(
-                        f"Failed to update {str(employee)} - Error {str(e[2][2])}"
-                    )
+                        except com_error as e:
+                            err, msg, excp = get_com_exception(e.args[2][5])
+                            if not issubclass(excp, (DatabaseError, Warning)):
+                                raise excp(f"{err} {msg}", com_error=e.args[2]) from e
+                            self.errors.append(
+                                f"Failed to update {str(employee)}, Error {str(msg)}"
+                            )
+                            logger.error(
+                                f"Error updating user {str(employee)}, Error {err}"
+                            )
+                    elif not issubclass(excp, (DatabaseError, Warning)):
+                        raise excp(f"{err} {msg}", com_error=e.args[2]) from e
+                    else:
+                        self.errors.append(
+                            f"Failed to update {str(employee)}, Error {str(msg)}"
+                        )
+                        logger.error(
+                            f"Error updating user {str(employee)}, Error {err}"
+                        )
 
         self.run_post_new_users()
 
@@ -172,7 +192,9 @@ class BaseExport:
         pass
 
     def run_post_new_users(self):
-        """Defines tasks to be run for new employees after all employees have been added."""
+        """
+        Defines tasks to be run for new employees after all employees have been added.
+        """
 
         if self.new_users:
             msg = "The following new users have been add:\n"
@@ -203,6 +225,7 @@ class BaseExport:
         :param employee: the current employee that's being processed
         :type employee: config.EmployeeManager
         """
+
         attribs = {
             "givenName": employee.firstname,
             "sn": employee.lastname,
@@ -219,7 +242,17 @@ class BaseExport:
             attribs["telephoneNumber"] = employee.phone.number
 
         if employee.address:
-            attribs["streetAddress"] = employee.address.street1
+            street = eval(
+                str(employee.address.street1)
+            )  # Catch a list stored as a string
+            if isinstance(street, list):
+                attribs["streetAddress"] = "\r\n".join(street)
+            else:
+                for x in range(1, 4):
+                    attribs[f"streetAddress"] = "\r\n".join(
+                        getattr(employee.address, "street%i" % x)
+                    )
+
             attribs["postOfficeBox"] = employee.address.postal_code
             attribs["l"] = employee.address.city
             attribs["st"] = employee.address.province
@@ -229,8 +262,7 @@ class BaseExport:
             attribs["employeeID"] = employee.id
 
         if employee.photo.readable():
-            with open(employee.photo.path, "rb") as photo:
-                attribs["thumbnailPhoto"] = b64encode(photo.read())
+            attribs["thumbnailPhoto"] = b64encode(employee.photo.open("rb").read())
 
         try:
             if employee.manager and employee.manager.employee.is_exported_ad:
