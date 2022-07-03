@@ -511,6 +511,8 @@ class EmployeeManager:
 
         return self.employee.primary_job.business_unit.name
 
+    _manager = None
+
     @property
     def manager(self):
         """The Employee's managers EmployeeManager. The manager is derived from either their set
@@ -520,15 +522,17 @@ class EmployeeManager:
         :rtype: EmployeeManager
         """
 
+        if self._manager:
+            return self._manager
+
         try:
-            return EmployeeManager(
+            logger.debug("Getting manager for employee %s", self.employee.id)
+            self._manager = EmployeeManager(
                 self.employee.manager or self.employee.primary_job.business_unit.manager
             )
+            return self._manager
         except Exception:
-            try:
-                return EmployeeManager(self.employee.primary_job.bu.manager)
-            except Exception:
-                return None
+            return None
 
     @property
     def import_manager(self) -> "EmployeeManager":
