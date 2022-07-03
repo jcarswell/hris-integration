@@ -125,7 +125,7 @@ class Employee(TemplateResponseMixin, LoggedInView):
         if request.FILES:
             if len(request.FILES) > 1:
                 errors += list(request.FILES.keys())
-            else:
+            elif request.FILES["photo"].name:
                 upload = models.employee_upload_to(
                     employee, request.FILES["photo"].name
                 )
