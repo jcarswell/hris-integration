@@ -4,17 +4,18 @@
 import logging
 import subprocess
 import os
+import pythoncom
 
 from time import sleep
 from typing import List
 from pyad.aduser import ADUser
-from base64 import b64encode
 from smtp_client.smtp import Smtp
 from smtp_client import SmtpToInvalid, SmtpServerError, ConfigError
 from jinja2 import Environment, PackageLoader
 from django.conf import settings
 from time import time
 from pywintypes import com_error
+from win32com.client import VARIANT
 from datetime import datetime
 from smtp_client.actions.template import SmtpTemplate
 from active_directory.exceptions import (
@@ -265,8 +266,25 @@ class BaseExport:
         if employee.ad_user.get_attribute("employeeID") != employee.id:
             attribs["employeeID"] = employee.id
 
-        if employee.photo.readable():
-            attribs["thumbnailPhoto"] = b64encode(employee.photo.open("rb").read())
+        if (
+            False and employee.photo.name
+        ):  # TODO: This is disabled for now due to issues with converting the photo possible
+            logger.debug(f"Setting photo for {str(employee)}")
+            try:
+                v = VARIANT(
+                    pythoncom.VT_ARRAY | pythoncom.VT_UI1,
+                    list(bytearray(employee.photo.open("rb").read())),
+                )
+                employee.ad_user._ldap_adsi_obj.putEx(
+                    2,
+                    "thumbnailPhoto",
+                    v,
+                )
+                logger.debug(f"Photo set for {str(employee)}")
+                employee.ad_user.flush()
+            except com_error as e:
+                logger.debug(get_com_exception(e.args[2][5]), e)
+                logger.warning(f"Failed to update photo for {str(employee)}")
 
         try:
             if employee.manager and employee.manager.employee.is_exported_ad:
@@ -299,8 +317,31 @@ class BaseExport:
         """
 
         logger.debug(f"Updating groups for {employee}")
-        self._ad.groups_add(employee.ad_user, employee.groups_add())
-        self._ad.groups_remove(employee.ad_user, employee.groups_remove())
+        try:
+            self._ad.groups_add(employee.ad_user, employee.groups_add())
+        except com_error as e:
+            err, msg, exce = get_com_exception(e.args[2][5])
+            if err == "LDAP_REFERRAL":
+                logger.error("One or more of the parsed groups is invalid")
+                self.errors.append("One or more of the parsed groups is invalid")
+            else:
+                logger.error(
+                    f"A {exec.__name__} was encountered while adding groups "
+                    f"Error {msg}"
+                )
+
+        try:
+            self._ad.groups_remove(employee.ad_user, employee.groups_remove())
+        except com_error as e:
+            err, msg, exce = get_com_exception(e.args[2][5])
+            if err == "LDAP_REFERRAL":
+                logger.error("One or more of the parsed groups is invalid")
+                self.errors.append("One or more of the parsed groups is invalid")
+            else:
+                logger.error(
+                    f"A {exec.__name__} was encountered while adding groups "
+                    f"Error {msg}"
+                )
 
     def update_user_extra(self, employee: config.EmployeeManager, user: ADUser):
         """To be implemented in a sub-class. Set any extra attributes for the user.
