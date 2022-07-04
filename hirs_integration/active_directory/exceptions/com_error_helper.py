@@ -154,8 +154,10 @@ AD_EXCEPTIONS: Dict[hex, Tuple[AnyStr, AnyStr, Error]] = {
     ),
     "0x80072035": (
         "LDAP_UNWILLING_TO_PERFORM",
-        "Server cannot perform operation",
+        "Server cannot perform operation, this may be because of a integrity policy",
         OperationalError,
+        # This could also be an IntegrityError as it could be something like a password
+        # that doesn't meet the complexity requirements
     ),
     "0x80072036": ("LDAP_LOOP_DETECT", "Loop was detected", DataError),
     "0x80072037": (
