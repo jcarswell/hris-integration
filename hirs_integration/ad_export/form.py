@@ -452,20 +452,6 @@ class ADUserExport(BaseExport):
         Clear the initial password from the employee object if the user has logged into
         the domain at least once.
         """
-        # TODO: This need to be removed from the public code base
-        if employee.status:
-            if employee.employee.status == config.STATE_LEA:
-                self._ad.update_attributes(
-                    user, acsCard1State=True, acsCard2Status=True
-                )
-                user.clear_managedby(False)
-            else:
-                self._ad.update_attributes(
-                    user, acsCard1State=False, acsCard2Status=False
-                )
-        else:
-            self._ad.update_attributes(user, acsCard1State=True, acsCard2Status=True)
-            user.clear_managedby(False)
 
         if user.get_last_login() > datetime(1970, 1, 1):
             logger.debug(f"{employee} has logged in at least once, clearing password")
