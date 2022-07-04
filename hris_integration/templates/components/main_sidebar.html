@@ -1,0 +1,151 @@
+{% load i18n static %}
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <!-- Brand Logo -->
+  <a href="/" class="brand-link">
+    <img src="{% static 'logo.svg' %}"
+         alt="HRIS Sync" class="brand-image">
+    <span class="brand-text font-weight-light">{{ site.name | default:"HRIS Sync" }}</span>
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Sidebar user panel (optional) -->
+    <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+      <div class="image">
+        <img src="{% static 'default-user.jpg' %}" class="img-circle elevation-2"
+             alt="User Image">
+      </div>
+      <div class="info">
+        <a href="#" class="d-block">
+          {% firstof request.user.get_full_name request.user.get_username %}
+          </a>
+      </div>
+    </div>
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+          data-accordion="false">
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-users"></i>
+            <p>
+              Employees
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'employee' %}" class="nav-link">
+                <i class="fas fa-user nav-icon"></i>
+                <p>Employees</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'employee_imported_list' %}" class="nav-link">
+                <i class="far fa-user nav-icon"></i>
+                <p>Synced Employees</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'import_pending' %}" class="nav-link">
+                <i class="fas fa-file-import nav-icon"></i>
+                <p>Pending Import</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-briefcase"></i>
+            <p>
+              Organization Setup
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'jobs' %}" class="nav-link">
+                <i class="fas fa-hat-cowboy-side nav-icon"></i>
+                <p>Job Roles</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'business_units' %}" class="nav-link">
+                <i class="fas fa-sitemap nav-icon"></i>
+                <p>Business Units</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'location' %}" class="nav-link">
+                <i class="fas fa-building nav-icon"></i>
+                <p>Locations</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'group_mappings' %}" class="nav-link">
+                <i class="fas fa-globe nav-icon"></i>
+                <p>AD Group Mapping</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-address-card"></i>
+            <p>
+              User Applications
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'software' %}" class="nav-link">
+                <i class="fas fa-compact-disc nav-icon"></i>
+                <p>Applications</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'accounts' %}" class="nav-link">
+                <i class="fas fa-address-card nav-icon"></i>
+                <p>Instances</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        {% block extra_nav %}{% endblock %}
+        <li class="nav-item has-treeview menu-open">
+          <a role="button" class="nav-link">
+            <i class="nav-icon fas fa-cog"></i>
+            <p>
+              Settings
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{% url 'settings' %}" class="nav-link">
+                <i class="fas fa-cogs nav-icon"></i>
+                <p>Settings</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'patterns' %}" class="nav-link">
+                <i class="fas fa-list nav-icon"></i>
+                <p>Word List Mapping</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'email_template' %}" class="nav-link">
+                <i class="fas fa-file-alt nav-icon"></i>
+                <p>Email Templates</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  <!-- /.sidebar-menu -->
+  </div>
+  <!-- /.sidebar -->
+</aside>

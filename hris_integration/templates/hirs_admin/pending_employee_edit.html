@@ -1,0 +1,24 @@
+{% extends "base/base_edit.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="alert-container" class="row d-none"></div>
+<div class="container">
+  {% block feild_set %}
+  <form id="form_list" {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}>
+    {% csrf_token %}
+    {{ form.as_form }}
+    <div class="form-row">
+      <button type="submit" name="submit" class="btn btn-primary" style="margin: 4pt 0 0 auto;"><strong>Submit</strong></button>
+    </div>
+  </form>
+  {% endblock %}
+  {% if password %}
+  <hr style="border-top:2px solid #bbb;">
+  <h3 id="password">Default Password</h3>
+  <div style="padding-bottom: 15pt;">
+    <input type="password" class="form-control" data-toggle="password" value="{{ password }}">
+  </div>
+  {% endif %}
+<div>
+{% endblock content %}

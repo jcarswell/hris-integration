@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+{% load static i18n %}
+
+{% block page_actions %}
+<div class="btn-toolbar mb-2 mb-md-0">
+  <a class="btn btn-md btn-primary" style="margin:0 2pt;" id="btn_back" href="#"><i class="fas fa-arrow-circle-left"></i> Back</a>
+<div>
+{% endblock %}
+
+{% block content %}
+<div id="alert-container" class="row d-none"></div>
+<div class="container">
+  {% if manual_import_form == False %}
+  <a>There's nothing to do for now. Please check back tomorrow.</a>
+  {% else %}
+  <h3>Manual Pending Employee Import</h3>
+  <form class="form-95" id="manual_import_form"{% if form_url %} action="{{ form_url }}"{% endif %}>
+    {% csrf_token %}
+    {{ manual_import_form }}
+    <div class="form-row">
+      <button type="submit" class="btn btn-success" style="margin: 4pt 0 0 auto;">
+        Go <i class="fas fa-arrow-circle-right"></i></button>
+    </div>
+  </form>
+  {% endif %}
+<div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'form.js' %}"></script>
+<script>
+$('form').each(function(i,v) {
+  $(this).submit(function(e) {
+    e.preventDefault();
+    data = serialize_form(this)
+    data.push({name:"form",value:$(this)[0].id});
+    console.debug("POSTing form: " + $(this)[0].id)
+    
+    $.ajax({
+      method: "POST",
+      url: location.href,
+      data: data
+    })
+    .done(function(data) {
+      doneProcess(data);
+      if (data['status'] === 'success') {
+        location.reload();
+      }
+    })
+    .fail(function(jqXHR,Status,error) {errorProcess(jqXHR,status,error);});
+  });
+});
+</script>
+{% endblock %}

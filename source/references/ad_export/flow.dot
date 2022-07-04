@@ -1,0 +1,62 @@
+digraph base {
+    graph [compound=true,rankdir=TB,rank=source]
+    start [color=green,shape=Mdiamond]
+    subgraph clusterad_export {
+        graph [label="ad_export.run()"]
+        {
+            graph [compound=true,
+                   rank=same,
+                   rankdir=LR]
+            node [shape=box,style=rounded];
+            load [label="Load Form\nfrom configuration"]
+            call [label="Form.form().run()"]
+        }
+        load -> call
+    }
+    subgraph clusterform {
+        graph [label="ad_export/form.py"]
+        {
+            graph [rankdir=TB,rank=source,ranksep="1 equally"]
+            form_init [label="__init__()
+self.employees = config.get_employees()
+self._ad = AD()"]
+        }
+        subgraph clusterform_run {
+            graph [label="run()"]
+            {
+                graph [rank=source,rankdir=TB,ranksep="1 equally"]
+                node [shape=box,style=rounded]
+                form_loop [label="Employee Loop"]
+                form_msg [label="if new_users send email notification"]
+                form_post [label="self.run_post()"]
+            }
+            subgraph clusterform_loop {
+                graph [label="Employee Loop"]
+                {
+                    graph [rank=source,label="",compound=true,rankdir=TB,ranksep="1 equally"]
+                    node [shape=box,style=rounded]
+                    ad_exist  [label="Check if employee exists\nuser=get_user"]
+                    ad_create [label="If employee doens't exist
+employee = self.new_user_pre(employee)
+_ad.create_user
+self.new_user_post
+add to self.new_users"]
+                    ad_update [label="If employee exist\n
+update_user
+update_user_extra
+update_groups
+merge pending and employee object"]
+                }
+                ad_exist -> {ad_create ad_update}
+                ad_create -> ad_update
+            }
+        }
+        form_loop -> ad_exist
+        ad_update -> form_loop
+        form_loop -> form_msg -> form_post
+    }
+
+    start -> load [lhead=clusterad_export];
+    call -> form_init [dir=both]
+    call -> form_loop [lhead=clusterform_run]
+}

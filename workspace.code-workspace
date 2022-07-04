@@ -5,14 +5,21 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": "C:\\Users\\jcarswell\\Python39-32\\python.exe",
 		"git.ignoreLimitWarning": true,
 		"files.associations": {
 			"**/*.html": "html",
 			"**/templates/**/*.html": "django-html",
 			"**/templates/**/*": "django-txt",
 			"**/requirements{/**,*}.{txt,in}": "pip-requirements"
-		}
+		},
+		"autoDocstring.docstringFormat": "sphinx",
+		"pythonIndent.keepHangingBracketOnLine": true,
+		"pythonIndent.trimLinesWithOnlyWhitespace": true,
+		"cSpell.words": [
+			"corepoint",
+			"HRIS"
+		],
+		"editor.rulers": [90,110]
 	},
 	"launch": {
 		"version": "0.2.0",
