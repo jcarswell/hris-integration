@@ -5,7 +5,9 @@ import logging
 
 from pyad import ADContainer, ADGroup, ADQuery, ADUser, InvalidAttribute, win32Exception
 from active_directory import search, TooManyResults
+from active_directory.exceptions import get_com_exception, raise_from_com
 from pywintypes import com_error
+from typing import Dict
 
 from . import config
 from ad_export.exceptions import ADResultsError, UserDoesNotExist, ADCreateError
@@ -14,6 +16,9 @@ logger = logging.getLogger("ad_export.ADInterface")
 
 
 class AD:
+
+    invalid_groups: Dict[str, bool] = {}
+
     def __init__(self, base_dn=None) -> None:
         self.base_dn = base_dn
         self.mode = "ADSI"
@@ -132,16 +137,40 @@ class AD:
 
     def groups_add(self, user: ADUser, groups: list) -> None:
         for group in groups:
-            g = ADGroup.from_dn(group)
             try:
-                g.add_members(user)
+                if AD.invalid_groups.get(group, True):
+                    g = ADGroup.from_dn(group)
+                    g.add_members(user)
+            except com_error as e:
+                err, _, _ = get_com_exception(e.args[2][5])
+                if err == "LDAP_REFERRAL":
+                    logger.warning(f"Group '{group}' is invalid")
+                    AD.invalid_groups[group] = False
+                else:
+                    raise_from_com(
+                        e.args[2],
+                        message=f"Failed to add {user} to {group}",
+                        exception=e,
+                    )
             except Exception:
-                logger.error(f"failed to add {g} for {user}")
+                logger.warning(f"Failed to add {user} to {group}")
 
     def groups_remove(self, user: ADUser, groups: list) -> None:
         for group in groups:
-            g = ADGroup.from_dn(group)
             try:
-                g.remove_members(user)
+                if AD.invalid_groups.get(group, True):
+                    g = ADGroup.from_dn(group)
+                    g.remove_members(user)
+            except com_error as e:
+                err, _, _ = get_com_exception(e.args[2][5])
+                if err == "LDAP_REFERRAL":
+                    logger.warning(f"Group '{group}' is invalid")
+                    AD.invalid_groups[group] = False
+                else:
+                    raise_from_com(
+                        e.args[2],
+                        message=f"Failed to remove {user} from {group}",
+                        exception=e,
+                    )
             except Exception:
-                logger.error(f"failed to add {g} for {user}")
+                logger.warning(f"failed to remove {user} from group")
