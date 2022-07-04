@@ -87,6 +87,18 @@ class BaseExport:
         logger.debug("Starting AD Export main loop")
         for employee in self.employees:
             logger.debug(f"Processing {str(employee)}")
+            if employee.ad_user is None and employee.employee.state:
+                logger.debug("User is new or guid is missing, trying to find user")
+                if employee.id > 0:
+                    user = self._ad.get_user_by_id(employee.id)
+                else:
+                    user = self._ad.get_user_by_username(employee.username)
+                if user:
+                    logger.debug(f"Found user {str(user)}")
+                    employee.ad_user = user
+                    employee.guid = str(user.guid)
+                    employee.employee.save()
+
             if isinstance(employee.ad_user, ADUser):
                 try:
                     self._ad.move(employee.ad_user, employee)
