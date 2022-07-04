@@ -13,12 +13,14 @@ logger = logging.getLogger("organization.GroupManager")
 class GroupManager:
     """
     The GroupManager represent all of the groups that are linked to an employee based on
-    the employees job, business unit, and location. Optionally applications that are linked
-    to an employee can be added via the add_application method.
+    the employees job, business unit, and location. Optionally applications that are
+    linked to an employee can be added via the add_application method.
 
-    Once initialized the self.add_groups and self.remove_groups lists are populated with the
-    relevant groups and the self.leave_groups list is populated with the groups that should
-    be added when an employee is on leave and removed when the employee returns.
+    Once initialized the self.add_groups and self.remove_groups lists are populated with
+    the relevant groups and the self.leave_groups list is populated with the groups that
+    should be added when an employee is on leave and removed when the employee returns.
+
+    While parsing the groups a remove will always take precedence over an add.
     """
 
     #: The groups to be added to the employee
@@ -170,8 +172,8 @@ class GroupManager:
 
     def _remove(self, group: str) -> None:
         """
-        Ensure that the group is not in the add_groups list, and add it to the remove_groups
-        list if it's not already in the list.
+        Ensure that the group is not in the add_groups list, and add it to the
+        remove_groups list if it's not already in the list.
 
         :param group: The group to add to the remove_groups list
         :type group: str
@@ -195,8 +197,8 @@ class GroupManager:
 
     def parse_group(self, groups: str) -> list:
         """
-        Parse a string of groups into a list of groups and attempt to resolve non-dn strings
-        to valid AD Groups.
+        Parse a string of groups into a list of groups and attempt to resolve non-dn
+        strings to valid AD Groups.
 
         :param groups: String of groups to parse
         :type groups: str
