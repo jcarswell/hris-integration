@@ -88,6 +88,7 @@ class EmployeeManager(EmployeeManager):
 
         if hasattr(self.employee, "guid"):
             self.employee.guid = guid
+            self.employee.is_exported_ad = True
 
     @property
     def enabled(self) -> bool:
@@ -168,6 +169,7 @@ def get_employees(
         employees = Employee.objects.all()
 
     for employee in employees:
+        logger.debug(f"Processing Employee {str(employee)}")
         add_emp(employee)
 
     logger.debug(f"Processed {len(output)} Employees")
