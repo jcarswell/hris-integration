@@ -37,7 +37,8 @@ class S2AccountSerializer(Select2Serializer):
     class Meta(Select2Meta):
         model = models.Account
         field_id = "id"
-        field_text = ["software"]
+        field_text = ["software", "employee"]
+        field_text_format = "{str(employee)} - {software.name}"
 
 
 class AccountSerializer(ModelSerializer):
