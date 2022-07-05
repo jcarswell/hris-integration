@@ -28,7 +28,7 @@
 				"name": "Python: Django",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}\\hirs_integration\\manage.py",
+				"program": "${workspaceFolder}\\hris_integration\\manage.py",
 				"args": [
 					"runserver"
 				],
@@ -38,7 +38,7 @@
 				"name": "Python: Django AD Export",
 				"type": "python",
 				"request": "launch",
-				"program": "${workspaceFolder}\\hirs_integration\\manage.py",
+				"program": "${workspaceFolder}\\hris_integration\\manage.py",
 				"args": [
 					"runadexport"
 				],
