@@ -13,24 +13,26 @@ import os
 import sys
 
 # I've simplified this a little to use append instead of insert.
-sys.path.append(os.path.abspath('../hirs_integration'))
+sys.path.append(os.path.abspath("../hris_integration"))
 
 # Specify settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hris_integration.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hris_integration.settings")
 
 # Setup Django
 import django
+
 django.setup()
 
 import sphinx_rtd_theme
+
 # -- Project information -----------------------------------------------------
 
-project = 'HRIS Integration'
-copyright = '2022, Josh Carswell'
-author = 'Josh Carswell'
+project = "HRIS Integration"
+copyright = "2022, Josh Carswell"
+author = "Josh Carswell"
 
 # The full version, including alpha/beta/rc tags
-release = '0.3'
+release = "0.3"
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,10 +41,10 @@ release = '0.3'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'myst_parser',
-    'sphinx.ext.autosectionlabel',
-    'sphinx_rtd_theme'
+    "sphinx.ext.autodoc",
+    "myst_parser",
+    "sphinx.ext.autosectionlabel",
+    "sphinx_rtd_theme",
 ]
 
 myst_enable_extensions = [
@@ -51,11 +53,11 @@ myst_enable_extensions = [
     "html_admonition",
     "html_image",
     "strikethrough",
-    "tasklist"
+    "tasklist",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -68,9 +70,9 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
