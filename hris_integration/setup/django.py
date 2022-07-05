@@ -10,6 +10,7 @@ from pathlib import Path
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.management import call_command
+from subprocess import run
 
 logger = logging.getLogger("Django Setup Module")
 
@@ -62,7 +63,6 @@ def setup(
     """
 
     call_command("migrate")
-    call_command("collectstatic", interactive=False)
 
     try:
         logger.debug(
@@ -89,6 +89,10 @@ def setup(
     if ftp_headers.exists():
         with open(ftp_headers, "r") as f:
             CsvImport(f)
+
+    logger.info("Building Docs")
+    run(["sphinx-build.exe", "-b", "html", "../source", "static-core/docs"])
+    call_command("collectstatic", interactive=False)
 
     if service:
         import cron
