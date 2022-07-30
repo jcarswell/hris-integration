@@ -18,7 +18,7 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = Path(BASE_DIR, "logs")
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 if os.getenv("CONFIG_PATH"):
     sys.path.append(os.getenv("CONFIG_PATH"))
