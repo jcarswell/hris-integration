@@ -873,35 +873,6 @@ class EmployeeForm(BaseImport):
             logger.debug(f"Saving phone {phone}")
             phone.save()
 
-    # Old code the was buggy
-    #        for key, value in self.kwargs.items():
-    #            # Given that there is only one field per phone but we can have multiple phone
-    #            # numbers we attempt to get the phone number with the label.
-    #            logger.debug(f"Saving phone number for {key}")
-    #            try:
-    #                phone = self._get_phone(key)
-    #                #logger.debug(f"Found phone number {repr(phone)}")
-    #            except Phone.MultipleObjectsReturned:
-    #                logger.warning(
-    #                    "More than one phone number exists. Cowardly not doing anything"
-    #                )
-    #                return
-    #            except KeyError:
-    #                # This should only happen if the employee is not matched but the flag is set
-    #                return
-    #            map_val = self.get_map_to(key)
-    #            if hasattr(phone, map_val) and value:
-    #                number = PhoneNumber(value).number
-    #                if number != getattr(phone, map_val):
-    #                    logger.debug(f"Updating {map_val} to {number}")
-    #                    setattr(phone, map_val, number)
-    #                if phone.label != key:
-    #                    logger.debug("label changed from '{phone.label}' => '{key}'")
-    #
-    #                if phone.number:
-    #                    phone.primary = False
-    #                    phone.save()
-
     def _get_address(self, label: str = None) -> Address:
         """
         Similar to _get_phone, but for addresses. This method also filters based on the
