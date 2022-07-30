@@ -1,6 +1,7 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from cProfile import label
 import datetime
 import logging
 import re
@@ -14,7 +15,7 @@ from extras.models import Notification
 from organization.models import JobRole, Location, BusinessUnit
 from django.db.utils import IntegrityError
 from django.db.models import Q
-from common.functions import get_model_pk_name
+from common.functions import get_model_pk_name, PhoneNumber
 
 
 from ftp_import.helpers import config
@@ -811,7 +812,7 @@ class EmployeeForm(BaseImport):
             except IntegrityError:
                 logger.error(f"Failed to save {self.employee}")
 
-    def _get_phone(self) -> Phone:
+    def _get_phone(self, label: str = None) -> Phone:
         """
         Attempts to get the Phone object for the employee. If one does not exist,
         a new one will be created with the base fields set. If one exists, it will be returned
@@ -823,7 +824,12 @@ class EmployeeForm(BaseImport):
         """
 
         if self.employee.employee:
-            phones_no = Phone.objects.filter(employee=self.employee.employee)
+            if label:
+                phones_no = Phone.objects.filter(
+                    Q(employee=self.employee.employee) & Q(label=label)
+                )
+            else:
+                phones_no = Phone.objects.filter(employee=self.employee.employee)
         else:
             return KeyError("No mutable employee")
 
@@ -843,26 +849,55 @@ class EmployeeForm(BaseImport):
             # This is a pending employee so we can't save the phone number
             return
 
-        try:
-            phone = self._get_phone()
-        except Phone.MultipleObjectsReturned:
-            logger.warning(
-                "More than one phone number exists. Cowardly not doing anything"
-            )
-            return
-        except KeyError:
-            # This should only happen if the employee is not matched but the flag is set
-            return
+        field_label = config.CsvSetting().get_by_map_val("phone_label")
+        field_phone = config.CsvSetting().get_by_map_val("number")
 
-        for key, value in self.kwargs.items():
-            map_val = self.get_map_to(key)
-            if hasattr(phone, map_val) and value:
-                setattr(phone, map_val, value)
-                phone.label = key
+        if field_phone and field_phone in self.kwargs.keys():
+            try:
+                if field_label and field_label in self.kwargs.keys():
+                    phone = self._get_phone(self.kwargs[field_label])
+                else:
+                    phone = self._get_phone()
+            except (Phone.MultipleObjectsReturned, KeyError):
+                return
 
-        if phone.number:
-            phone.primary = False
+            if field_label and field_label in self.kwargs.keys():
+                phone.label = self.kwargs[field_label]
+            else:
+                phone.label = field_phone
+
+            phone.number = PhoneNumber(self.kwargs[field_phone]).number
+            logger.debug(f"Saving phone {phone}")
             phone.save()
+
+    # Old code the was buggy
+    #        for key, value in self.kwargs.items():
+    #            # Given that there is only one field per phone but we can have multiple phone
+    #            # numbers we attempt to get the phone number with the label.
+    #            logger.debug(f"Saving phone number for {key}")
+    #            try:
+    #                phone = self._get_phone(key)
+    #                #logger.debug(f"Found phone number {repr(phone)}")
+    #            except Phone.MultipleObjectsReturned:
+    #                logger.warning(
+    #                    "More than one phone number exists. Cowardly not doing anything"
+    #                )
+    #                return
+    #            except KeyError:
+    #                # This should only happen if the employee is not matched but the flag is set
+    #                return
+    #            map_val = self.get_map_to(key)
+    #            if hasattr(phone, map_val) and value:
+    #                number = PhoneNumber(value).number
+    #                if number != getattr(phone, map_val):
+    #                    logger.debug(f"Updating {map_val} to {number}")
+    #                    setattr(phone, map_val, number)
+    #                if phone.label != key:
+    #                    logger.debug("label changed from '{phone.label}' => '{key}'")
+    #
+    #                if phone.number:
+    #                    phone.primary = False
+    #                    phone.save()
 
     def _get_address(self) -> Address:
         """
@@ -887,21 +922,33 @@ class EmployeeForm(BaseImport):
         else:
             return addrs[0]
 
-    def save_address(self):
+    def save_address(self) -> None:
         """Parse the kwargs for address fields and updates the address object."""
 
         if self.employee.is_matched == False:
             # This is a pending employee so we can't save the address
             return
 
+        label = config.CsvSetting().get_by_map_val("address_label")
+
         try:
             address = self._get_address()
+            if address == None:
+                address = Address(
+                    employee=self.employee.employee, label=label or "Imported Address"
+                )
+            else:
+                logger.debug(f"Found address {address.id}")
         except Address.MultipleObjectsReturned:
             logger.warning("More than one address exists. Cowardly not doing anything")
+            return
+        except KeyError:
+            # This should only happen if the employee is not matched but the flag is set
+            return
 
         for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(address, map_val):
+            if map_val != "id" and hasattr(address, map_val):
                 if map_val[:6] == "street":
                     if isinstance(value, list):
                         for x in range(len(value) if len(value) < 3 else 3):
