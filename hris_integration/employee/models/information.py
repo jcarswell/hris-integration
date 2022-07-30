@@ -26,7 +26,7 @@ class Phone(ChangeLogMixin):
 
     def __str__(self) -> str:
         s = ("%s%s%s-%s%s%s-%s%s%s%s" % tuple(self.number),)
-        return f"Phone: {self.full_name} - {self.label} {s}"
+        return f"Phone: {self.employee.full_name} - {self.label} {s}"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.objects.get(id={self.id})"
@@ -88,7 +88,7 @@ class Address(ChangeLogMixin):
     primary: bool = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return f"Address: {self.full_name} - {self.label}"
+        return f"Address: {self.employee.full_name} - {self.label}"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.objects.get(id={self.id})"
