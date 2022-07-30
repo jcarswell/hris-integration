@@ -55,6 +55,17 @@ settings.
 Release Notes
 =============
 
+0.3.1 - Import Issues
+---------------------
+
+This is a bug fix release. Importing employees would result in errors being thrown for
+saving phone numbers and addresses, due the fact that the pk of all models is now id.
+
+There is a known issues with the employee page for adding phone numbers and addresses, 
+then trying to set them as primary, which will cause that page to be reloaded as the
+submit hook is not registering correctly. To work around this issue, simply refresh the
+page after you have added and phone number or addresses, then check the primary checkbox.
+
 0.3.0 - Quality of Life improvements and Github release
 -------------------------------------------------------
 
