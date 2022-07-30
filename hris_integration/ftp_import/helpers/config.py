@@ -103,8 +103,10 @@ class CsvSetting:
 
     def get_by_map_val(self, map_to: str) -> str:
         for k, v in self.fields.items():
-            if v["map_to"] == map_to:
+            if v["map_to"] == map_to and v["import"]:
                 return k
+            elif not v["import"]:
+                return None
 
 
 def get_fields() -> dict:
