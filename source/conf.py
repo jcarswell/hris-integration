@@ -32,7 +32,7 @@ copyright = "2022, Josh Carswell"
 author = "Josh Carswell"
 
 # The full version, including alpha/beta/rc tags
-release = "0.3"
+release = "0.3.1"
 
 
 # -- General configuration ---------------------------------------------------

@@ -203,3 +203,7 @@ class EmployeeBase(MPTTModel, ChangeLogMixin, EmployeeState):
     def surname(self) -> str:
         warn("surname is deprecated, use last_name instead", DeprecationWarning)
         return self.last_name
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"

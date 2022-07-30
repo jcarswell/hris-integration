@@ -1,6 +1,7 @@
 # Copyright: (c) 2022, Josh Carswell <josh.carswell@thecarswells.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from cProfile import label
 import datetime
 import logging
 import re
@@ -14,7 +15,7 @@ from extras.models import Notification
 from organization.models import JobRole, Location, BusinessUnit
 from django.db.utils import IntegrityError
 from django.db.models import Q
-from common.functions import get_model_pk_name
+from common.functions import get_model_pk_name, PhoneNumber
 
 
 from ftp_import.helpers import config
@@ -811,7 +812,7 @@ class EmployeeForm(BaseImport):
             except IntegrityError:
                 logger.error(f"Failed to save {self.employee}")
 
-    def _get_phone(self) -> Phone:
+    def _get_phone(self, label: str = None) -> Phone:
         """
         Attempts to get the Phone object for the employee. If one does not exist,
         a new one will be created with the base fields set. If one exists, it will be returned
@@ -823,18 +824,26 @@ class EmployeeForm(BaseImport):
         """
 
         if self.employee.employee:
-            phones_no = Phone.objects.filter(employee=self.employee.employee)
+            if label:
+                phone = Phone.objects.filter(
+                    Q(employee=self.employee.employee) & Q(label=label)
+                )
+            else:
+                phone = Phone.objects.filter(employee=self.employee.employee)
         else:
             return KeyError("No mutable employee")
 
-        if len(phones_no) > 1:
+        if len(phone) > 1:
             raise Phone.MultipleObjectsReturned
-        elif len(phones_no) < 1:
-            addr = Phone()
-            addr.employee = self.employee.employee
-            return addr
+        elif len(phone) < 1:
+            phone = Phone()
+            phone.employee = self.employee.employee
+            phone.label = label
+            logger.debug(f"Created new phone object")
+            return phone
         else:
-            return phones_no[0]
+            logger.debug(f"Found existing phone {phone[0]}")
+            return phone[0]
 
     def save_phone(self):
         """Parse the kwargs for phone number fields and update the phone number object."""
@@ -843,28 +852,28 @@ class EmployeeForm(BaseImport):
             # This is a pending employee so we can't save the phone number
             return
 
-        try:
-            phone = self._get_phone()
-        except Phone.MultipleObjectsReturned:
-            logger.warning(
-                "More than one phone number exists. Cowardly not doing anything"
-            )
-            return
-        except KeyError:
-            # This should only happen if the employee is not matched but the flag is set
-            return
+        field_label = self.get_field_name("phone_label")
+        field_phone = self.get_field_name("number")
 
-        for key, value in self.kwargs.items():
-            map_val = self.get_map_to(key)
-            if hasattr(phone, map_val) and value:
-                setattr(phone, map_val, value)
-                phone.label = key
+        if field_phone and field_phone in self.kwargs.keys():
+            try:
+                if field_label and field_label in self.kwargs.keys():
+                    phone = self._get_phone(self.kwargs[field_label])
+                else:
+                    phone = self._get_phone()
+            except (Phone.MultipleObjectsReturned, KeyError):
+                return
 
-        if phone.number:
-            phone.primary = False
+            if field_label and field_label in self.kwargs.keys():
+                phone.label = self.kwargs[field_label]
+            else:
+                phone.label = field_phone
+
+            phone.number = PhoneNumber(self.kwargs[field_phone]).number
+            logger.debug(f"Saving phone {phone}")
             phone.save()
 
-    def _get_address(self) -> Address:
+    def _get_address(self, label: str = None) -> Address:
         """
         Similar to _get_phone, but for addresses. This method also filters based on the
         "Imported Address" label, so it should always return a single address new or existing.
@@ -875,7 +884,7 @@ class EmployeeForm(BaseImport):
         """
 
         addrs = Address.objects.filter(
-            Q(employee=self.employee.employee) & Q(label="Imported Address")
+            Q(employee=self.employee.employee) & Q(label=label or "Imported Address")
         )
         if len(addrs) > 1:
             raise Address.MultipleObjectsReturned
@@ -883,25 +892,33 @@ class EmployeeForm(BaseImport):
             addr = Address()
             addr.employee = self.employee.employee
             addr.label = "Imported Address"
+            logger.debug(f"Created new address")
             return addr
         else:
+            logger.debug(f"Found existing address {addrs[0].id}")
             return addrs[0]
 
-    def save_address(self):
+    def save_address(self) -> None:
         """Parse the kwargs for address fields and updates the address object."""
 
         if self.employee.is_matched == False:
             # This is a pending employee so we can't save the address
             return
 
+        label = self.get_field_name("address_label")
+
         try:
-            address = self._get_address()
+            address = self._get_address(label)
         except Address.MultipleObjectsReturned:
-            logger.warning("More than one address exists. Cowardly not doing anything")
+            logger.debug("More than one address exists. Cowardly not doing anything")
+            return
+        except KeyError:
+            # This should only happen if the employee is not matched but the flag is set
+            return
 
         for key, value in self.kwargs.items():
             map_val = self.get_map_to(key)
-            if hasattr(address, map_val):
+            if map_val != "id" and hasattr(address, map_val):
                 if map_val[:6] == "street":
                     if isinstance(value, list):
                         for x in range(len(value) if len(value) < 3 else 3):
